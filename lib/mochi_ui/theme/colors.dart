@@ -155,6 +155,48 @@ class MochiColors {
     softAlpha: _darkSoftAlpha,
   );
 
+  // See [MochiTone] on why these carry value equality.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiColors &&
+          brightness == other.brightness &&
+          softAlpha == other.softAlpha &&
+          background == other.background &&
+          surface == other.surface &&
+          overlay == other.overlay &&
+          border == other.border &&
+          foreground == other.foreground &&
+          mutedForeground == other.mutedForeground &&
+          focusRing == other.focusRing &&
+          shadow == other.shadow &&
+          neutral == other.neutral &&
+          primary == other.primary &&
+          info == other.info &&
+          success == other.success &&
+          warning == other.warning &&
+          danger == other.danger;
+
+  @override
+  int get hashCode => Object.hash(
+    brightness,
+    softAlpha,
+    background,
+    surface,
+    overlay,
+    border,
+    foreground,
+    mutedForeground,
+    focusRing,
+    shadow,
+    neutral,
+    primary,
+    info,
+    success,
+    warning,
+    danger,
+  );
+
   static MochiColors lerp(MochiColors a, MochiColors b, double t) => MochiColors(
     brightness: t < 0.5 ? a.brightness : b.brightness,
     softAlpha: t < 0.5 ? a.softAlpha : b.softAlpha,

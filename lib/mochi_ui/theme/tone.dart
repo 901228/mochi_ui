@@ -19,6 +19,20 @@ class MochiTone {
   /// Intent-colored text placed on [soft] or the page background.
   final Color onSoft;
 
+  // Value equality, so a theme that interpolates to the colors it already has compares equal and
+  // no animation is started for it.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiTone &&
+          base == other.base &&
+          onBase == other.onBase &&
+          soft == other.soft &&
+          onSoft == other.onSoft;
+
+  @override
+  int get hashCode => Object.hash(base, onBase, soft, onSoft);
+
   static MochiTone lerp(MochiTone a, MochiTone b, double t) => MochiTone(
     base: Color.lerp(a.base, b.base, t)!,
     onBase: Color.lerp(a.onBase, b.onBase, t)!,
