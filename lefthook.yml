@@ -1,0 +1,53 @@
+pre-commit:
+  parallel: true
+  commands:
+    # only format staged files
+    dart-format:
+      glob: "*.dart"
+      run: fvm dart format --set-exit-if-changed {staged_files}
+      stage_fixed: true
+
+    # static analysis on staged files
+    dart-analyze:
+      glob: "*.dart"
+      run: fvm dart analyze --fatal-infos {staged_files}
+
+    # only run tests on staged files
+    flutter-test:
+      glob: "test/**/*.dart"
+      run: fvm flutter test {staged_files}
+
+    # check pubspec.yaml
+    pubspec-check:
+      glob: "pubspec.yaml"
+      run: fvm flutter pub deps
+
+pre-push:
+  commands:
+    flutter-test-all:
+      run: fvm flutter test --coverage
+
+    dart-analyze-full:
+      run: fvm dart analyze --fatal-warnings
+
+commit-msg:
+  commands:
+    check-conventional-commit-with-emoji:
+      run: |
+        if ! grep -qE "^(✨|🐛|📝|🎨|♻️|✅|🔧|⚡️) (feat|fix|docs|style|refactor|test|chore|perf)(\(.+\))?: .+" "{1}"; then
+          echo "❌ Commit message format error!"
+          echo "   Format: <emoji> <type>(<scope>): <description>"
+          echo ""
+          echo "Available types and emojis:"
+          echo "✨ feat      - New feature"
+          echo "🐛 fix       - Bug fix"
+          echo "📝 docs      - Documentation update"
+          echo "🎨 style     - Code style"
+          echo "♻️ refactor  - Code refactor"
+          echo "✅ test      - Testing"
+          echo "🔧 chore     - Chore"
+          echo "⚡️ perf      - Performance"
+          echo ""
+          echo "Example: ✨ feat(auth): add login validation"
+          exit 1
+        fi
