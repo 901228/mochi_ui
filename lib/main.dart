@@ -156,6 +156,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SheetSample(),
           const SizedBox(height: 32),
+          const _ThemedText("toast", .section),
+          const SizedBox(height: 12),
+          const _ToastSample(),
+          const SizedBox(height: 32),
           const _ThemedText("scaffold + header", .section),
           const SizedBox(height: 12),
           const _ScaffoldSample(),
@@ -712,6 +716,65 @@ class _SheetSample extends StatelessWidget {
             ),
             child: Text(side.name),
           ),
+      ],
+    );
+  }
+}
+
+class _ToastSample extends StatelessWidget {
+  const _ToastSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.sm,
+      runSpacing: g.space.sm,
+      children: [
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () => showMochiToast(
+            context,
+            title: const Text("Saved"),
+            icon: const Icon(TablerIcons.check),
+            intent: MochiIntent.success,
+          ),
+          child: const Text("plain"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          tooltip: "Hover it and it waits for you",
+          onPress: () {
+            late final MochiToastHandle handle;
+            handle = showMochiToast(
+              context,
+              intent: MochiIntent.danger,
+              icon: const Icon(TablerIcons.trash),
+              title: const Text("Record deleted"),
+              description: const Text("It is gone from this session."),
+              action: MochiButton(
+                appearance: MochiButtonAppearance.text,
+                size: MochiButtonSize.xs,
+                onPress: () => handle.dismiss(),
+                child: const Text("Undo"),
+              ),
+            );
+          },
+          child: const Text("with undo"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () {
+            for (var i = 1; i <= 4; i++) {
+              showMochiToast(context, title: Text("Message $i"), duration: const Duration(seconds: 6));
+            }
+          },
+          child: const Text("four at once"),
+        ),
       ],
     );
   }

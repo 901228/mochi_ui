@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/theme.dart";
 import "animated_theme.dart";
 import "scroll_behavior.dart";
+import "toast.dart";
 import "transitions.dart";
 
 class MochiApp extends StatelessWidget {
@@ -60,7 +61,12 @@ class MochiApp extends StatelessWidget {
             style: context.theme.typography.body.sm.copyWith(color: context.colors.foreground),
             child: IconTheme(
               data: IconThemeData(color: context.colors.foreground, size: 20),
-              child: ScrollConfiguration(behavior: const MochiScrollBehavior(), child: child!),
+              child: ScrollConfiguration(
+                behavior: const MochiScrollBehavior(),
+                // Above the navigator, so a toast outlives the page that raised it and stays
+                // visible over a dialog.
+                child: MochiToaster(child: child!),
+              ),
             ),
           ),
         ),
