@@ -73,7 +73,9 @@ class _MochiCircularProgressState extends State<MochiCircularProgress> with Sing
           spin: reduceMotion ? const AlwaysStoppedAnimation(0.0) : _controller,
           value: widget.value,
           color: color,
-          strokeWidth: widget.strokeWidth ?? size / 9,
+          // A thin arc leaves roughly one pixel of antialiasing on a 1x display, and the stepping
+          // shimmers as it rotates; a sixth of the diameter still reads as a ring.
+          strokeWidth: widget.strokeWidth ?? size / 6,
         ),
       ),
     );
