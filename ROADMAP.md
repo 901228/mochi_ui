@@ -54,12 +54,12 @@
 
 ## 4. P3：浮層
 
-- [ ] Popover（底層，下面兩個都靠它）
+- [x] Popover（底層，下面幾個都靠它）— `MochiPopover`：基於 widgets 層的 `RawMenuAnchor`（overlay、點外面關閉、Esc、focus 還原都是現成的），這裡補上定位（side × align、沒空間就翻面、夾在畫面內）與面板外觀
 - [ ] PopoverMenu（1）— session 選單
 - [ ] ContextMenu（2）— 紀錄、session 長按 / 右鍵
 - [ ] Dialog（4）+ `showMochiDialog`（5）
-- [ ] Dialog.adaptive（1）— 桌面 dialog、手機 sheet
 - [ ] Sheet（1）+ `showMochiSheet` — 首頁側邊選單
+- [ ] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
 - [ ] ⭐ Toast / Toaster — cube timer 已包了 `FToaster`，之後刪除紀錄的「復原」會用到
 
 ## 5. P4：輸入
