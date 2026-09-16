@@ -1,3 +1,5 @@
+import "package:flutter/rendering.dart";
+import "package:flutter/scheduler.dart";
 import "package:flutter/widgets.dart";
 import "package:tabler_icons_plus/tabler_icons_plus.dart";
 
@@ -75,6 +77,16 @@ class _Gallery extends StatelessWidget {
             children: [
               const _ThemedText("Mochi UI", .title),
               const Spacer(),
+              MochiButton(
+                intent: MochiIntent.neutral,
+                appearance: MochiButtonAppearance.ghost,
+                tooltip: "Watch sizes ease between the two scales",
+                onPress: () => Navigator.of(context)
+                    .push(MochiPageRoute<void>(builder: (_) => _SizingPage(onTouchChanged: onTouchChanged))),
+                prefix: const Icon(TablerIcons.ruler),
+                child: const Text("sizing"),
+              ),
+              const SizedBox(width: 8),
               MochiButton(
                 intent: MochiIntent.neutral,
                 appearance: MochiButtonAppearance.ghost,
@@ -368,6 +380,149 @@ class _TransitionSample extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// A page with only the widgets whose size depends on `touch`, so the size transition can be
+/// watched without the rest of the gallery rebuilding along with it.
+class _SizingPage extends StatelessWidget {
+  const _SizingPage({required this.onTouchChanged});
+
+  final ValueChanged<bool> onTouchChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    return MochiScaffold(
+      header: MochiHeader(
+        variant: MochiHeaderVariant.bordered,
+        title: const Text("sizing"),
+        prefixes: [MochiHeaderAction.back(onPress: () => Navigator.of(context).pop())],
+        suffixes: [
+          MochiButton(
+            appearance: MochiButtonAppearance.ghost,
+            size: MochiButtonSize.sm,
+            selected: theme.touch,
+            onPress: () => onTouchChanged(!theme.touch),
+            prefix: const Icon(TablerIcons.handFinger),
+            child: const Text("touch"),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(g.space.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: g.space.lg,
+          children: [
+            const _ThemedText("Toggle touch and watch the numbers ease.", .muted),
+            Wrap(
+              spacing: g.space.md,
+              runSpacing: g.space.md,
+              children: [
+                for (final size in MochiButtonSize.values)
+                  _Measured(
+                    label: size.name,
+                    child: MochiButton(size: size, onPress: () {}, child: Text(size.name)),
+                  ),
+                _Measured(
+                  label: "icon",
+                  child: MochiButton.icon(onPress: () {}, icon: const Icon(TablerIcons.heart)),
+                ),
+                _Measured(
+                  label: "switch",
+                  child: MochiSwitch(value: true, onChanged: (_) {}),
+                ),
+              ],
+            ),
+            SizedBox(
+              width: 320,
+              child: _Measured(
+                label: "tiles",
+                child: MochiTileGroup(
+                  children: [
+                    MochiTile(
+                      prefix: const Icon(TablerIcons.bell),
+                      title: const Text("With an icon"),
+                      onPress: () {},
+                    ),
+                    MochiTile(title: const Text("Without one"), onPress: () {}),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows its child's live height, so a transition can be read off the number as well as seen.
+class _Measured extends StatefulWidget {
+  const _Measured({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  State<_Measured> createState() => _MeasuredState();
+}
+
+class _MeasuredState extends State<_Measured> {
+  final _height = ValueNotifier<double>(0);
+
+  @override
+  void dispose() {
+    _height.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    spacing: context.theme.geometry.space.xs2,
+    children: [
+      _MeasureSize(height: _height, child: widget.child),
+      ValueListenableBuilder(
+        valueListenable: _height,
+        builder: (context, height, _) =>
+            _ThemedText("${widget.label} · ${height.toStringAsFixed(1)}", .muted),
+      ),
+    ],
+  );
+}
+
+class _MeasureSize extends SingleChildRenderObjectWidget {
+  const _MeasureSize({required this.height, required super.child});
+
+  final ValueNotifier<double> height;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderMeasureSize(height);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderMeasureSize renderObject) =>
+      renderObject.height = height;
+}
+
+class _RenderMeasureSize extends RenderProxyBox {
+  _RenderMeasureSize(this.height);
+
+  ValueNotifier<double> height;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+
+    // Notifying during layout would rebuild the listener in the same frame it is laid out in.
+    if (height.value != size.height) {
+      final measured = size.height;
+      SchedulerBinding.instance.addPostFrameCallback((_) => height.value = measured);
+    }
   }
 }
 
