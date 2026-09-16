@@ -5,8 +5,8 @@ import "package:flutter/widgets.dart";
 class MochiMotion {
   MochiMotion({
     this.stateDuration = const Duration(milliseconds: 120),
-    this.themeDuration = const Duration(milliseconds: 150),
-    this.themeCurve = Curves.easeOutQuart,
+    this.themeDuration = const Duration(milliseconds: 180),
+    this.themeCurve = Curves.easeOutCubic,
     this.indeterminateDuration = const Duration(milliseconds: 1000),
     this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
