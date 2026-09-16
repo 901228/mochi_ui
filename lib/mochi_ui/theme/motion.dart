@@ -5,7 +5,7 @@ import "package:flutter/widgets.dart";
 class MochiMotion {
   MochiMotion({
     this.stateDuration = const Duration(milliseconds: 120),
-    this.themeDuration = const Duration(milliseconds: 200),
+    this.themeDuration = const Duration(milliseconds: 150),
     this.indeterminateDuration = const Duration(milliseconds: 1000),
     this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
@@ -27,7 +27,8 @@ class MochiMotion {
   /// Interaction state changes (hover, pressed, selected colors).
   final Duration stateDuration;
 
-  /// Light / dark theme transitions.
+  /// Light / dark theme transitions. Kept short: every frame of it rebuilds every component on
+  /// screen, so its cost grows with how busy the page is.
   final Duration themeDuration;
 
   /// Metrics changing under a component: the touch scale switching to the desktop one, say.
