@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/theme.dart";
 import "animated_theme.dart";
 import "scroll_behavior.dart";
+import "transitions.dart";
 
 class MochiApp extends StatelessWidget {
   const MochiApp({
@@ -76,8 +77,7 @@ class MochiApp extends StatelessWidget {
       color: _color,
       title: title,
       home: home,
-      pageRouteBuilder: <T>(settings, builder) =>
-          PageRouteBuilder<T>(settings: settings, pageBuilder: (context, _, _) => builder(context)),
+      pageRouteBuilder: <T>(settings, builder) => MochiPageRoute<T>(settings: settings, builder: builder),
       builder: _builder,
     );
   }

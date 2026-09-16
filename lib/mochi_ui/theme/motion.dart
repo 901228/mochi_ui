@@ -7,6 +7,10 @@ class MochiMotion {
     this.stateDuration = const Duration(milliseconds: 120),
     this.themeDuration = const Duration(milliseconds: 200),
     this.indeterminateDuration = const Duration(milliseconds: 1000),
+    this.transitionDuration = const Duration(milliseconds: 320),
+    this.transitionReverseDuration = const Duration(milliseconds: 240),
+    this.transitionCurve = Curves.easeOutCubic,
+    this.transitionReverseCurve = Curves.easeInCubic,
     this.pressScale = 1.06,
     this.pressMaxGrowth = 3,
     SpringDescription? pressSpring,
@@ -23,6 +27,16 @@ class MochiMotion {
 
   /// Light / dark theme transitions.
   final Duration themeDuration;
+
+  /// Entering a page or an overlay (dialog, sheet, popover, toast).
+  final Duration transitionDuration;
+
+  /// Leaving is quicker than entering: the surface is on its way out and should not hold
+  /// attention.
+  final Duration transitionReverseDuration;
+
+  final Curve transitionCurve;
+  final Curve transitionReverseCurve;
 
   /// One cycle of an indeterminate spinner or bar. Both move at a constant speed and keep a
   /// constant size, so the two read as one family.
@@ -52,6 +66,10 @@ class MochiMotion {
           stateDuration == other.stateDuration &&
           themeDuration == other.themeDuration &&
           indeterminateDuration == other.indeterminateDuration &&
+          transitionDuration == other.transitionDuration &&
+          transitionReverseDuration == other.transitionReverseDuration &&
+          transitionCurve == other.transitionCurve &&
+          transitionReverseCurve == other.transitionReverseCurve &&
           pressScale == other.pressScale &&
           pressMaxGrowth == other.pressMaxGrowth &&
           _springEquals(pressSpring, other.pressSpring) &&
@@ -62,6 +80,10 @@ class MochiMotion {
     stateDuration,
     themeDuration,
     indeterminateDuration,
+    transitionDuration,
+    transitionReverseDuration,
+    transitionCurve,
+    transitionReverseCurve,
     pressScale,
     pressMaxGrowth,
     pressSpring.stiffness,
