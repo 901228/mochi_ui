@@ -1,0 +1,208 @@
+import "package:flutter/foundation.dart";
+import "package:flutter/widgets.dart";
+
+/// Corner radii. Use them with [RoundedSuperellipseBorder]; superellipse corners look
+/// tighter than circular ones at the same radius, so these run a little larger.
+@immutable
+class MochiRadius {
+  const MochiRadius({
+    this.xs = const BorderRadius.all(Radius.circular(6)),
+    this.sm = const BorderRadius.all(Radius.circular(8)),
+    this.md = const BorderRadius.all(Radius.circular(10)),
+    this.lg = const BorderRadius.all(Radius.circular(14)),
+    this.xl = const BorderRadius.all(Radius.circular(20)),
+    this.full = const BorderRadius.all(Radius.circular(9999)),
+  });
+
+  final BorderRadius xs;
+  final BorderRadius sm;
+  final BorderRadius md;
+  final BorderRadius lg;
+  final BorderRadius xl;
+
+  /// Pill / circle.
+  final BorderRadius full;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiRadius &&
+          xs == other.xs &&
+          sm == other.sm &&
+          md == other.md &&
+          lg == other.lg &&
+          xl == other.xl &&
+          full == other.full;
+
+  @override
+  int get hashCode => Object.hash(xs, sm, md, lg, xl, full);
+}
+
+/// Spacing scale, named like the type scale.
+@immutable
+class MochiSpace {
+  const MochiSpace({
+    this.xs3 = 2,
+    this.xs2 = 4,
+    this.xs = 8,
+    this.sm = 12,
+    this.md = 16,
+    this.lg = 24,
+    this.xl = 32,
+    this.xl2 = 48,
+    this.xl3 = 64,
+  });
+
+  final double xs3;
+  final double xs2;
+  final double xs;
+  final double sm;
+  final double md;
+  final double lg;
+  final double xl;
+  final double xl2;
+  final double xl3;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiSpace &&
+          xs3 == other.xs3 &&
+          xs2 == other.xs2 &&
+          xs == other.xs &&
+          sm == other.sm &&
+          md == other.md &&
+          lg == other.lg &&
+          xl == other.xl &&
+          xl2 == other.xl2 &&
+          xl3 == other.xl3;
+
+  @override
+  int get hashCode => Object.hash(xs3, xs2, xs, sm, md, lg, xl, xl2, xl3);
+}
+
+enum MochiElevation { sm, md, lg }
+
+/// One layer of a shadow, colorless; the color comes from [MochiColors.shadow].
+@immutable
+class MochiShadowLayer {
+  const MochiShadowLayer({required this.offset, required this.blur, this.spread = 0, required this.opacity});
+
+  final Offset offset;
+  final double blur;
+  final double spread;
+
+  /// Multiplied with the shadow color's alpha.
+  final double opacity;
+
+  BoxShadow resolve(Color color) => BoxShadow(
+    color: color.withValues(alpha: color.a * opacity),
+    offset: offset,
+    blurRadius: blur,
+    spreadRadius: spread,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is MochiShadowLayer &&
+      offset == other.offset &&
+      blur == other.blur &&
+      spread == other.spread &&
+      opacity == other.opacity;
+
+  @override
+  int get hashCode => Object.hash(offset, blur, spread, opacity);
+}
+
+@immutable
+class MochiShadows {
+  const MochiShadows({
+    this.sm = const [
+      MochiShadowLayer(offset: Offset(0, 1), blur: 3, opacity: 0.16),
+      MochiShadowLayer(offset: Offset(0, 1), blur: 2, spread: -1, opacity: 0.12),
+    ],
+    this.md = const [
+      MochiShadowLayer(offset: Offset(0, 4), blur: 10, spread: -2, opacity: 0.22),
+      MochiShadowLayer(offset: Offset(0, 2), blur: 4, spread: -2, opacity: 0.14),
+    ],
+    this.lg = const [
+      MochiShadowLayer(offset: Offset(0, 12), blur: 28, spread: -6, opacity: 0.30),
+      MochiShadowLayer(offset: Offset(0, 4), blur: 10, spread: -4, opacity: 0.18),
+    ],
+  });
+
+  /// Resting surfaces: cards.
+  final List<MochiShadowLayer> sm;
+
+  /// Raised surfaces: popovers, menus, tooltips.
+  final List<MochiShadowLayer> md;
+
+  /// Floating surfaces: dialogs, sheets, toasts.
+  final List<MochiShadowLayer> lg;
+
+  List<BoxShadow> of(MochiElevation elevation, Color color) => [
+    for (final layer in switch (elevation) {
+      .sm => sm,
+      .md => md,
+      .lg => lg,
+    })
+      layer.resolve(color),
+  ];
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiShadows &&
+          listEquals(sm, other.sm) &&
+          listEquals(md, other.md) &&
+          listEquals(lg, other.lg);
+
+  @override
+  int get hashCode => Object.hash(Object.hashAll(sm), Object.hashAll(md), Object.hashAll(lg));
+}
+
+/// Size and shape tokens shared by components. Colors live in [MochiColors].
+@immutable
+class MochiGeometry {
+  const MochiGeometry({
+    this.radius = const MochiRadius(),
+    this.space = const MochiSpace(),
+    this.shadows = const MochiShadows(),
+    this.borderWidth = 1,
+    this.focusRingWidth = 2,
+    this.focusRingGap = 2,
+    this.pagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  });
+
+  final MochiRadius radius;
+  final MochiSpace space;
+  final MochiShadows shadows;
+  final double borderWidth;
+
+  /// Stroke width of [MochiFocusRing].
+  final double focusRingWidth;
+
+  /// Space between a component's edge and its focus ring.
+  final double focusRingGap;
+
+  /// Default padding around page content.
+  final EdgeInsets pagePadding;
+
+  static const standard = MochiGeometry();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiGeometry &&
+          radius == other.radius &&
+          space == other.space &&
+          shadows == other.shadows &&
+          borderWidth == other.borderWidth &&
+          focusRingWidth == other.focusRingWidth &&
+          focusRingGap == other.focusRingGap &&
+          pagePadding == other.pagePadding;
+
+  @override
+  int get hashCode =>
+      Object.hash(radius, space, shadows, borderWidth, focusRingWidth, focusRingGap, pagePadding);
+}
