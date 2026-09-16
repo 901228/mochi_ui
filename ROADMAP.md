@@ -1,0 +1,78 @@
+# Mochi UI Roadmap
+
+優先順序依據 `~/things/project/mochi_cube_timer/apps/gui` 目前使用的 forui 元件（2026-09-16 統計，括號內為使用次數）。
+標 ⭐ 的是 cube timer 沒用到、但我建議加上的項目。
+
+**完成的定義**：元件 + 預覽頁（`lib/main.dart`）+ widget test + light/dark 都檢查過。
+
+---
+
+## 0. 基礎建設
+
+- [x] 顏色系統：palette → `MochiColors` / `MochiTone` → 元件 style
+- [x] Typography：`title` / `body` × `xs3…xl8`，Comfortaa + 假粉圓 fallback
+- [x] 主題動畫（`AnimatedMochiTheme`）與狀態動畫（`MochiStateTransition`）
+- [x] `MochiApp` / `MochiApp.router`（取代 `CupertinoApp`，搭配 go_router）
+- [x] Theme 擴充機制 `MochiThemeExtension`（取代 material `ThemeExtension`）
+- [x] `touch` 旗標（桌面 / 觸控兩套尺寸）
+- [x] Geometry tokens `MochiGeometry`：圓角 xs–xl/full（superellipse）、間距 xs3–xl3、border 寬度、陰影 sm/md/lg、頁面 padding
+- [x] 共用 focus ring `MochiFocusRing`（顏色 `colors.focusRing`，寬度 / 間隙在 geometry）
+- [x] Motion tokens `MochiMotion`：state / theme 動畫時間、按壓彈簧
+- [x] 按壓動畫：iOS 風格按下放大（`MochiPressScale`，彈簧回彈、上限 6% / 每邊 3px、尊重減少動態效果）
+- [x] 圓角改用 superellipse（`RoundedSuperellipseBorder`）
+- [x] Flutter 改跟 master：stable 3.47 的 Linux Impeller 沒開 MSAA，描邊和路徑都有鋸齒（flutter#191171，修正只在 master）
+- [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
+- [ ] `MochiIcons` token：等第一個需要內建圖示的元件（Checkbox / Select）再做，只收元件自己用到的那幾個，可整組替換
+- [ ] ⭐ 尺寸過渡動畫：`touch` 或緊湊模式切換時，高度與 padding 目前是瞬間跳動（顏色有動畫）。需要類似 `MochiStateTransition`、只在尺寸真的改變時才觸發的機制，避免跟主題動畫互相打架
+- [ ] ⭐ 以 `ColorScheme` 產生主題的 helper（像 forui CLI preset），方便 app 換主色
+
+## 1. 已完成的元件
+
+- [x] Tappable（8）— `MochiTappable`：hover / focus / pressed / selected / disabled、長按、雙擊、右鍵
+- [x] Button（13）— `MochiButton`：6 intent × 6 appearance、selected、prefix / suffix、`size`（xs/sm/md/lg）
+- [x] Button.icon（9）— `MochiButton.icon`：正方形圖示按鈕
+- [x] Tooltip（4）+ TooltipGroup（1）— `MochiTooltip`：hover / 長按 / 鍵盤 focus
+- [x] Icon（22）— Flutter `Icon` + `IconTheme`
+
+## 2. P1：小元件
+
+- [x] Divider（4）— `MochiDivider`：水平 / 垂直、indent
+- [x] CircularProgress（3）— `MochiCircularProgress`：determinate / indeterminate，顏色跟隨外層文字色
+- [x] Switch（2）— `MochiSwitch`：intent、focus ring、尊重減少動態效果
+- [x] Card（2）— `MochiCard`：elevation、可選 onPress（hover 上色、不放大）
+- [x] LinearProgress — `MochiLinearProgress`：determinate / indeterminate
+- [x] Badge / Tag — `MochiBadge`：solid / soft / outlined 膠囊
+
+## 3. P2：頁面骨架
+
+- [ ] Tile / TileGroup（1 / 8）— 設定頁
+- [ ] Item / ItemGroup（3 / 1）— 紀錄列表、session 選單
+- [ ] Header（1）+ Header.nested（4）+ HeaderAction（back / x / custom）
+- [ ] Scaffold（3）— header / content / footer
+- [ ] ⭐ ScrollArea — 統一 scrollbar 與 edge fade
+
+## 4. P3：浮層
+
+- [ ] Popover（底層，下面兩個都靠它）
+- [ ] PopoverMenu（1）— session 選單
+- [ ] ContextMenu（2）— 紀錄、session 長按 / 右鍵
+- [ ] Dialog（4）+ `showMochiDialog`（5）
+- [ ] Dialog.adaptive（1）— 桌面 dialog、手機 sheet
+- [ ] Sheet（1）+ `showMochiSheet` — 首頁側邊選單
+- [ ] ⭐ Toast / Toaster — cube timer 已包了 `FToaster`，之後刪除紀錄的「復原」會用到
+
+## 5. P4：輸入
+
+- [ ] TextField（4）— 基於 `EditableText`：hint、control、inputFormatters、keyboardType、maxLength
+- [ ] TextField.multiline（1）— scramble 輸入
+- [ ] ⭐ Checkbox
+- [ ] ⭐ RadioGroup
+- [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單
+- [ ] ⭐ Slider — 檢查時間、音量類設定
+- [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）
+
+## 6. P5：導覽
+
+- [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）
+- [ ] BottomNavigationBar（1）
+- [ ] Breadcrumb（1）
