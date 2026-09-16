@@ -7,7 +7,7 @@ class MochiMotion {
     this.stateDuration = const Duration(milliseconds: 120),
     this.themeDuration = const Duration(milliseconds: 200),
     this.indeterminateDuration = const Duration(milliseconds: 1000),
-    this.sizeDuration = const Duration(milliseconds: 260),
+    this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
     this.transitionDuration = const Duration(milliseconds: 320),
     this.transitionReverseDuration = const Duration(milliseconds: 240),
@@ -31,6 +31,9 @@ class MochiMotion {
   final Duration themeDuration;
 
   /// Metrics changing under a component: the touch scale switching to the desktop one, say.
+  ///
+  /// Matches [transitionDuration] on purpose — both are app-wide movements nobody's finger is
+  /// driving — but stays its own token, since the two need different curves.
   final Duration sizeDuration;
 
   /// Eased at both ends: a size leaving rest at full speed reads as a jolt, since nothing the
