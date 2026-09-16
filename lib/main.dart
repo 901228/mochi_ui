@@ -140,6 +140,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TransitionSample(),
           const SizedBox(height: 32),
+          const _ThemedText("popover", .section),
+          const SizedBox(height: 12),
+          const _PopoverSample(),
+          const SizedBox(height: 32),
           const _ThemedText("scaffold + header", .section),
           const SizedBox(height: 12),
           const _ScaffoldSample(),
@@ -381,6 +385,70 @@ class _TransitionSample extends StatelessWidget {
             ),
             child: Text(transition.name),
           ),
+      ],
+    );
+  }
+}
+
+class _PopoverSample extends StatelessWidget {
+  const _PopoverSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.sm,
+      runSpacing: g.space.sm,
+      children: [
+        for (final side in MochiPopoverSide.values)
+          MochiPopover(
+            side: side,
+            popoverBuilder: (context) => SizedBox(
+              width: 180,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Opens on the ${side.name}"),
+                  SizedBox(height: g.space.xs),
+                  const Text("Flips when there is no room, and stays inside the window."),
+                ],
+              ),
+            ),
+            builder: (context, anchor, _) => MochiButton(
+              appearance: MochiButtonAppearance.outlined,
+              size: MochiButtonSize.sm,
+              focusNode: anchor.focusNode,
+              onPress: anchor.toggle,
+              child: Text(side.name),
+            ),
+          ),
+        for (final align in MochiPopoverAlign.values)
+          MochiPopover(
+            align: align,
+            popoverBuilder: (context) => SizedBox(width: 220, child: Text("Aligned ${align.name}")),
+            builder: (context, anchor, _) => MochiButton(
+              appearance: MochiButtonAppearance.soft,
+              size: MochiButtonSize.sm,
+              focusNode: anchor.focusNode,
+              onPress: anchor.toggle,
+              child: Text("align ${align.name}"),
+            ),
+          ),
+        // Opened at the pointer rather than against an edge: the shape a context menu takes
+        // once MochiContextMenu lands.
+        MochiPopover(
+          align: MochiPopoverAlign.start,
+          popoverBuilder: (context) => const SizedBox(width: 160, child: Text("Opened at the pointer")),
+          builder: (context, anchor, _) => GestureDetector(
+            onSecondaryTapUp: (details) => anchor.open(position: details.localPosition),
+            child: MochiCard(
+              padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
+              child: const Text("right click me"),
+            ),
+          ),
+        ),
       ],
     );
   }

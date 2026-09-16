@@ -8,6 +8,7 @@ export "widgets/divider.dart";
 export "widgets/focus_ring.dart";
 export "widgets/header.dart";
 export "widgets/linear_progress.dart";
+export "widgets/popover.dart";
 export "widgets/press_scale.dart";
 export "widgets/responsive.dart";
 export "widgets/scaffold.dart";
