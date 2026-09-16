@@ -154,4 +154,64 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(Scrollable), findsWidgets);
   });
+
+  group("showMochiModal", () {
+    Widget adaptive({required Size size, MochiModalForm? form, ValueChanged<String?>? onResult}) =>
+        MediaQuery(
+          data: MediaQueryData(size: size),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            home: Builder(
+              builder: (context) => Center(
+                child: MochiButton(
+                  onPress: () async {
+                    final answer = await showMochiModal<String>(
+                      context,
+                      form: form,
+                      title: const Text("Move to"),
+                      body: const Text("Pick a session."),
+                      actions: [
+                        MochiButton(onPress: () => Navigator.of(context).pop("ok"), child: const Text("OK")),
+                      ],
+                    );
+                    onResult?.call(answer);
+                  },
+                  child: const Text("open"),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    testWidgets("is a dialog on a wide screen", (tester) async {
+      await tester.pumpWidget(adaptive(size: const Size(1000, 700)));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MochiDialog), findsOneWidget);
+      expect(find.byType(MochiSheet), findsNothing);
+    });
+
+    testWidgets("is a bottom sheet on a phone, and still returns its answer", (tester) async {
+      String? result;
+      await tester.pumpWidget(adaptive(size: const Size(390, 780), onResult: (value) => result = value));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MochiSheet), findsOneWidget);
+      expect(find.byType(MochiDialog), findsNothing);
+
+      await tester.tap(find.text("OK"));
+      await tester.pumpAndSettle();
+      expect(result, "ok");
+    });
+
+    testWidgets("form: overrides the screen", (tester) async {
+      await tester.pumpWidget(adaptive(size: const Size(390, 780), form: MochiModalForm.dialog));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MochiDialog), findsOneWidget);
+    });
+  });
 }

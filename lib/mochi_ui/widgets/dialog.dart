@@ -2,7 +2,9 @@ import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
 import "../theme/motion.dart";
+import "../theme/responsive.dart";
 import "../theme/theme.dart";
+import "sheet.dart";
 import "transitions.dart";
 
 /// A modal box: a title, some content, and the actions that answer it.
@@ -63,41 +65,65 @@ class MochiDialog extends StatelessWidget {
               side: BorderSide(color: colors.border, width: g.borderWidth),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DefaultTextStyle(
-                style: theme.typography.title.md.copyWith(color: colors.foreground),
-                child: title,
-              ),
-              if (body case final body?) ...[
-                SizedBox(height: g.space.xs),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: DefaultTextStyle(
-                      style: theme.typography.body.sm.copyWith(color: colors.mutedForeground),
-                      child: body,
-                    ),
-                  ),
-                ),
-              ],
-              if (actions.isNotEmpty) ...[
-                SizedBox(height: g.space.lg),
-                if (axis == Axis.horizontal)
-                  Row(mainAxisAlignment: MainAxisAlignment.end, spacing: g.space.xs, children: actions)
-                else
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: g.space.xs,
-                    children: actions,
-                  ),
-              ],
-            ],
-          ),
+          child: _ModalColumn(title: title, body: body, actions: actions, actionsAxis: axis),
         ),
       ),
+    );
+  }
+}
+
+/// Title, body and actions, laid out the same way whichever container they end up in.
+class _ModalColumn extends StatelessWidget {
+  const _ModalColumn({
+    required this.title,
+    required this.body,
+    required this.actions,
+    required this.actionsAxis,
+  });
+
+  final Widget title;
+  final Widget? body;
+  final List<Widget> actions;
+  final Axis actionsAxis;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final colors = theme.colors;
+    final g = theme.geometry;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DefaultTextStyle(
+          style: theme.typography.title.md.copyWith(color: colors.foreground),
+          child: title,
+        ),
+        if (body case final body?) ...[
+          SizedBox(height: g.space.xs),
+          Flexible(
+            child: SingleChildScrollView(
+              child: DefaultTextStyle(
+                style: theme.typography.body.sm.copyWith(color: colors.mutedForeground),
+                child: body,
+              ),
+            ),
+          ),
+        ],
+        if (actions.isNotEmpty) ...[
+          SizedBox(height: g.space.lg),
+          if (actionsAxis == Axis.horizontal)
+            Row(mainAxisAlignment: MainAxisAlignment.end, spacing: g.space.xs, children: actions)
+          else
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: g.space.xs,
+              children: actions,
+            ),
+        ],
+      ],
     );
   }
 }
@@ -184,3 +210,56 @@ Future<T?> showMochiDialog<T>(
     settings: settings,
   ),
 );
+
+/// Which container an adaptive modal ends up in.
+enum MochiModalForm {
+  /// A box in the middle of the screen.
+  dialog,
+
+  /// A panel along the bottom edge, within reach of a thumb.
+  sheet,
+}
+
+/// Asks something modally, in whichever container suits the screen.
+///
+/// A dialog on anything tablet-sized and up, a bottom sheet on a phone, where a box in the middle
+/// of the screen is out of reach and the actions want to be full width. Pass [form] to settle it
+/// either way, or call [showMochiDialog] / [showMochiSheet] directly when the answer is never in
+/// doubt.
+///
+/// This takes the parts of the question rather than a built widget on purpose: the two containers
+/// lay their actions out differently, so there is no one subtree that suits both.
+Future<T?> showMochiModal<T>(
+  BuildContext context, {
+  required Widget title,
+  Widget? body,
+  List<Widget> actions = const [],
+  MochiModalForm? form,
+  bool barrierDismissible = true,
+  String barrierLabel = "Dismiss",
+  bool useRootNavigator = true,
+  RouteSettings? settings,
+}) {
+  final resolved = form ?? context.responsive<MochiModalForm>(mobile: .sheet, tablet: .dialog);
+
+  return switch (resolved) {
+    MochiModalForm.dialog => showMochiDialog<T>(
+      context,
+      barrierDismissible: barrierDismissible,
+      barrierLabel: barrierLabel,
+      useRootNavigator: useRootNavigator,
+      settings: settings,
+      builder: (context) => MochiDialog(title: title, body: body, actions: actions),
+    ),
+    MochiModalForm.sheet => showMochiSheet<T>(
+      context,
+      barrierDismissible: barrierDismissible,
+      barrierLabel: barrierLabel,
+      useRootNavigator: useRootNavigator,
+      settings: settings,
+      builder: (context) => MochiSheet(
+        child: _ModalColumn(title: title, body: body, actions: actions, actionsAxis: Axis.vertical),
+      ),
+    ),
+  };
+}

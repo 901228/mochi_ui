@@ -606,6 +606,30 @@ class _DialogSampleState extends State<_DialogSample> {
     );
   }
 
+  Future<void> _modal(BuildContext context) async {
+    final answer = await showMochiModal<bool>(
+      context,
+      title: const Text("Move to session?"),
+      body: const Text("Narrow the window to a phone width and this becomes a sheet."),
+      actions: [
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          onPress: () => Navigator.of(context).pop(false),
+          child: const Text("Cancel"),
+        ),
+        MochiButton(onPress: () => Navigator.of(context).pop(true), child: const Text("Move")),
+      ],
+    );
+    if (!context.mounted) return;
+    setState(
+      () => _answer = switch (answer) {
+        true => "moved",
+        false => "cancelled",
+        null => "dismissed",
+      },
+    );
+  }
+
   Future<void> _long(BuildContext context) => showMochiDialog<void>(
     context,
     builder: (context) => MochiDialog(
@@ -636,6 +660,13 @@ class _DialogSampleState extends State<_DialogSample> {
           size: MochiButtonSize.sm,
           onPress: () => _long(context),
           child: const Text("long body"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          tooltip: "Dialog on a wide window, bottom sheet once it is phone-sized",
+          onPress: () => _modal(context),
+          child: const Text("adaptive modal"),
         ),
         _ThemedText("answer: $_answer", .muted),
       ],
