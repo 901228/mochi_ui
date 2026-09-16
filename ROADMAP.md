@@ -58,10 +58,10 @@
 - [x] PopoverMenu（1）— `MochiPopoverMenu` + `MochiMenu` / `MochiMenuItem` / `MochiMenuDivider` / `MochiMenuLabel`，項目按下會關掉整個選單（含子選單）
 - [x] ContextMenu（2）— `MochiContextMenu`：右鍵 / 長按在游標位置開啟；子項目有自己的長按時讓給子項目
 - [x] ⭐ Submenu — `MochiSubmenu`：hover 停留 120ms 或方向鍵開啟（cube timer 的 Penalty / Move to 會用到）
-- [ ] Dialog（4）+ `showMochiDialog`（5）
-- [ ] Sheet（1）+ `showMochiSheet` — 首頁側邊選單
-- [ ] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
-- [ ] ⭐ Toast / Toaster — cube timer 已包了 `FToaster`，之後刪除紀錄的「復原」會用到
+- [x] Dialog（4）+ `showMochiDialog`（5）— `MochiDialog` + `MochiDialogRoute`；按鈕桌面橫排、touch 直排全寬（cube timer 原本自己包一層就是為了這個）
+- [x] Sheet（1）+ `showMochiSheet` — `MochiSheet`：四個邊都能貼，往自己那邊拖曳可以關掉（直接倒轉 route 的 animation，barrier 跟著淡出）
+- [x] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet（以 breakpoint 判斷，`form:` 可指定）。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
+- [x] ⭐ Toast / Toaster — `MochiToaster`（`MochiApp` 自動裝在 navigator 之上）+ `showMochiToast`：intent 上在邊框、hover 會暫停倒數、handle 可提前關掉
 
 ## 5. P4：輸入
 
