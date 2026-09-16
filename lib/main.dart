@@ -148,6 +148,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _MenuSample(),
           const SizedBox(height: 32),
+          const _ThemedText("dialog", .section),
+          const SizedBox(height: 12),
+          const _DialogSample(),
+          const SizedBox(height: 32),
           const _ThemedText("scaffold + header", .section),
           const SizedBox(height: 12),
           const _ScaffoldSample(),
@@ -553,6 +557,83 @@ class _MenuSampleState extends State<_MenuSample> {
           ),
         ),
         _ThemedText("chose: $_chosen", .muted),
+      ],
+    );
+  }
+}
+
+class _DialogSample extends StatefulWidget {
+  const _DialogSample();
+
+  @override
+  State<_DialogSample> createState() => _DialogSampleState();
+}
+
+class _DialogSampleState extends State<_DialogSample> {
+  String _answer = "nothing yet";
+
+  Future<void> _confirm(BuildContext context) async {
+    final answer = await showMochiDialog<bool>(
+      context,
+      builder: (context) => MochiDialog(
+        title: const Text("Delete record?"),
+        body: const Text("This record will be permanently deleted. There is no undo yet."),
+        actions: [
+          MochiButton(
+            appearance: MochiButtonAppearance.outlined,
+            onPress: () => Navigator.of(context).pop(false),
+            child: const Text("Cancel"),
+          ),
+          MochiButton(
+            intent: MochiIntent.danger,
+            onPress: () => Navigator.of(context).pop(true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted) return;
+    setState(
+      () => _answer = switch (answer) {
+        true => "deleted",
+        false => "cancelled",
+        null => "dismissed",
+      },
+    );
+  }
+
+  Future<void> _long(BuildContext context) => showMochiDialog<void>(
+    context,
+    builder: (context) => MochiDialog(
+      title: const Text("A long body scrolls"),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [for (var i = 1; i <= 40; i++) Text("Line $i of a body that outgrows the screen.")],
+      ),
+      actions: [MochiButton(onPress: () => Navigator.of(context).pop(), child: const Text("Close"))],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.md,
+      children: [
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () => _confirm(context),
+          child: const Text("confirm"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () => _long(context),
+          child: const Text("long body"),
+        ),
+        _ThemedText("answer: $_answer", .muted),
       ],
     );
   }
