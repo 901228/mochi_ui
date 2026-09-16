@@ -144,6 +144,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _PopoverSample(),
           const SizedBox(height: 32),
+          const _ThemedText("menu", .section),
+          const SizedBox(height: 12),
+          const _MenuSample(),
+          const SizedBox(height: 32),
           const _ThemedText("scaffold + header", .section),
           const SizedBox(height: 12),
           const _ScaffoldSample(),
@@ -449,6 +453,90 @@ class _PopoverSample extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _MenuSample extends StatefulWidget {
+  const _MenuSample();
+
+  @override
+  State<_MenuSample> createState() => _MenuSampleState();
+}
+
+class _MenuSampleState extends State<_MenuSample> {
+  String _chosen = "nothing yet";
+  bool _archived = false;
+
+  List<Widget> _items(BuildContext context) => [
+    const MochiMenuLabel(child: Text("Session")),
+    MochiMenuItem(
+      prefix: const Icon(TablerIcons.pencil),
+      title: const Text("Rename"),
+      suffix: const Text("F2"),
+      onPress: () => setState(() => _chosen = "rename"),
+    ),
+    MochiMenuItem(
+      prefix: Icon(_archived ? TablerIcons.archiveOff : TablerIcons.archive),
+      title: Text(_archived ? "Unarchive" : "Archive"),
+      onPress: () => setState(() {
+        _archived = !_archived;
+        _chosen = _archived ? "archive" : "unarchive";
+      }),
+    ),
+    MochiMenuItem(
+      prefix: const Icon(TablerIcons.star),
+      title: const Text("Selected row"),
+      selected: true,
+      onPress: () => setState(() => _chosen = "selected row"),
+    ),
+    const MochiMenuItem(prefix: Icon(TablerIcons.ban), title: Text("Disabled row")),
+    const MochiMenuDivider(),
+    MochiMenuItem(
+      intent: MochiIntent.danger,
+      prefix: const Icon(TablerIcons.trash),
+      title: const Text("Delete"),
+      onPress: () => setState(() => _chosen = "delete"),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.md,
+      children: [
+        MochiPopoverMenu(
+          menuBuilder: _items,
+          builder: (context, anchor, _) => MochiButton(
+            appearance: MochiButtonAppearance.outlined,
+            size: MochiButtonSize.sm,
+            focusNode: anchor.focusNode,
+            onPress: anchor.toggle,
+            suffix: const Icon(TablerIcons.chevronDown),
+            child: const Text("popover menu"),
+          ),
+        ),
+        MochiPopoverMenu(
+          menuBuilder: _items,
+          builder: (context, anchor, _) => MochiButton.icon(
+            appearance: MochiButtonAppearance.ghost,
+            size: MochiButtonSize.sm,
+            focusNode: anchor.focusNode,
+            onPress: anchor.toggle,
+            icon: const Icon(TablerIcons.dotsVertical),
+          ),
+        ),
+        MochiContextMenu(
+          menuBuilder: _items,
+          child: MochiCard(
+            padding: EdgeInsets.symmetric(horizontal: g.space.md, vertical: g.space.sm),
+            child: const Text("right click or long press me"),
+          ),
+        ),
+        _ThemedText("chose: $_chosen", .muted),
       ],
     );
   }
