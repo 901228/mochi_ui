@@ -31,6 +31,7 @@ class MochiSurfaceTransition extends StatelessWidget {
     this.alignment = Alignment.center,
     this.slideFrom = AxisDirection.right,
     this.scaleFrom = 0.96,
+    this.scrim = true,
   });
 
   /// Runs 0 to 1 as the surface enters.
@@ -50,6 +51,14 @@ class MochiSurfaceTransition extends StatelessWidget {
   final AxisDirection slideFrom;
   final double scaleFrom;
 
+  /// Whether the surface dims what it covers and casts a shadow while it travels.
+  ///
+  /// Pages need both: they are opaque and share a background colour, so without them the two
+  /// just overlap. A floating surface (a popover, a menu) wants neither — it paints its own
+  /// shadow the whole time, and the dimming of a modal belongs to the barrier behind it, which
+  /// covers the screen rather than only the surface's own bounds.
+  final bool scrim;
+
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
@@ -61,9 +70,7 @@ class MochiSurfaceTransition extends StatelessWidget {
       reverseCurve: motion.transitionReverseCurve,
     );
 
-    // Every entering surface casts a shadow: pages share a background color, so without one the
-    // two just overlap.
-    final raised = _EdgeShadow(animation: curved, edge: slideFrom, child: child);
+    final raised = scrim ? _EdgeShadow(animation: curved, edge: slideFrom, child: child) : child;
 
     final surface = switch (transition) {
       .fade => FadeTransition(opacity: curved, child: raised),
@@ -83,15 +90,17 @@ class MochiSurfaceTransition extends StatelessWidget {
 
     // The dimming sits behind this surface and covers the whole area, rather than riding on the
     // surface below: that one slides and scales away, and anything it uncovers would stay bright.
-    final entry = Stack(
-      fit: StackFit.passthrough,
-      children: [
-        Positioned.fill(
-          child: IgnorePointer(child: _Dim(animation: curved)),
-        ),
-        surface,
-      ],
-    );
+    final entry = scrim
+        ? Stack(
+            fit: StackFit.passthrough,
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(child: _Dim(animation: curved)),
+              ),
+              surface,
+            ],
+          )
+        : surface;
 
     final secondary = secondaryAnimation;
     if (secondary == null) return entry;
