@@ -1,0 +1,34 @@
+name: mochi_ui
+description: "Mochi UI"
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  tabler_icons_plus: ^3.46.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: false
+
+  # Licenses: assets/fonts/*-OFL.txt (SIL Open Font License 1.1)
+  fonts:
+    # Variable font covering wght 300-700; prefer TextStyle.withWeight over fontWeight alone.
+    - family: Comfortaa
+      fonts:
+        - asset: assets/fonts/Comfortaa-Variable.ttf
+    # CJK fallback for Comfortaa (rounded, derived from jf open huninn).
+    - family: FakePearl
+      fonts:
+        - asset: assets/fonts/FakePearl-Regular.ttf
+        - asset: assets/fonts/FakePearl-SemiBold.ttf
+          weight: 600
