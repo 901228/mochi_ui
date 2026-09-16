@@ -199,19 +199,19 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
         margin: g.space.xs,
         textDirection: Directionality.of(context),
       ),
+      // RawMenuAnchor puts the panel beside the anchor in the element tree rather than under it,
+      // so the panel needs its own TapRegion in the same group to count as inside. Escape is
+      // already handled: the DismissMenuAction the anchor installs is an inherited lookup.
       child: TapRegion(
         groupId: info.tapRegionGroupId,
         onTapOutside: (_) => _controller.close(),
-        child: Actions(
-          actions: {DismissIntent: DismissMenuAction(controller: _controller)},
-          child: FocusScope(
-            autofocus: widget.autofocus,
-            child: MochiSurfaceTransition(
-              animation: _animation,
-              scrim: false,
-              alignment: _growFrom,
-              child: panel,
-            ),
+        child: FocusScope(
+          autofocus: widget.autofocus,
+          child: MochiSurfaceTransition(
+            animation: _animation,
+            scrim: false,
+            alignment: _growFrom,
+            child: panel,
           ),
         ),
       ),
