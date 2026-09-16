@@ -152,6 +152,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _DialogSample(),
           const SizedBox(height: 32),
+          const _ThemedText("sheet", .section),
+          const SizedBox(height: 12),
+          const _SheetSample(),
+          const SizedBox(height: 32),
           const _ThemedText("scaffold + header", .section),
           const SizedBox(height: 12),
           const _ScaffoldSample(),
@@ -634,6 +638,49 @@ class _DialogSampleState extends State<_DialogSample> {
           child: const Text("long body"),
         ),
         _ThemedText("answer: $_answer", .muted),
+      ],
+    );
+  }
+}
+
+class _SheetSample extends StatelessWidget {
+  const _SheetSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.sm,
+      runSpacing: g.space.sm,
+      children: [
+        for (final side in MochiSheetSide.values)
+          MochiButton(
+            appearance: MochiButtonAppearance.outlined,
+            size: MochiButtonSize.sm,
+            onPress: () => showMochiSheet<void>(
+              context,
+              side: side,
+              builder: (context) => MochiSheet(
+                side: side,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: g.space.sm,
+                  children: [
+                    Text("From the ${side.name}"),
+                    const Text("Drag it towards its own edge to dismiss it, or press the barrier."),
+                    MochiButton(
+                      appearance: MochiButtonAppearance.soft,
+                      onPress: () => Navigator.of(context).pop(),
+                      child: const Text("Close"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            child: Text(side.name),
+          ),
       ],
     );
   }
