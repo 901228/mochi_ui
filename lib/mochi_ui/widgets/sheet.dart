@@ -89,7 +89,9 @@ class MochiSheet extends StatelessWidget {
               mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (showHandle) const _SheetHandle(),
+                // On the edge that faces into the screen, which is the one you drag from: the
+                // bottom of a sheet that came down from the top.
+                if (showHandle && side != MochiSheetSide.top) const _SheetHandle(),
                 Flexible(
                   child: Padding(
                     // The sheet runs to the edge of the screen, so its own padding has to clear
@@ -98,6 +100,7 @@ class MochiSheet extends StatelessWidget {
                     child: child,
                   ),
                 ),
+                if (showHandle && side == MochiSheetSide.top) const _SheetHandle(),
               ],
             ),
           ),
@@ -210,8 +213,11 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondary) {
-    final sheet = Align(alignment: _alignment, child: builder(context));
+    final sheet = builder(context);
 
+    // The sheet alone, with no full-screen wrapper: the transition below slides its child by a
+    // fraction of that child's own size, and the drag measures it the same way, so both have to
+    // see the sheet rather than a box the size of the screen.
     return dragToDismiss
         ? _SheetDrag(side: side, controller: _controller, onDismiss: () => navigator?.pop(), child: sheet)
         : sheet;
@@ -223,13 +229,16 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => MochiSurfaceTransition(
-    animation: animation,
-    transition: MochiTransition.slide,
-    slideFrom: _from,
-    // The barrier dims the screen; the sheet brings its own shadow.
-    scrim: false,
-    child: child,
+  ) => Align(
+    alignment: _alignment,
+    child: MochiSurfaceTransition(
+      animation: animation,
+      transition: MochiTransition.slide,
+      slideFrom: _from,
+      // The barrier dims the screen; the sheet brings its own shadow.
+      scrim: false,
+      child: child,
+    ),
   );
 }
 
@@ -253,10 +262,15 @@ class _SheetDrag extends StatefulWidget {
 }
 
 class _SheetDragState extends State<_SheetDrag> {
-  /// Under this much of the sheet left showing, or over this speed towards the edge, letting go
-  /// dismisses it instead of settling it back.
+  /// Past this much of the sheet, or over this speed towards the edge, letting go dismisses it
+  /// instead of settling it back.
   static const _closeBelow = 0.5;
   static const _flingVelocity = 700.0;
+
+  /// However short the sheet is, it takes this much travel to dismiss it: half of a sheet only a
+  /// hundred pixels tall is a twitch, and there would be no way to change your mind. The gesture
+  /// itself is longer by the touch slop the recognizer eats before the first update arrives.
+  static const _minTravel = 48.0;
 
   final _key = GlobalKey();
   bool get _vertical => widget.side == MochiSheetSide.top || widget.side == MochiSheetSide.bottom;
@@ -288,7 +302,10 @@ class _SheetDragState extends State<_SheetDrag> {
 
     final velocity = _vertical ? details.velocity.pixelsPerSecond.dy : details.velocity.pixelsPerSecond.dx;
 
-    if (_sign * velocity > _flingVelocity || controller.value < _closeBelow) {
+    final travelled = (1 - controller.value) * _extent;
+    final dragged = controller.value < _closeBelow && travelled >= _minTravel;
+
+    if (_sign * velocity > _flingVelocity || dragged) {
       widget.onDismiss();
       return;
     }

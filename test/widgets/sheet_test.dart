@@ -96,6 +96,66 @@ void main() {
     expect(tester.getRect(find.byType(MochiSheet)), resting);
   });
 
+  testWidgets("a short sheet takes a real drag, not a twitch", (tester) async {
+    await tester.pumpWidget(app());
+    await tester.tap(find.text("open"));
+    await tester.pumpAndSettle();
+    final height = tester.getRect(find.byType(MochiSheet)).height;
+    expect(height, lessThan(160), reason: "the point of the case: half of this is a twitch");
+
+    // Over half the sheet, but a short distance: it stays.
+    await tester.timedDrag(
+      find.byType(MochiSheet),
+      Offset(0, height * 0.6),
+      const Duration(milliseconds: 600),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(MochiSheet), findsOneWidget);
+
+    // Far enough to mean it. The first 18 pixels or so go to the recognizer's slop.
+    await tester.timedDrag(find.byType(MochiSheet), const Offset(0, 120), const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    expect(find.byType(MochiSheet), findsNothing);
+  });
+
+  testWidgets("the handle sits on the edge that faces into the screen", (tester) async {
+    final handle = find.byWidgetPredicate((w) => w is SizedBox && w.width == 36 && w.height == 4);
+
+    for (final side in [MochiSheetSide.bottom, MochiSheetSide.top]) {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          touch: true,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () => showMochiSheet<void>(
+                  context,
+                  side: side,
+                  builder: (context) => MochiSheet(side: side, child: const Text("body")),
+                ),
+                child: const Text("open"),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final grab = tester.getCenter(handle).dy;
+      final body = tester.getCenter(find.text("body")).dy;
+      expect(
+        side == MochiSheetSide.bottom ? grab < body : grab > body,
+        isTrue,
+        reason: "the handle is on the inner edge of a $side sheet",
+      );
+
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+    }
+  });
+
   testWidgets("dragToDismiss: false ignores the drag", (tester) async {
     await tester.pumpWidget(app(dragToDismiss: false));
     await tester.tap(find.text("open"));
