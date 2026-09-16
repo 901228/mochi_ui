@@ -179,6 +179,7 @@ class _TileSurface extends StatelessWidget {
       value: _RowMetrics.of(theme),
       lerp: _RowMetrics.lerp,
       duration: theme.motion.sizeDuration,
+      curve: theme.motion.sizeCurve,
       builder: (context, metrics, _) => MochiStateTransition(
         states: states,
         duration: theme.motion.stateDuration,

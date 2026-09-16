@@ -191,6 +191,7 @@ class _ButtonSurface extends StatelessWidget {
       value: target,
       lerp: MochiButtonMetrics.lerp,
       duration: theme.motion.sizeDuration,
+      curve: theme.motion.sizeCurve,
       builder: (context, m, _) => _surface(context, theme, colors, s, m),
     );
   }

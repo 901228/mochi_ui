@@ -78,6 +78,7 @@ class _SwitchSurface extends StatelessWidget {
       value: target,
       lerp: (a, b, t) => Size.lerp(a, b, t)!,
       duration: theme.motion.sizeDuration,
+      curve: theme.motion.sizeCurve,
       builder: (context, size, _) => _track(context, theme, colors, size, inset, thumb, track),
     );
   }
