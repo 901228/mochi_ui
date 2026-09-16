@@ -81,8 +81,11 @@ class _Gallery extends StatelessWidget {
                 intent: MochiIntent.neutral,
                 appearance: MochiButtonAppearance.ghost,
                 tooltip: "Watch sizes ease between the two scales",
-                onPress: () => Navigator.of(context)
-                    .push(MochiPageRoute<void>(builder: (_) => _SizingPage(onTouchChanged: onTouchChanged))),
+                onPress: () => Navigator.of(context).push(
+                  MochiPageRoute<void>(
+                    builder: (_) => _SizingPage(onTouchChanged: onTouchChanged, onModeChanged: onModeChanged),
+                  ),
+                ),
                 prefix: const Icon(TablerIcons.ruler),
                 child: const Text("sizing"),
               ),
@@ -386,9 +389,10 @@ class _TransitionSample extends StatelessWidget {
 /// A page with only the widgets whose size depends on `touch`, so the size transition can be
 /// watched without the rest of the gallery rebuilding along with it.
 class _SizingPage extends StatelessWidget {
-  const _SizingPage({required this.onTouchChanged});
+  const _SizingPage({required this.onTouchChanged, required this.onModeChanged});
 
   final ValueChanged<bool> onTouchChanged;
+  final ValueChanged<MochiThemeMode> onModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -408,6 +412,24 @@ class _SizingPage extends StatelessWidget {
             onPress: () => onTouchChanged(!theme.touch),
             prefix: const Icon(TablerIcons.handFinger),
             child: const Text("touch"),
+          ),
+          // Both animations are worth watching on a page this quiet: the scale eases, the colors
+          // fade, and neither has the rest of the gallery rebuilding alongside it.
+          MochiButton(
+            appearance: MochiButtonAppearance.ghost,
+            size: MochiButtonSize.sm,
+            onPress: () => onModeChanged(switch (theme.colors.brightness) {
+              .light => MochiThemeMode.dark,
+              .dark => MochiThemeMode.light,
+            }),
+            prefix: Icon(switch (theme.colors.brightness) {
+              .light => TablerIcons.moon,
+              .dark => TablerIcons.sun,
+            }),
+            child: Text(switch (theme.colors.brightness) {
+              .light => "dark",
+              .dark => "light",
+            }),
           ),
         ],
       ),
