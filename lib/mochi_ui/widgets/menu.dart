@@ -521,17 +521,26 @@ class MochiContextMenu extends StatelessWidget {
       onOpen: onOpen,
       onClose: onClose,
       child: child,
-      builder: (context, anchor, child) => GestureDetector(
-        // Opaque would swallow taps meant for the child.
-        behavior: HitTestBehavior.translucent,
-        onSecondaryTapUp: secondaryTap ? (details) => anchor.open(position: details.localPosition) : null,
-        onLongPressStart: longPress
-            ? (details) {
-                HapticFeedback.selectionClick();
-                anchor.open(position: details.localPosition);
-              }
-            : null,
-        child: child,
+      builder: (context, anchor, child) => Listener(
+        // A press on the child itself puts the menu away. The child is inside the menu's tap
+        // region, so it counts as "in the menu" and wouldn't otherwise close it — but pressing
+        // the row a menu belongs to is the same gesture as pressing anywhere else on the page.
+        // A Listener rather than a tap callback, which the child's own would win in the arena.
+        onPointerDown: (_) {
+          if (anchor.isOpen) anchor.close();
+        },
+        child: GestureDetector(
+          // Opaque would swallow taps meant for the child.
+          behavior: HitTestBehavior.translucent,
+          onSecondaryTapUp: secondaryTap ? (details) => anchor.open(position: details.localPosition) : null,
+          onLongPressStart: longPress
+              ? (details) {
+                  HapticFeedback.selectionClick();
+                  anchor.open(position: details.localPosition);
+                }
+              : null,
+          child: child,
+        ),
       ),
     );
   }

@@ -216,6 +216,30 @@ void main() {
     expect(find.text("Rename"), findsOneWidget);
   });
 
+  testWidgets("pressing the child again puts the context menu away", (tester) async {
+    await tester.pumpWidget(
+      app(
+        MochiContextMenu(
+          menuBuilder: items,
+          child: MochiTile(title: const Text("row"), onPress: () => events.add("open row")),
+        ),
+      ),
+    );
+
+    final target = tester.getCenter(find.text("row"));
+    final mouse = await tester.startGesture(target, kind: PointerDeviceKind.mouse, buttons: kSecondaryButton);
+    await mouse.up();
+    await tester.pumpAndSettle();
+    expect(find.text("Rename"), findsOneWidget);
+
+    // The child is inside the menu's tap region, so this is not an outside tap; pressing the row
+    // the menu belongs to should still close it, and still do what the row does.
+    await tester.tap(find.text("row"));
+    await tester.pumpAndSettle();
+    expect(find.text("Rename"), findsNothing);
+    expect(events, ["open row"]);
+  });
+
   testWidgets("a long press on the child wins over the context menu", (tester) async {
     await tester.pumpWidget(
       app(
