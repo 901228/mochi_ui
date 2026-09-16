@@ -7,6 +7,7 @@ import "tone.dart";
 class MochiColors {
   const MochiColors({
     required this.brightness,
+    required this.softAlpha,
     required this.background,
     required this.surface,
     required this.overlay,
@@ -24,6 +25,10 @@ class MochiColors {
   });
 
   final Brightness brightness;
+
+  /// How much of an accent a soft fill carries. Pastel accents over a dark background wash out,
+  /// so the dark theme uses more of the accent than the light one.
+  final double softAlpha;
 
   // Neutrals
   final Color background;
@@ -56,6 +61,12 @@ class MochiColors {
     .danger => danger,
   };
 
+  /// A soft fill of [tone] over [background], for surfaces that do not sit on the page background
+  /// (a selected row inside a card, say): [MochiTone.soft] is mixed over the page and turns out
+  /// too dark there.
+  Color softOn(MochiTone tone, Color background) =>
+      Color.alphaBlend(tone.base.withValues(alpha: softAlpha), background);
+
   /// Blends [on] over [base] according to the interaction state.
   static Color stateLayer(Color base, Color on, Set<WidgetState> states) {
     if (states.contains(WidgetState.pressed)) return Color.alphaBlend(on.withValues(alpha: 0.16), base);
@@ -76,8 +87,12 @@ class MochiColors {
     onSoft: onSoft,
   );
 
+  static const _lightSoftAlpha = 0.14;
+  static const _darkSoftAlpha = 0.26;
+
   static final light = MochiColors(
     brightness: .light,
+    softAlpha: _lightSoftAlpha,
     background: LattePalette.base,
     surface: LattePalette.mantle,
     overlay: LattePalette.white,
@@ -101,10 +116,12 @@ class MochiColors {
 
   static final dark = MochiColors(
     brightness: .dark,
+    softAlpha: _darkSoftAlpha,
     background: MochaPalette.base,
     surface: MochaPalette.surface0,
     overlay: MochaPalette.surface0,
-    border: MochaPalette.surface1,
+    // surface1 is nearly invisible against the base in the dark theme; borders need one step more.
+    border: MochaPalette.surface2,
     foreground: MochaPalette.text,
     mutedForeground: MochaPalette.subtext0,
     focusRing: MochaPalette.blue,
@@ -122,19 +139,25 @@ class MochiColors {
     danger: _darkAccent(MochaPalette.red),
   );
 
-  static MochiTone _lightAccent(Color base, Color onBase, Color onSoft) =>
-      _accent(base: base, onBase: onBase, onSoft: onSoft, background: LattePalette.base, softAlpha: 0.14);
+  static MochiTone _lightAccent(Color base, Color onBase, Color onSoft) => _accent(
+    base: base,
+    onBase: onBase,
+    onSoft: onSoft,
+    background: LattePalette.base,
+    softAlpha: _lightSoftAlpha,
+  );
 
   static MochiTone _darkAccent(Color base) => _accent(
     base: base,
     onBase: MochaPalette.crust,
     onSoft: base,
     background: MochaPalette.base,
-    softAlpha: 0.16,
+    softAlpha: _darkSoftAlpha,
   );
 
   static MochiColors lerp(MochiColors a, MochiColors b, double t) => MochiColors(
     brightness: t < 0.5 ? a.brightness : b.brightness,
+    softAlpha: t < 0.5 ? a.softAlpha : b.softAlpha,
     background: Color.lerp(a.background, b.background, t)!,
     surface: Color.lerp(a.surface, b.surface, t)!,
     overlay: Color.lerp(a.overlay, b.overlay, t)!,

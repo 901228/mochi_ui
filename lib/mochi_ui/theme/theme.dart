@@ -4,6 +4,7 @@ import "package:flutter/widgets.dart";
 import "colors.dart";
 import "defaults.dart";
 import "geometry.dart";
+import "icons.dart";
 import "motion.dart";
 import "typography.dart";
 
@@ -50,6 +51,7 @@ class MochiTheme {
     required this.colors,
     required this.typography,
     this.geometry = MochiGeometry.standard,
+    this.icons = MochiIcons.standard,
     this.defaults = MochiDefaults.standard,
     MochiMotion? motion,
     this.touch = false,
@@ -61,6 +63,7 @@ class MochiTheme {
     required this.colors,
     required this.typography,
     required this.geometry,
+    required this.icons,
     required this.defaults,
     required this.motion,
     required this.touch,
@@ -70,6 +73,7 @@ class MochiTheme {
   final MochiColors colors;
   final MochiTypography typography;
   final MochiGeometry geometry;
+  final MochiIcons icons;
   final MochiDefaults defaults;
   final MochiMotion motion;
 
@@ -103,6 +107,7 @@ class MochiTheme {
     MochiColors? colors,
     MochiTypography? typography,
     MochiGeometry? geometry,
+    MochiIcons? icons,
     MochiDefaults? defaults,
     MochiMotion? motion,
     bool? touch,
@@ -111,6 +116,7 @@ class MochiTheme {
     colors: colors ?? this.colors,
     typography: typography ?? this.typography,
     geometry: geometry ?? this.geometry,
+    icons: icons ?? this.icons,
     defaults: defaults ?? this.defaults,
     motion: motion ?? this.motion,
     touch: touch ?? this.touch,
@@ -129,6 +135,7 @@ class MochiTheme {
           colors == other.colors &&
           typography == other.typography &&
           geometry == other.geometry &&
+          icons == other.icons &&
           defaults == other.defaults &&
           motion == other.motion &&
           touch == other.touch &&
@@ -139,17 +146,19 @@ class MochiTheme {
     colors,
     typography,
     geometry,
+    icons,
     defaults,
     motion,
     touch,
     Object.hashAllUnordered(_extensions.values),
   );
 
-  /// Interpolates colors and extensions; [typography], [geometry], [defaults], [motion] and [touch] switch to [b] immediately.
+  /// Interpolates colors and extensions; [typography], [geometry], [icons], [defaults], [motion] and [touch] switch to [b] immediately.
   static MochiTheme lerp(MochiTheme a, MochiTheme b, double t) => MochiTheme._raw(
     colors: MochiColors.lerp(a.colors, b.colors, t),
     typography: b.typography,
     geometry: b.geometry,
+    icons: b.icons,
     defaults: b.defaults,
     motion: b.motion,
     touch: b.touch,

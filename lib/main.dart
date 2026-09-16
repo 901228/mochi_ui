@@ -121,6 +121,22 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _ComponentsSample(),
           const SizedBox(height: 32),
+          const _ThemedText("transitions", .section),
+          const SizedBox(height: 12),
+          const _TransitionSample(),
+          const SizedBox(height: 32),
+          const _ThemedText("scaffold + header", .section),
+          const SizedBox(height: 12),
+          const _ScaffoldSample(),
+          const SizedBox(height: 32),
+          const _ThemedText("tiles", .section),
+          const SizedBox(height: 12),
+          const _TileSample(),
+          const SizedBox(height: 32),
+          const _ThemedText("scroll area", .section),
+          const SizedBox(height: 12),
+          const _ScrollAreaSample(),
+          const SizedBox(height: 32),
           const _ThemedText("button sizes", .section),
           const SizedBox(height: 12),
           const _SizeSample(),
@@ -316,6 +332,225 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _TransitionSample extends StatelessWidget {
+  const _TransitionSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.sm,
+      children: [
+        for (final transition in MochiTransition.values)
+          MochiButton(
+            appearance: MochiButtonAppearance.outlined,
+            size: MochiButtonSize.sm,
+            onPress: () => Navigator.of(context).push(
+              MochiPageRoute<void>(
+                transition: transition,
+                builder: (context) => MochiScaffold(
+                  header: MochiHeader(
+                    variant: MochiHeaderVariant.bordered,
+                    title: Text("Pushed with ${transition.name}"),
+                    prefixes: [MochiHeaderAction.back(onPress: () => Navigator.of(context).pop())],
+                  ),
+                  child: const Center(child: Text("Press back to return")),
+                ),
+              ),
+            ),
+            child: Text(transition.name),
+          ),
+      ],
+    );
+  }
+}
+
+class _ScaffoldSample extends StatelessWidget {
+  const _ScaffoldSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    Widget page(String label, Widget scaffold) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.xs,
+      children: [
+        SizedBox(
+          width: 300,
+          height: 180,
+          child: MochiCard(padding: EdgeInsets.zero, child: scaffold),
+        ),
+        _ThemedText(label, .muted),
+      ],
+    );
+
+    return Wrap(
+      spacing: g.space.lg,
+      runSpacing: g.space.md,
+      children: [
+        page(
+          "title start",
+          MochiScaffold(
+            safeArea: false,
+            background: const Color(0x00000000),
+            header: MochiHeader(
+              variant: MochiHeaderVariant.bordered,
+              title: const Text("Records"),
+              suffixes: [
+                MochiHeaderAction(icon: const Icon(TablerIcons.search), onPress: () {}, tooltip: "Search"),
+                MochiHeaderAction(icon: const Icon(TablerIcons.dots), onPress: () {}, tooltip: "More"),
+              ],
+            ),
+            footer: Padding(
+              padding: EdgeInsets.all(g.space.sm),
+              child: MochiButton(size: MochiButtonSize.sm, onPress: () {}, child: const Text("Add solve")),
+            ),
+            child: const Align(alignment: .topLeft, child: Text("content")),
+          ),
+        ),
+        page(
+          "floating",
+          MochiScaffold(
+            safeArea: false,
+            background: const Color(0x00000000),
+            header: MochiHeader(
+              variant: MochiHeaderVariant.floating,
+              title: const Text("Sessions"),
+              suffixes: [MochiHeaderAction(icon: const Icon(TablerIcons.plus), onPress: () {})],
+            ),
+            child: const Align(alignment: .topLeft, child: Text("content")),
+          ),
+        ),
+        page(
+          "title center, back action",
+          MochiScaffold(
+            safeArea: false,
+            background: const Color(0x00000000),
+            header: MochiHeader(
+              alignment: MochiHeaderAlignment.center,
+              title: const Text("Settings"),
+              prefixes: [MochiHeaderAction.back(onPress: () {})],
+              suffixes: [MochiHeaderAction.close(onPress: () {})],
+            ),
+            child: const Align(alignment: .topLeft, child: Text("content")),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TileSample extends StatefulWidget {
+  const _TileSample();
+
+  @override
+  State<_TileSample> createState() => _TileSampleState();
+}
+
+class _TileSampleState extends State<_TileSample> {
+  bool _inspection = true;
+  int _selected = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final icons = context.theme.icons;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.lg,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiTileGroup(
+            label: const Text("Timer (reservePrefix)"),
+            reservePrefix: true,
+            description: const Text("Applies to new solves"),
+            children: [
+              MochiTile(
+                prefix: const Icon(TablerIcons.hourglass),
+                title: const Text("Inspection"),
+                subtitle: const Text("15 second countdown"),
+                suffix: MochiSwitch(value: _inspection, onChanged: (v) => setState(() => _inspection = v)),
+              ),
+              MochiTile(
+                prefix: const Icon(TablerIcons.bell),
+                title: const Text("Alert type"),
+                details: const Text("Beep"),
+                suffix: Icon(icons.chevronRight),
+                onPress: () {},
+              ),
+              MochiTile(
+                title: const Text("Start delay"),
+                subtitle: const Text("No icon on this row"),
+                details: const Text("0.3s"),
+                onPress: () {},
+              ),
+              MochiTile(
+                prefix: const Icon(TablerIcons.trash),
+                title: const Text("Clear session"),
+                intent: MochiIntent.danger,
+                enabled: false,
+                onPress: () {},
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          width: 280,
+          child: MochiTileGroup(
+            label: const Text("Sessions (divider: indented)"),
+            divider: MochiTileDivider.indented,
+            children: [
+              for (final (index, name) in ["3x3 main", "3x3 OH", "Megaminx"].indexed)
+                MochiTile(
+                  title: Text(name),
+                  details: Text("${(index + 1) * 37} solves"),
+                  selected: index == _selected,
+                  onPress: () => setState(() => _selected = index),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ScrollAreaSample extends StatelessWidget {
+  const _ScrollAreaSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.lg,
+      children: [
+        SizedBox(
+          width: 260,
+          height: 160,
+          child: MochiCard(
+            padding: EdgeInsets.zero,
+            child: MochiScrollArea(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  for (var i = 1; i <= 12; i++)
+                    MochiTile(title: Text("Solve $i"), details: Text("${10 + i}.${i}4"), onPress: () {}),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const _ThemedText("fades at whichever end can still scroll", .muted),
       ],
     );
   }

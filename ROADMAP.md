@@ -22,9 +22,11 @@
 - [x] 圓角改用 superellipse（`RoundedSuperellipseBorder`）
 - [x] Flutter 改跟 master：stable 3.47 的 Linux Impeller 沒開 MSAA，描邊和路徑都有鋸齒（flutter#191171，修正只在 master）
 - [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
-- [ ] `MochiIcons` token：等第一個需要內建圖示的元件（Checkbox / Select）再做，只收元件自己用到的那幾個，可整組替換
+- [x] `MochiIcons` token：元件自己會畫的 8 個圖示，`copyWith(icons:)` 可整組替換
 - [ ] ⭐ 尺寸過渡動畫：`touch` 或緊湊模式切換時，高度與 padding 目前是瞬間跳動（顏色有動畫）。需要類似 `MochiStateTransition`、只在尺寸真的改變時才觸發的機制，避免跟主題動畫互相打架
 - [ ] ⭐ 以 `ColorScheme` 產生主題的 helper（像 forui CLI preset），方便 app 換主色
+- [ ] ⭐ 評估各元件是否需要獨立的 style 類別：目前只有 button 有（`MochiButtonStyle` / `MochiButtonMetrics`），其餘直接讀 token。forui 是每個 widget 一份 style，代價是每個元件多一份類別加 lerp。等 P3 的 dialog / popover 做完再看哪些真的需要覆寫
+- [ ] ⭐ 評估導入 Widgetbook：等 P3 / P4 做完、元件穩定後再看。要導入的話放獨立 package（它的介面是 Material 的），現有的 gallery 保留矩陣視圖，Widgetbook 負責單一元件加 knobs
 
 ## 1. 已完成的元件
 
@@ -45,11 +47,10 @@
 
 ## 3. P2：頁面骨架
 
-- [ ] Tile / TileGroup（1 / 8）— 設定頁
-- [ ] Item / ItemGroup（3 / 1）— 紀錄列表、session 選單
-- [ ] Header（1）+ Header.nested（4）+ HeaderAction（back / x / custom）
-- [ ] Scaffold（3）— header / content / footer
-- [ ] ⭐ ScrollArea — 統一 scrollbar 與 edge fade
+- [x] Tile / TileGroup（1 / 8 + 3 / 1）— `MochiTile` / `MochiTileGroup`：forui 的 FTile 只是 FItem 加觸控 padding，這裡合併成一個
+- [x] Header（5）+ HeaderAction — `MochiHeader` / `MochiHeaderAction`（含 `.back()` / `.close()`）；不分 nested，返回鍵放 prefixes 就好
+- [x] Scaffold（3）— `MochiScaffold`：header / content / footer
+- [x] ScrollArea — `MochiScrollArea`：可捲動的那一端會淡出
 
 ## 4. P3：浮層
 
@@ -73,6 +74,7 @@
 
 ## 6. P5：導覽
 
+- [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
 - [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）
 - [ ] BottomNavigationBar（1）
 - [ ] Breadcrumb（1）

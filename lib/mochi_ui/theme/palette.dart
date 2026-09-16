@@ -31,6 +31,7 @@ abstract final class MochaPalette {
   static const subtext0 = Color(0xFFA6ADC8);
   static const surface0 = Color(0xFF313244);
   static const surface1 = Color(0xFF45475A);
+  static const surface2 = Color(0xFF585B70);
   static const base = Color(0xFF1E1E2E);
   static const crust = Color(0xFF11111B);
   // Shadows on dark surfaces need to be much darker than any surface to show.

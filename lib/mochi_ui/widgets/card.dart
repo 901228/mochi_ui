@@ -91,7 +91,8 @@ class _CardSurface extends StatelessWidget {
             side: BorderSide(color: colors.border, width: g.borderWidth),
           ),
         ),
-        child: child,
+        // Clipped so content (rows, scrollbars) stays inside the rounded corners.
+        child: ClipRSuperellipse(borderRadius: g.radius.md, child: child),
       ),
     );
   }
