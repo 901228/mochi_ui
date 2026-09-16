@@ -467,6 +467,7 @@ class _MenuSample extends StatefulWidget {
 
 class _MenuSampleState extends State<_MenuSample> {
   String _chosen = "nothing yet";
+  String _penalty = "none";
   bool _archived = false;
 
   List<Widget> _items(BuildContext context) => [
@@ -492,6 +493,21 @@ class _MenuSampleState extends State<_MenuSample> {
       onPress: () => setState(() => _chosen = "selected row"),
     ),
     const MochiMenuItem(prefix: Icon(TablerIcons.ban), title: Text("Disabled row")),
+    MochiSubmenu(
+      prefix: const Icon(TablerIcons.gavel),
+      title: const Text("Penalty"),
+      menuBuilder: (context) => [
+        for (final penalty in const ["none", "DNF", "+2"])
+          MochiMenuItem(
+            title: Text(penalty),
+            selected: _penalty == penalty,
+            onPress: () => setState(() {
+              _penalty = penalty;
+              _chosen = "penalty $penalty";
+            }),
+          ),
+      ],
+    ),
     const MochiMenuDivider(),
     MochiMenuItem(
       intent: MochiIntent.danger,

@@ -1,3 +1,4 @@
+import "dart:async";
 import "dart:ui" show lerpDouble;
 
 import "package:flutter/services.dart";
@@ -117,6 +118,8 @@ class MochiMenuItem extends StatelessWidget {
     this.selected = false,
     this.onPress,
     this.closeOnPress = true,
+    this.onHoverChange,
+    this.focusNode,
     this.semanticLabel,
   });
 
@@ -139,7 +142,19 @@ class MochiMenuItem extends StatelessWidget {
   /// Whether choosing this row closes the menu it belongs to, submenus included.
   final bool closeOnPress;
 
+  final ValueChanged<bool>? onHoverChange;
+
+  /// Set by [MochiSubmenu] so focus comes back to the row when its submenu closes.
+  final FocusNode? focusNode;
+
   final String? semanticLabel;
+
+  /// Pointing at a row puts away whatever submenu is open, including this row's own: a submenu
+  /// left standing while the pointer moves on would cover the rows below it.
+  void _handleHover(BuildContext context, bool hovered) {
+    if (hovered) MenuController.maybeOf(context)?.closeChildren();
+    onHoverChange?.call(hovered);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +163,8 @@ class MochiMenuItem extends StatelessWidget {
     return MochiTappable(
       enabled: enabled && onPress != null,
       selected: selected,
+      focusNode: focusNode,
+      onHoverChange: (hovered) => _handleHover(context, hovered),
       semanticLabel: semanticLabel,
       // Rows keep their place in the list; they tint instead of growing.
       scaleOnPress: false,
@@ -287,6 +304,106 @@ class MochiMenuLabel extends StatelessWidget {
             .withWeight(FontWeight.w600)
             .copyWith(color: theme.colors.mutedForeground),
         child: child,
+      ),
+    );
+  }
+}
+
+/// A row in a [MochiMenu] that opens a menu of its own beside it.
+///
+/// Opens on hover after [hoverDelay], on a press, and on the arrow key pointing at it; the
+/// opposite arrow puts it away again. Its rows close the whole menu when chosen, not just this
+/// panel.
+class MochiSubmenu extends StatefulWidget {
+  const MochiSubmenu({
+    super.key,
+    required this.title,
+    required this.menuBuilder,
+    this.prefix,
+    this.enabled = true,
+    this.minWidth = 160,
+    this.hoverDelay = const Duration(milliseconds: 120),
+  });
+
+  final Widget title;
+  final Widget? prefix;
+
+  /// Builds the rows of the submenu.
+  final List<Widget> Function(BuildContext context) menuBuilder;
+
+  final bool enabled;
+  final double minWidth;
+
+  /// How long the pointer has to rest on the row before the submenu opens. Without a wait, a
+  /// pointer crossing the row on its way somewhere else would flash a panel open.
+  final Duration hoverDelay;
+
+  @override
+  State<MochiSubmenu> createState() => _MochiSubmenuState();
+}
+
+class _MochiSubmenuState extends State<MochiSubmenu> {
+  final _controller = MenuController();
+  Timer? _hover;
+
+  @override
+  void dispose() {
+    _hover?.cancel();
+    super.dispose();
+  }
+
+  void _handleHover(bool hovered) {
+    _hover?.cancel();
+    if (!hovered || !widget.enabled) return;
+    _hover = Timer(widget.hoverDelay, () {
+      if (mounted) _controller.open();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final towards = rtl ? MochiPopoverSide.left : MochiPopoverSide.right;
+
+    // Closing is bound out here, above the popover, for when the focus has moved into the panel
+    // itself: its key events travel up through this widget, and a binding inside the panel would
+    // sit below the focus and never be reached.
+    return CallbackShortcuts(
+      bindings: {
+        SingleActivator(rtl ? LogicalKeyboardKey.arrowRight : LogicalKeyboardKey.arrowLeft):
+            _controller.close,
+      },
+      child: MochiPopover(
+        controller: _controller,
+        side: towards,
+        align: MochiPopoverAlign.start,
+        // Lined up with the parent's rows: the panels share an edge rather than leaving a gap.
+        gap: 0,
+        padding: EdgeInsets.all(theme.geometry.space.xs2),
+        popoverBuilder: (context) =>
+            MochiMenu(minWidth: widget.minWidth, children: widget.menuBuilder(context)),
+        // Bound in here too, under the arrow-key traversal RawMenuAnchor wraps the anchor in: the
+        // binding nearest the focused row wins, and out there the arrow only moves the focus
+        // along. Opening a submenu puts the focus back on its row, so this is where the arrows
+        // usually land.
+        builder: (context, anchor, _) => CallbackShortcuts(
+          bindings: {
+            SingleActivator(rtl ? LogicalKeyboardKey.arrowLeft : LogicalKeyboardKey.arrowRight): anchor.open,
+            SingleActivator(rtl ? LogicalKeyboardKey.arrowRight : LogicalKeyboardKey.arrowLeft): anchor.close,
+          },
+          child: MochiMenuItem(
+            prefix: widget.prefix,
+            title: widget.title,
+            suffix: Icon(rtl ? theme.icons.chevronLeft : theme.icons.chevronRight),
+            enabled: widget.enabled,
+            focusNode: anchor.focusNode,
+            // The row opens the submenu rather than doing something itself, so it stays put.
+            closeOnPress: false,
+            onPress: anchor.open,
+            onHoverChange: _handleHover,
+          ),
+        ),
       ),
     );
   }

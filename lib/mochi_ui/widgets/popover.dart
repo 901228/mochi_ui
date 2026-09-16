@@ -142,6 +142,14 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
     _animation.forward();
   }
 
+  void _handleClose() {
+    // Not every close goes through the exit animation: closing a parent menu's children, a
+    // scroll, or the view changing size all hide the overlay outright. Put the animation back to
+    // the start so the next open runs from there rather than appearing fully grown.
+    _animation.value = 0;
+    widget.onClose?.call();
+  }
+
   void _handleCloseRequest(VoidCallback hideOverlay) {
     if (_animationsOff || !_animation.isAnimating && _animation.value == 0) {
       _animation.value = 0;
@@ -166,7 +174,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
       onOpenRequested: _handleOpenRequest,
       onCloseRequested: _handleCloseRequest,
       onOpen: widget.onOpen,
-      onClose: widget.onClose,
+      onClose: _handleClose,
       overlayBuilder: _buildOverlay,
       builder: (context, controller, child) => widget.builder(context, anchor, child),
       child: widget.child,

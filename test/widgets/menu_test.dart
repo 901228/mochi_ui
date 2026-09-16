@@ -98,6 +98,87 @@ void main() {
     expect(events, ["rename"]);
   });
 
+  group("submenu", () {
+    Widget nested() => MochiPopoverMenu(
+      menuBuilder: (context) => [
+        MochiMenuItem(title: const Text("Rename"), onPress: () => events.add("rename")),
+        MochiSubmenu(
+          title: const Text("Penalty"),
+          menuBuilder: (context) => [
+            MochiMenuItem(title: const Text("DNF"), onPress: () => events.add("dnf")),
+            MochiMenuItem(title: const Text("+2"), onPress: () => events.add("+2")),
+          ],
+        ),
+      ],
+      builder: (context, anchor, _) =>
+          MochiButton(focusNode: anchor.focusNode, onPress: anchor.toggle, child: const Text("open")),
+    );
+
+    testWidgets("opens beside its row and closes the whole menu when a row is chosen", (tester) async {
+      await tester.pumpWidget(app(nested()));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("Penalty"));
+      await tester.pumpAndSettle();
+      expect(find.text("DNF"), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text("DNF")).dx,
+        greaterThan(tester.getTopRight(find.text("Penalty")).dx),
+      );
+
+      await tester.tap(find.text("DNF"));
+      await tester.pumpAndSettle();
+      expect(events, ["dnf"]);
+      // Both panels: an item in a submenu closes the menu it was opened from.
+      expect(find.text("DNF"), findsNothing);
+      expect(find.text("Penalty"), findsNothing);
+    });
+
+    testWidgets("opens on hover and closes when another row is pointed at", (tester) async {
+      await tester.pumpWidget(app(nested()));
+
+      // Opened with the mouse: a touch tap leaves the focus system in touch mode, where hover
+      // highlights, and so hover callbacks, are suppressed.
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.down(tester.getCenter(find.text("open")));
+      await mouse.up();
+      await tester.pumpAndSettle();
+
+      await mouse.moveTo(tester.getCenter(find.text("Penalty")));
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(find.text("DNF"), findsNothing, reason: "not until the pointer has rested");
+
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(find.text("DNF"), findsOneWidget);
+
+      await mouse.moveTo(tester.getCenter(find.text("Rename")));
+      await tester.pumpAndSettle();
+      expect(find.text("DNF"), findsNothing);
+    });
+
+    testWidgets("the arrow keys open and close it", (tester) async {
+      await tester.pumpWidget(app(nested()));
+      await tester.tap(find.text("open"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.text("DNF"), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      expect(find.text("DNF"), findsNothing);
+      expect(find.text("Penalty"), findsOneWidget);
+    });
+  });
+
   testWidgets("a context menu opens at the pointer on a right click", (tester) async {
     await tester.pumpWidget(
       app(
