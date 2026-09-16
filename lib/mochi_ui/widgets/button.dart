@@ -1,11 +1,13 @@
 import "package:flutter/widgets.dart";
 
+import "../theme/colors.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
+import "value_transition.dart";
 import "tappable.dart";
 import "tooltip.dart";
 
@@ -182,7 +184,24 @@ class _ButtonSurface extends StatelessWidget {
     final appearance =
         this.appearance ?? (iconOnly ? defaults.iconButtonAppearance : defaults.buttonAppearance);
     final s = style ?? MochiButtonStyle.of(intent ?? defaults.buttonIntent, appearance);
-    final m = metrics ?? MochiButtonMetrics.of(size ?? defaults.buttonSize, touch: theme.touch);
+    final target = metrics ?? MochiButtonMetrics.of(size ?? defaults.buttonSize, touch: theme.touch);
+
+    // Sizes come from the theme, so switching scales would otherwise jump.
+    return MochiValueTransition(
+      value: target,
+      lerp: MochiButtonMetrics.lerp,
+      duration: theme.motion.sizeDuration,
+      builder: (context, m, _) => _surface(context, theme, colors, s, m),
+    );
+  }
+
+  Widget _surface(
+    BuildContext context,
+    MochiTheme theme,
+    MochiColors colors,
+    MochiButtonStyle s,
+    MochiButtonMetrics m,
+  ) {
     final label = m.textStyle(theme.typography).withWeight(FontWeight.w600);
     final radius = m.radius(theme.geometry.radius);
     final content = Row(

@@ -1,3 +1,5 @@
+import "dart:ui" show lerpDouble;
+
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
@@ -7,7 +9,40 @@ import "../theme/typography.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
+import "value_transition.dart";
 import "tappable.dart";
+
+/// The parts of a row's layout that change with the theme's scale.
+@immutable
+class _RowMetrics {
+  const _RowMetrics({required this.minHeight, required this.verticalPadding, required this.iconSize});
+
+  factory _RowMetrics.of(MochiTheme theme) => _RowMetrics(
+    minHeight: theme.touch ? 52 : 40,
+    verticalPadding: theme.touch ? theme.geometry.space.sm : theme.geometry.space.xs,
+    iconSize: theme.touch ? 20 : 18,
+  );
+
+  final double minHeight;
+  final double verticalPadding;
+  final double iconSize;
+
+  static _RowMetrics lerp(_RowMetrics a, _RowMetrics b, double t) => _RowMetrics(
+    minHeight: lerpDouble(a.minHeight, b.minHeight, t)!,
+    verticalPadding: lerpDouble(a.verticalPadding, b.verticalPadding, t)!,
+    iconSize: lerpDouble(a.iconSize, b.iconSize, t)!,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is _RowMetrics &&
+      minHeight == other.minHeight &&
+      verticalPadding == other.verticalPadding &&
+      iconSize == other.iconSize;
+
+  @override
+  int get hashCode => Object.hash(minHeight, verticalPadding, iconSize);
+}
 
 /// Width of the prefix column: the icon plus the gap to the title.
 double _prefixColumn(MochiTheme theme) => (theme.touch ? 20 : 18) + theme.geometry.space.sm;
@@ -139,75 +174,78 @@ class _TileSurface extends StatelessWidget {
     Color foreground(Set<WidgetState> st) =>
         st.contains(WidgetState.selected) ? tone.onSoft : colors.foreground;
 
-    return MochiStateTransition(
-      states: states,
-      duration: theme.motion.stateDuration,
-      builder: (context, blend) {
-        final fg = blend.color(foreground);
-        final muted = blend.color(
-          (st) => st.contains(WidgetState.selected) ? tone.onSoft : colors.mutedForeground,
-        );
+    // Row sizes come from the theme, so switching scales would otherwise jump.
+    return MochiValueTransition(
+      value: _RowMetrics.of(theme),
+      lerp: _RowMetrics.lerp,
+      duration: theme.motion.sizeDuration,
+      builder: (context, metrics, _) => MochiStateTransition(
+        states: states,
+        duration: theme.motion.stateDuration,
+        builder: (context, blend) {
+          final fg = blend.color(foreground);
+          final muted = blend.color(
+            (st) => st.contains(WidgetState.selected) ? tone.onSoft : colors.mutedForeground,
+          );
 
-        return MochiFocusRing(
-          visible: blend.contains(WidgetState.focused),
-          radius: BorderRadius.zero,
-          // Groups clip their rows, so the ring has to live inside the row.
-          inset: true,
-          child: ColoredBox(
-            // The background stays opaque: fading the whole row would let the group's border show
-            // through it, which reads as an extra outline around that row.
-            color: blend.color(background),
-            child: Opacity(
-              // Keyed off `enabled`, not the disabled state: a row whose only interactive part is
-              // its suffix has no callbacks of its own and must not look disabled.
-              opacity: enabled ? 1 : 0.4,
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: g.space.md,
-                  vertical: theme.touch ? g.space.sm : g.space.xs,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: theme.touch ? 52 : 40),
-                  child: IconTheme.merge(
-                    data: IconThemeData(color: fg, size: theme.touch ? 20 : 18),
-                    child: Row(
-                      spacing: g.space.sm,
-                      children: [
-                        ?prefix,
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: g.space.xs3,
-                            children: [
-                              DefaultTextStyle(
-                                style: typography.body.sm.copyWith(color: fg),
-                                child: title,
-                              ),
-                              if (subtitle case final subtitle?)
+          return MochiFocusRing(
+            visible: blend.contains(WidgetState.focused),
+            radius: BorderRadius.zero,
+            // Groups clip their rows, so the ring has to live inside the row.
+            inset: true,
+            child: ColoredBox(
+              // The background stays opaque: fading the whole row would let the group's border show
+              // through it, which reads as an extra outline around that row.
+              color: blend.color(background),
+              child: Opacity(
+                // Keyed off `enabled`, not the disabled state: a row whose only interactive part is
+                // its suffix has no callbacks of its own and must not look disabled.
+                opacity: enabled ? 1 : 0.4,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: g.space.md, vertical: metrics.verticalPadding),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: metrics.minHeight),
+                    child: IconTheme.merge(
+                      data: IconThemeData(color: fg, size: metrics.iconSize),
+                      child: Row(
+                        spacing: g.space.sm,
+                        children: [
+                          ?prefix,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: g.space.xs3,
+                              children: [
                                 DefaultTextStyle(
-                                  style: typography.body.xs.copyWith(color: muted),
-                                  child: subtitle,
+                                  style: typography.body.sm.copyWith(color: fg),
+                                  child: title,
                                 ),
-                            ],
+                                if (subtitle case final subtitle?)
+                                  DefaultTextStyle(
+                                    style: typography.body.xs.copyWith(color: muted),
+                                    child: subtitle,
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                        if (details case final details?)
-                          DefaultTextStyle(
-                            style: typography.body.xs.copyWith(color: muted),
-                            child: details,
-                          ),
-                        ?suffix,
-                      ],
+                          if (details case final details?)
+                            DefaultTextStyle(
+                              style: typography.body.xs.copyWith(color: muted),
+                              child: details,
+                            ),
+                          ?suffix,
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

@@ -28,8 +28,11 @@ class _State extends AnimatedWidgetBaseState<AnimatedMochiTheme> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      MochiThemeScope(theme: _theme!.evaluate(animation), child: widget.child);
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+    return MochiThemeScope(theme: reduced ? widget.theme : _theme!.evaluate(animation), child: widget.child);
+  }
 }
 
 class _ThemeTween extends Tween<MochiTheme> {
@@ -37,4 +40,10 @@ class _ThemeTween extends Tween<MochiTheme> {
 
   @override
   MochiTheme lerp(double t) => t >= 1 ? end! : MochiTheme.lerp(begin!, end!, t);
+
+  // Tween short-circuits t == 0 to `begin`, which would hold back everything the theme switches
+  // over immediately (sizes, typography, touch) for a frame. Only the colors interpolate, so the
+  // blend is always worth computing.
+  @override
+  MochiTheme transform(double t) => lerp(t);
 }

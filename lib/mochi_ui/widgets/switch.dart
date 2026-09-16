@@ -5,6 +5,7 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
+import "value_transition.dart";
 import "tappable.dart";
 
 /// An on/off switch. Pass a null [onChanged] (or `enabled: false`) to disable it.
@@ -59,9 +60,8 @@ class _SwitchSurface extends StatelessWidget {
     final tone = colors.of(intent);
     final touch = theme.touch;
 
-    final (width, height) = touch ? (48.0, 28.0) : (40.0, 24.0);
+    final target = touch ? const Size(48, 28) : const Size(40, 24);
     const inset = 3.0;
-    final thumbSize = height - inset * 2;
     // Off, the thumb contrasts with the neutral track and must be light in both themes (neither
     // surface nor foreground is). On, it sits on the intent color, so it uses that tone's on-color:
     // dark in the dark theme, where the accents are pastel.
@@ -72,6 +72,28 @@ class _SwitchSurface extends StatelessWidget {
     Color track(Set<WidgetState> st) => st.contains(WidgetState.selected)
         ? MochiColors.stateLayer(tone.base, tone.onBase, st)
         : MochiColors.stateLayer(colors.border, colors.foreground, st);
+
+    // The track's size comes from the theme, so switching scales would otherwise jump.
+    return MochiValueTransition(
+      value: target,
+      lerp: (a, b, t) => Size.lerp(a, b, t)!,
+      duration: theme.motion.sizeDuration,
+      builder: (context, size, _) => _track(context, theme, colors, size, inset, thumb, track),
+    );
+  }
+
+  Widget _track(
+    BuildContext context,
+    MochiTheme theme,
+    MochiColors colors,
+    Size size,
+    double inset,
+    Color Function(Set<WidgetState>) thumb,
+    Color Function(Set<WidgetState>) track,
+  ) {
+    final width = size.width;
+    final height = size.height;
+    final thumbSize = height - inset * 2;
 
     return MochiStateTransition(
       states: states,
@@ -84,7 +106,7 @@ class _SwitchSurface extends StatelessWidget {
           child: Container(
             width: width,
             height: height,
-            padding: const EdgeInsets.all(inset),
+            padding: EdgeInsets.all(inset),
             decoration: ShapeDecoration(
               color: blend.color(track),
               shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(height / 2))),

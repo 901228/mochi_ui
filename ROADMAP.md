@@ -23,7 +23,7 @@
 - [x] Flutter 改跟 master：stable 3.47 的 Linux Impeller 沒開 MSAA，描邊和路徑都有鋸齒（flutter#191171，修正只在 master）
 - [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
 - [x] `MochiIcons` token：元件自己會畫的 8 個圖示，`copyWith(icons:)` 可整組替換
-- [ ] ⭐ 尺寸過渡動畫：`touch` 或緊湊模式切換時，高度與 padding 目前是瞬間跳動（顏色有動畫）。需要類似 `MochiStateTransition`、只在尺寸真的改變時才觸發的機制，避免跟主題動畫互相打架
+- [x] ⭐ 尺寸過渡動畫 — `MochiValueTransition<T>`：只在數值本身改變時才重跑（隱式 `Animated*` 會被主題動畫每幀重啟）。Button / Tile / Switch 已接上，時間為 `motion.sizeDuration`
 - [ ] ⭐ 以 `ColorScheme` 產生主題的 helper（像 forui CLI preset），方便 app 換主色
 - [ ] ⭐ 評估各元件是否需要獨立的 style 類別：目前只有 button 有（`MochiButtonStyle` / `MochiButtonMetrics`），其餘直接讀 token。forui 是每個 widget 一份 style，代價是每個元件多一份類別加 lerp。等 P3 的 dialog / popover 做完再看哪些真的需要覆寫
 - [ ] ⭐ 評估導入 Widgetbook：等 P3 / P4 做完、元件穩定後再看。要導入的話放獨立 package（它的介面是 Material 的），現有的 gallery 保留矩陣視圖，Widgetbook 負責單一元件加 knobs

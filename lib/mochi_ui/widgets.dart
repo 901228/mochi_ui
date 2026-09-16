@@ -19,3 +19,4 @@ export "widgets/tappable.dart";
 export "widgets/tile.dart";
 export "widgets/tooltip.dart";
 export "widgets/transitions.dart";
+export "widgets/value_transition.dart";

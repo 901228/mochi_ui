@@ -7,6 +7,7 @@ class MochiMotion {
     this.stateDuration = const Duration(milliseconds: 120),
     this.themeDuration = const Duration(milliseconds: 200),
     this.indeterminateDuration = const Duration(milliseconds: 1000),
+    this.sizeDuration = const Duration(milliseconds: 200),
     this.transitionDuration = const Duration(milliseconds: 320),
     this.transitionReverseDuration = const Duration(milliseconds: 240),
     this.transitionCurve = Curves.easeOutCubic,
@@ -27,6 +28,9 @@ class MochiMotion {
 
   /// Light / dark theme transitions.
   final Duration themeDuration;
+
+  /// Metrics changing under a component: the touch scale switching to the desktop one, say.
+  final Duration sizeDuration;
 
   /// Entering a page or an overlay (dialog, sheet, popover, toast).
   final Duration transitionDuration;
@@ -66,6 +70,7 @@ class MochiMotion {
           stateDuration == other.stateDuration &&
           themeDuration == other.themeDuration &&
           indeterminateDuration == other.indeterminateDuration &&
+          sizeDuration == other.sizeDuration &&
           transitionDuration == other.transitionDuration &&
           transitionReverseDuration == other.transitionReverseDuration &&
           transitionCurve == other.transitionCurve &&
@@ -80,6 +85,7 @@ class MochiMotion {
     stateDuration,
     themeDuration,
     indeterminateDuration,
+    sizeDuration,
     transitionDuration,
     transitionReverseDuration,
     transitionCurve,

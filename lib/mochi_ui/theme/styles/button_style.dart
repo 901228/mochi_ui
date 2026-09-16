@@ -1,3 +1,5 @@
+import "dart:ui" show lerpDouble;
+
 import "package:flutter/widgets.dart";
 
 import "../colors.dart";
@@ -97,6 +99,32 @@ class MochiButtonMetrics {
       textStyle: _md,
     ),
   };
+
+  // Value equality matters: MochiValueTransition restarts whenever the value changes, and metrics
+  // are rebuilt on every frame of a theme animation.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiButtonMetrics &&
+          height == other.height &&
+          horizontalPadding == other.horizontalPadding &&
+          gap == other.gap &&
+          iconSize == other.iconSize &&
+          radius == other.radius &&
+          textStyle == other.textStyle;
+
+  @override
+  int get hashCode => Object.hash(height, horizontalPadding, gap, iconSize, radius, textStyle);
+
+  /// Blends two sizes, so a button changing scale grows into the new one instead of jumping.
+  static MochiButtonMetrics lerp(MochiButtonMetrics a, MochiButtonMetrics b, double t) => MochiButtonMetrics(
+    height: lerpDouble(a.height, b.height, t)!,
+    horizontalPadding: lerpDouble(a.horizontalPadding, b.horizontalPadding, t)!,
+    gap: lerpDouble(a.gap, b.gap, t)!,
+    iconSize: lerpDouble(a.iconSize, b.iconSize, t)!,
+    radius: (r) => BorderRadius.lerp(a.radius(r), b.radius(r), t)!,
+    textStyle: (typography) => TextStyle.lerp(a.textStyle(typography), b.textStyle(typography), t)!,
+  );
 
   static BorderRadius _xsRadius(MochiRadius r) => r.xs;
   static BorderRadius _smRadius(MochiRadius r) => r.sm;
