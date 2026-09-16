@@ -55,8 +55,9 @@
 ## 4. P3：浮層
 
 - [x] Popover（底層，下面幾個都靠它）— `MochiPopover`：基於 widgets 層的 `RawMenuAnchor`（overlay、點外面關閉、Esc、focus 還原都是現成的），這裡補上定位（side × align、沒空間就翻面、夾在畫面內）與面板外觀
-- [ ] PopoverMenu（1）— session 選單
-- [ ] ContextMenu（2）— 紀錄、session 長按 / 右鍵
+- [x] PopoverMenu（1）— `MochiPopoverMenu` + `MochiMenu` / `MochiMenuItem` / `MochiMenuDivider` / `MochiMenuLabel`，項目按下會關掉整個選單（含子選單）
+- [x] ContextMenu（2）— `MochiContextMenu`：右鍵 / 長按在游標位置開啟；子項目有自己的長按時讓給子項目
+- [x] ⭐ Submenu — `MochiSubmenu`：hover 停留 120ms 或方向鍵開啟（cube timer 的 Penalty / Move to 會用到）
 - [ ] Dialog（4）+ `showMochiDialog`（5）
 - [ ] Sheet（1）+ `showMochiSheet` — 首頁側邊選單
 - [ ] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
