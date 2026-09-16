@@ -6,6 +6,7 @@ class MochiMotion {
   MochiMotion({
     this.stateDuration = const Duration(milliseconds: 120),
     this.themeDuration = const Duration(milliseconds: 150),
+    this.themeCurve = Curves.easeOutQuart,
     this.indeterminateDuration = const Duration(milliseconds: 1000),
     this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
@@ -30,6 +31,10 @@ class MochiMotion {
   /// Light / dark theme transitions. Kept short: every frame of it rebuilds every component on
   /// screen, so its cost grows with how busy the page is.
   final Duration themeDuration;
+
+  /// Front-loaded: most of the colour change lands in the first frames, so the switch feels
+  /// immediate and the rest of the fade is a settle nobody waits on.
+  final Curve themeCurve;
 
   /// Metrics changing under a component: the touch scale switching to the desktop one, say.
   ///
@@ -78,6 +83,7 @@ class MochiMotion {
       other is MochiMotion &&
           stateDuration == other.stateDuration &&
           themeDuration == other.themeDuration &&
+          themeCurve == other.themeCurve &&
           indeterminateDuration == other.indeterminateDuration &&
           sizeDuration == other.sizeDuration &&
           sizeCurve == other.sizeCurve &&
@@ -94,6 +100,7 @@ class MochiMotion {
   int get hashCode => Object.hash(
     stateDuration,
     themeDuration,
+    themeCurve,
     indeterminateDuration,
     sizeDuration,
     sizeCurve,

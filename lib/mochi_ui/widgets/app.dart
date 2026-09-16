@@ -51,6 +51,7 @@ class MochiApp extends StatelessWidget {
     };
     return AnimatedMochiTheme(
       duration: theme.motion.themeDuration,
+      curve: theme.motion.themeCurve,
       theme: theme.copyWith(touch: touch ?? MochiTheme.defaultTouch),
       child: Builder(
         builder: (context) => ColoredBox(
