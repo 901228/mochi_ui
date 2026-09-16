@@ -108,6 +108,16 @@ void main() {
     expect(find.text("Record deleted"), findsNothing);
   });
 
+  testWidgets("the close button sits against the right edge", (tester) async {
+    await tester.pumpWidget(app());
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+
+    final toast = tester.getRect(find.byType(MochiToast));
+    final close = tester.getRect(find.byType(MochiButton).last);
+    expect(toast.right - close.right, lessThan(24), reason: "against the edge, not trailing the text");
+  });
+
   testWidgets("only the newest few stay up", (tester) async {
     await tester.pumpWidget(app());
     for (var i = 0; i < 5; i++) {

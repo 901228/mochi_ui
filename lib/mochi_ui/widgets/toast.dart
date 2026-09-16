@@ -71,7 +71,9 @@ class MochiToast extends StatelessWidget {
                 data: IconThemeData(color: neutral ? colors.mutedForeground : tone.onSoft, size: 18),
                 child: icon,
               ),
-            Flexible(
+            // Expanded, not Flexible: the message takes whatever is left so the action and the
+            // close button sit against the right edge instead of trailing the text.
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
