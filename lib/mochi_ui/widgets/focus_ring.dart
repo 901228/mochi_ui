@@ -60,6 +60,10 @@ class MochiFocusRing extends StatelessWidget {
     // Always a Stack, so toggling the ring never reparents (and resets the state of) child.
     return Stack(
       clipBehavior: Clip.none,
+      // Passthrough rather than the default loose fit: a loose Stack would hand the child its own
+      // constraints, so a button told to fill its parent (a stretched column of dialog actions,
+      // say) would shrink back to its content instead.
+      fit: StackFit.passthrough,
       children: [
         child,
         if (visible)
