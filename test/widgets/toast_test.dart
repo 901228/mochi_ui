@@ -252,7 +252,9 @@ void main() {
             builder: (context) => Center(
               child: MochiButton(
                 onPress: () {
-                  for (var i = 1; i <= 4; i++) {
+                  // Five: three up, one to take the place of the one that leaves, and one left
+                  // queued behind it.
+                  for (var i = 1; i <= 5; i++) {
                     showMochiToast(
                       context,
                       title: Text("Message $i"),
@@ -288,6 +290,12 @@ void main() {
     expect(next.bottom, greaterThan(last.bottom), reason: "peeking past the end of the stack");
     expect(next.bottom - last.bottom, lessThan(12), reason: "no more than a card's edge");
     expect(next.width, lessThan(last.width), reason: "a card's width, not a toast's");
+    // The queue behind it holds its places until this one moves up: with the front place taken,
+    // the one still waiting is a place further back than the promoted toast, not level with it.
+    final queued = tester.getRect(
+      find.ancestor(of: find.text("Message 5"), matching: find.byType(MochiToast)),
+    );
+    expect(queued.width, lessThan(next.width), reason: "holding its place until the front one moves up");
     expect(
       tester
           .widget<Opacity>(find.ancestor(of: find.text("Message 4"), matching: find.byType(Opacity)).first)

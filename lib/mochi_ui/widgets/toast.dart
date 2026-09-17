@@ -270,7 +270,14 @@ class MochiToasterState extends State<MochiToaster> {
                       children: [
                         // Outside the toasts rather than under the newest one: the deck stands
                         // still while a toast leaves, and the cards shuffle up on their own.
-                        _Deck(waiting: _waiting, towards: towards),
+                        _Deck(
+                          waiting: _waiting,
+                          towards: towards,
+                          // A toast promoted but not yet on its way up is still standing at the
+                          // front of the queue, so the rest hold their places behind it. They
+                          // move up when it does, not when the toast it follows starts leaving.
+                          reserved: _toasts.where((request) => request.held).length,
+                        ),
                         for (final request in _toasts.reversed)
                           _Toast(
                             key: request.key,
@@ -523,13 +530,17 @@ Widget? _intentIcon(BuildContext context, MochiIntent intent) {
 /// Its own item in the column rather than something drawn under the newest toast: a toast leaving
 /// must not take the queue with it.
 class _Deck extends StatelessWidget {
-  const _Deck({required this.waiting, required this.towards});
+  const _Deck({required this.waiting, required this.towards, this.reserved = 0});
 
   /// The toasts still queued, front of the queue first.
   final List<_ToastRequest> waiting;
 
   /// 1 when the stack grows downwards, -1 when it grows up.
   final double towards;
+
+  /// Places at the front held by toasts that have left the queue but are still standing there,
+  /// waiting for the one they follow to slide clear.
+  final int reserved;
 
   @override
   Widget build(BuildContext context) {
@@ -548,16 +559,16 @@ class _Deck extends StatelessWidget {
           fit: StackFit.passthrough,
           children: [
             // Furthest back first, so each lies over the one behind it.
-            for (var depth = _DeckPlace.maxLayers - 1; depth >= 0; depth--)
-              if (depth < waiting.length)
+            for (var depth = _DeckPlace.maxLayers - 1; depth >= reserved; depth--)
+              if (depth - reserved < waiting.length)
                 // Keyed by the toast itself, so one moving up a place in the queue is that same
                 // widget at a new depth and can travel there, rather than the place being redrawn
                 // with someone else standing in it.
                 _DeckCard(
-                  key: waiting[depth].key,
+                  key: waiting[depth - reserved].key,
                   depth: depth,
                   towards: towards,
-                  child: waiting[depth].toast,
+                  child: waiting[depth - reserved].toast,
                 ),
           ],
         ),
