@@ -18,14 +18,16 @@
 - [x] Geometry tokens `MochiGeometry`：圓角 xs–xl/full（superellipse）、間距 xs3–xl3、border 寬度、陰影 sm/md/lg、頁面 padding
 - [x] 共用 focus ring `MochiFocusRing`（顏色 `colors.focusRing`，寬度 / 間隙在 geometry）
 - [x] Motion tokens `MochiMotion`：state / theme 動畫時間、按壓彈簧
-- [x] 按壓動畫：iOS 風格按下放大（`MochiPressScale`，彈簧回彈、上限 6% / 每邊 3px、尊重減少動態效果）
+- [x] 按壓動畫：iOS 風格按下放大（`MochiPressScale`，彈簧回彈、上限 6% / 每邊 3px、尊重系統的「減少動態效果」設定 `MediaQuery.disableAnimations`）
 - [x] 圓角改用 superellipse（`RoundedSuperellipseBorder`）
 - [x] Flutter 改跟 master：stable 3.47 的 Linux Impeller 沒開 MSAA，描邊和路徑都有鋸齒（flutter#191171，修正只在 master）
 - [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
 - [x] `MochiIcons` token：元件自己會畫的 8 個圖示，`copyWith(icons:)` 可整組替換
 - [x] ⭐ 尺寸過渡動畫 — `MochiValueTransition<T>`：只在數值本身改變時才重跑（隱式 `Animated*` 會被主題動畫每幀重啟）。Button / Tile / Switch 已接上，時間為 `motion.sizeDuration`
 - [ ] ⭐ 以 `ColorScheme` 產生主題的 helper（像 forui CLI preset），方便 app 換主色
-- [ ] ⭐ 評估各元件是否需要獨立的 style 類別：目前只有 button 有（`MochiButtonStyle` / `MochiButtonMetrics`），其餘直接讀 token。forui 是每個 widget 一份 style，代價是每個元件多一份類別加 lerp。等 P3 的 dialog / popover 做完再看哪些真的需要覆寫
+- [x] ⭐ 評估各元件是否需要獨立的 style 類別 — **結論：不要整組加 style，但有 size 軸的元件要有 metrics。** P3 做完後回頭看，實際會想覆寫的是「尺寸」而不是「顏色」：顏色都能從 intent × appearance 推出來，真的要換主色是換 `MochiColors`，要換單一 app 的規則是 `MochiThemeExtension`，兩條路都已經有了。所以規則訂為：
+  - **有 size 選項的元件 → 一份 `XxxMetrics`**（像 `MochiButtonMetrics`）：值要有 value equality 才能餵給 `MochiValueTransition`。Badge、Progress 接下來就是照這個做
+  - **顏色 → 不開 style 類別**，除非某個元件的配色規則複雜到不是 `(colors, states) → color` 能講完（目前只有 button 是）
 - [ ] ⭐ 評估導入 Widgetbook：等 P3 / P4 做完、元件穩定後再看。要導入的話放獨立 package（它的介面是 Material 的），現有的 gallery 保留矩陣視圖，Widgetbook 負責單一元件加 knobs
 
 ## 1. 已完成的元件
@@ -40,7 +42,7 @@
 
 - [x] Divider（4）— `MochiDivider`：水平 / 垂直、indent
 - [x] CircularProgress（3）— `MochiCircularProgress`：determinate / indeterminate，顏色跟隨外層文字色
-- [x] Switch（2）— `MochiSwitch`：intent、focus ring、尊重減少動態效果
+- [x] Switch（2）— `MochiSwitch`：intent、focus ring、尊重系統的「減少動態效果」設定
 - [x] Card（2）— `MochiCard`：elevation、可選 onPress（hover 上色、不放大）
 - [x] LinearProgress — `MochiLinearProgress`：determinate / indeterminate
 - [x] Badge / Tag — `MochiBadge`：solid / soft / outlined 膠囊
@@ -61,21 +63,46 @@
 - [x] Dialog（4）+ `showMochiDialog`（5）— `MochiDialog` + `MochiDialogRoute`；按鈕桌面橫排、touch 直排全寬（cube timer 原本自己包一層就是為了這個）
 - [x] Sheet（1）+ `showMochiSheet` — `MochiSheet`：四個邊都能貼，往自己那邊拖曳可以關掉（直接倒轉 route 的 animation，barrier 跟著淡出）
 - [x] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet（以 breakpoint 判斷，`form:` 可指定）。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
-- [x] ⭐ Toast / Toaster — `MochiToaster`（`MochiApp` 自動裝在 navigator 之上）+ `showMochiToast`：intent 上在邊框、hover 會暫停倒數、handle 可提前關掉
+- [x] ⭐ Toast / Toaster — `MochiToaster`（`MochiApp` 自動裝在 navigator 之上）+ `showMochiToast`：intent 上在邊框並自帶圖示、hover 會暫停倒數、超過上限的排隊、handle 可提前關掉
+- [x] ⭐ 現成的問句 — `showMochiConfirm` / `showMochiAlert` / `showMochiChoice`，都走 `showMochiModal`，所以名字裡沒有 dialog；`MochiModalAction` 是按下就把 modal pop 掉的按鈕
+- [ ] ⭐ `showMochiPrompt`（輸入一段文字，例如改名 session）— 卡在 TextField，等 P4 的 TextField 做完就補
 
-## 5. P4：輸入
+## 5. P3.5：回頭對齊 Bulma / forui
+
+- [ ] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
+- [ ] Badge 加 `size`
+- [ ] Badge 的圓角改成可選：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
+- [ ] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉
+- [ ] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 獨立出來一個元件：badge 的叉、toast 的關閉、之後 dialog / sheet 的關閉都是同一顆，toast 裡目前是私有的 `_ToastClose`
+- [ ] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
+- [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 也用它
+
+## 6. P4：輸入
 
 - [ ] TextField（4）— 基於 `EditableText`：hint、control、inputFormatters、keyboardType、maxLength
 - [ ] TextField.multiline（1）— scramble 輸入
 - [ ] ⭐ Checkbox
 - [ ] ⭐ RadioGroup
-- [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單
+- [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單。要含 **multi select**（多選時用 badge 顯示已選項目）
+- [ ] ⭐ Autocomplete — 建議加，但排在 TextField + Select 之後：它等於兩者相加，而且 widgets 層已經有 `RawAutocomplete` 可以包，成本低
+- [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
 - [ ] ⭐ Slider — 檢查時間、音量類設定
 - [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）
 
-## 6. P5：導覽
+## 7. P5：導覽
 
 - [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
 - [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）
 - [ ] BottomNavigationBar（1）
 - [ ] Breadcrumb（1）
+- [ ] ⭐ Pagination — Bulma 有，長列表用得到
+
+## 8. P6：內容與日期
+
+- [ ] ⭐ Accordion — 一組 `MochiCollapsible`，可設定單開 / 多開。跟 P3.5 的 card collapsible 共用同一個底層
+- [ ] ⭐ Avatar — 圖片 / 縮寫文字 / fallback 圖示，圓形與方形，size
+- [ ] ⭐ Calendar — 月曆本體（選單日 / 多日 / 區間），下面三個 picker 都靠它
+- [ ] ⭐ DatePicker — Calendar 裝進 popover / sheet
+- [ ] ⭐ TimePicker — 時 / 分（/ 秒）滾輪或輸入
+- [ ] ⭐ DateTimePicker — 上面兩個合起來
+- [ ] ⭐ Resizable — 可拖曳分隔線的分割面板。**優先度最低**，cube timer 沒有這種版面
