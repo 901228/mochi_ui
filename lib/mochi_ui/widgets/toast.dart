@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:ui" show lerpDouble;
 
 import "package:flutter/widgets.dart";
 
@@ -183,9 +184,12 @@ class MochiToasterState extends State<MochiToaster> {
   /// Moves waiting toasts up as room appears. Raising more than [MochiToaster.maxVisible] at once
   /// queues the rest rather than dropping them: a toast nobody saw may as well not have been
   /// raised, and the one pushed out would be the oldest, which is the one that has been waiting.
-  void _fill() {
+  ///
+  /// One taking a slot that just came free was already on screen as a card in the deck, so it
+  /// grows into place from there rather than arriving from off screen.
+  void _fill({bool promoted = false}) {
     while (_waiting.isNotEmpty && _toasts.length < widget.maxVisible) {
-      _toasts.add(_waiting.removeAt(0));
+      _toasts.add(_waiting.removeAt(0)..promoted = promoted);
     }
   }
 
@@ -193,7 +197,7 @@ class MochiToasterState extends State<MochiToaster> {
     if (!mounted) return;
     setState(() {
       _toasts.remove(request);
-      _fill();
+      _fill(promoted: true);
     });
   }
 
@@ -252,6 +256,9 @@ class _ToastRequest {
   final Widget toast;
   final Duration duration;
   final key = UniqueKey();
+
+  /// Whether this one was already showing as a card in the deck before it came up.
+  bool promoted = false;
 
   /// Set by the entry once it is on screen.
   VoidCallback? dismiss;
@@ -324,9 +331,14 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
   /// Which way the stack grows: 1 when new toasts arrive at the bottom, -1 at the top.
   double get _towards => widget.alignment.y > 0 ? 1 : -1;
 
+  /// Roughly how much narrower a deck card is than the toast above it, which is where a promoted
+  /// toast grows from.
+  static const _deckScale = 0.94;
+
   /// A toast rises out of the edge its stack is anchored to, which is the same direction the
-  /// column grows in, so arriving is one movement rather than two.
-  Offset get _enterFrom => Offset(0, _towards);
+  /// column grows in, so arriving is one movement rather than two. One promoted out of the deck
+  /// only nudges, since it was already sitting there.
+  Offset get _enterFrom => Offset(0, _towards * (widget.request.promoted ? 0.15 : 1));
 
   /// It leaves towards the side of the screen instead, so it doesn't travel across the toasts
   /// below it on the way out. A stack down the middle has no side to leave by.
@@ -339,7 +351,6 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final motion = context.theme.motion;
-    final toast = _Deck(waiting: widget.waiting, towards: _towards, child: widget.request.toast);
 
     // Hand-rolled rather than MochiSurfaceTransition: a toast comes from one edge and leaves by
     // another, and the height it gives up has to collapse without a clip, which would cut off its
@@ -364,13 +375,24 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
             // The gap a toast gives up closes over the same time as its exit, so the ones still
             // up slide into place instead of jumping once it is gone.
             heightFactor: t,
-            child: Opacity(
-              opacity: t.clamp(0, 1),
-              child: FractionalTranslation(translation: travel * (1 - t), child: child),
+            // The deck sits outside the fade and the travel, so a toast leaving slides out from
+            // over its own queue rather than carrying it along.
+            child: _Deck(
+              waiting: widget.waiting,
+              towards: _towards,
+              child: Opacity(
+                opacity: t.clamp(0, 1),
+                child: Transform.scale(
+                  // A promoted toast was a card in the deck a moment ago, so it grows from that
+                  // card's size instead of arriving at full size.
+                  scale: widget.request.promoted ? lerpDouble(_deckScale, 1, t) : 1,
+                  child: FractionalTranslation(translation: travel * (1 - t), child: child),
+                ),
+              ),
             ),
           );
         },
-        child: toast,
+        child: widget.request.toast,
       ),
     );
   }
