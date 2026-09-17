@@ -485,61 +485,64 @@ class _DeckStrip extends StatelessWidget {
   static const _step = 6.0;
   static const _inset = 10.0;
 
+  /// How far a card reaches up behind the toast in front of it. Anything past the sliver that
+  /// shows is hidden by that toast, which is painted over it.
+  static const _hidden = 40.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final motion = theme.motion;
     final layers = waiting.clamp(0, _maxLayers);
 
-    // The strip takes up room in the stack, so its height is animated too: the toasts above it
-    // slide over as the queue fills and drains instead of stepping.
     return TweenAnimationBuilder(
       tween: Tween<double>(begin: 0, end: layers.toDouble()),
       duration: motion.toastDuration,
       curve: motion.transitionCurve,
+      // No height of its own: the deck hangs past the end of the stack, into the padding, rather
+      // than taking a place in it and pushing every toast along as the queue fills and drains.
       builder: (context, shown, _) => SizedBox(
-        height: _step * shown,
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            // Furthest back first. Each card is drawn tall and cropped to the sliver of it that
-            // shows, so what is left is a card's leading edge rather than a bar.
-            for (var layer = _maxLayers - 1; layer >= 0; layer--)
-              if (layer < shown.ceil()) _card(theme, layer),
-          ],
+        height: 0,
+        child: OverflowBox(
+          alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
+          maxHeight: _hidden + _step * _maxLayers,
+          child: Stack(
+            clipBehavior: Clip.none,
+            fit: StackFit.passthrough,
+            children: [
+              // Furthest back first, so each card lies over the one behind it. Every card slides
+              // out from under the toast in front as its turn in the queue comes round.
+              for (var layer = _maxLayers - 1; layer >= 0; layer--)
+                _card(theme, layer, (shown - layer).clamp(0, 1)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _card(MochiTheme theme, int layer) {
+  /// [reveal] is how much of this card's own sliver has come out, 0 to 1.
+  Widget _card(MochiTheme theme, int layer, double reveal) {
     final g = theme.geometry;
-    final radius = BorderRadius.vertical(
-      top: towards > 0 ? g.radius.md.topLeft : Radius.zero,
-      bottom: towards > 0 ? Radius.zero : g.radius.md.topLeft,
-    );
+    final out = _step * layer + _step * reveal;
+    final corner = g.radius.md.topLeft;
 
     return Positioned(
       left: _inset * (layer + 1),
       right: _inset * (layer + 1),
-      top: towards > 0 ? _step * layer : null,
-      bottom: towards > 0 ? null : _step * layer,
-      height: _step,
-      child: ClipRect(
-        child: OverflowBox(
-          alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
-          maxHeight: _step * 4,
-          child: SizedBox(
-            height: _step * 4,
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: theme.colors.overlay,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: radius,
-                  side: BorderSide(color: theme.colors.border, width: g.borderWidth),
-                ),
-              ),
-            ),
+      // Anchored at the end of the stack and reaching back behind the toast there: only the part
+      // past that toast's edge is ever seen, which is a card's trailing edge.
+      top: towards > 0 ? -_hidden : null,
+      bottom: towards > 0 ? null : -_hidden,
+      height: _hidden + out,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: theme.colors.overlay,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: towards > 0
+                ? BorderRadius.vertical(bottom: corner)
+                : BorderRadius.vertical(top: corner),
+            side: BorderSide(color: theme.colors.border, width: g.borderWidth),
           ),
         ),
       ),
