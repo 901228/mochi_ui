@@ -287,6 +287,13 @@ void main() {
     expect(next.bottom, greaterThan(last.bottom), reason: "peeking past the end of the stack");
     expect(next.bottom - last.bottom, lessThan(12), reason: "no more than a card's edge");
     expect(next.width, lessThan(last.width), reason: "a card's width, not a toast's");
+    expect(
+      tester
+          .widget<Opacity>(find.ancestor(of: find.text("Message 4"), matching: find.byType(Opacity)).first)
+          .opacity,
+      1,
+      reason: "standing there in full, not fading in, or the slide uncovers nothing",
+    );
 
     // Then its place closes while the next one comes up at the end of the stack: what was below
     // the gap moves up by exactly what the new one takes at the bottom, and what was above it

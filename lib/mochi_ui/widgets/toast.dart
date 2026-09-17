@@ -480,7 +480,13 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
                 bottom: _towards > 0 ? 0 : widget.gap,
               ),
               child: Opacity(
-                opacity: (t * (1 - gone)).clamp(0, 1),
+                // A promoted toast is already on screen, standing where the front card of the
+                // deck was, so it is there in full from the start rather than fading in — that
+                // card is what the toast in front uncovers as it slides away.
+                // A promoted toast is already on screen, standing where the front card of the
+                // deck was, so it is there in full from the start rather than fading in — that
+                // is what the toast in front uncovers as it slides away.
+                opacity: ((widget.request.promoted ? 1.0 : t) * (1 - gone)).clamp(0, 1),
                 child: Transform.scale(
                   // A promoted toast was a card in the deck a moment ago, so it grows from that
                   // card's size instead of arriving at full size.
