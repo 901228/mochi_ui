@@ -274,13 +274,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 450));
     final places = [for (var i = 1; i <= 3; i++) tester.getRect(find.text("Message $i"))];
 
-    // While it slides clear the stack is untouched, and the deck still has its card: nothing has
-    // come up yet.
+    // While it slides clear the stack is untouched, and the next toast has come out of the deck
+    // to stand where that deck's front card was: a card's width, peeking past the end of the
+    // stack, so what the one on its way out uncovers is the new toast rather than a blank card.
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text("Message 4"), findsNothing);
     expect(tester.getRect(find.text("Message 1")), places[0]);
     expect(tester.getRect(find.text("Message 3")), places[2]);
+
+    final last = tester.getRect(find.ancestor(of: find.text("Message 3"), matching: find.byType(MochiToast)));
+    final next = tester.getRect(find.ancestor(of: find.text("Message 4"), matching: find.byType(MochiToast)));
+    expect(next.bottom, greaterThan(last.bottom), reason: "peeking past the end of the stack");
+    expect(next.bottom - last.bottom, lessThan(12), reason: "no more than a card's edge");
+    expect(next.width, lessThan(last.width), reason: "a card's width, not a toast's");
 
     // Then its place closes while the next one comes up at the end of the stack: what was below
     // the gap moves up by exactly what the new one takes at the bottom, and what was above it
