@@ -14,6 +14,8 @@ class MochiApp extends StatelessWidget {
     this.lightTheme,
     this.darkTheme,
     this.touch,
+    this.toastAlignment,
+    this.maxVisibleToasts = 3,
     required Widget this.home,
   }) : routerConfig = null;
 
@@ -24,6 +26,8 @@ class MochiApp extends StatelessWidget {
     this.lightTheme,
     this.darkTheme,
     this.touch,
+    this.toastAlignment,
+    this.maxVisibleToasts = 3,
     required RouterConfig<Object> this.routerConfig,
   }) : home = null;
 
@@ -38,6 +42,13 @@ class MochiApp extends StatelessWidget {
 
   /// Overrides [MochiTheme.touch] of both themes. Defaults to [MochiTheme.defaultTouch].
   final bool? touch;
+
+  /// Which corner or edge toasts stack against. See [MochiToaster.alignment], which decides by
+  /// screen size when this is null.
+  final Alignment? toastAlignment;
+
+  /// How many toasts are up at once; the rest wait their turn. See [MochiToaster.maxVisible].
+  final int maxVisibleToasts;
 
   final Widget? home;
   final RouterConfig<Object>? routerConfig;
@@ -65,7 +76,7 @@ class MochiApp extends StatelessWidget {
                 behavior: const MochiScrollBehavior(),
                 // Above the navigator, so a toast outlives the page that raised it and stays
                 // visible over a dialog.
-                child: MochiToaster(child: child!),
+                child: MochiToaster(alignment: toastAlignment, maxVisible: maxVisibleToasts, child: child!),
               ),
             ),
           ),

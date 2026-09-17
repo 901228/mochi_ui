@@ -108,6 +108,32 @@ void main() {
     expect(find.text("Record deleted"), findsNothing);
   });
 
+  testWidgets("stacks against the corner it was given, not the middle", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () => showMochiToast(context, title: const Text("Saved")),
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+    final toast = tester.getRect(find.byType(MochiToast));
+    expect(800 - toast.right, lessThan(24), reason: "against the right edge");
+    expect(600 - toast.bottom, lessThan(24), reason: "against the bottom edge");
+  });
+
   testWidgets("the close button sits against the right edge", (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text("raise"));

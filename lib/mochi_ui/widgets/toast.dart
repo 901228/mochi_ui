@@ -225,11 +225,14 @@ class MochiToasterState extends State<MochiToaster> {
                         : CrossAxisAlignment.center,
                     spacing: g.space.xs,
                     children: [
-                      for (final request in _toasts)
+                      for (final (index, request) in _toasts.indexed)
                         _Toast(
                           key: request.key,
                           request: request,
                           alignment: alignment,
+                          // The deck sits under the toast at the end new ones arrive at, so the
+                          // hint appears where the next one will.
+                          waiting: index == _toasts.length - 1 ? _waiting.length : 0,
                           onRemoved: () => _remove(request),
                         ),
                     ],
@@ -256,11 +259,20 @@ class _ToastRequest {
 }
 
 class _Toast extends StatefulWidget {
-  const _Toast({super.key, required this.request, required this.alignment, required this.onRemoved});
+  const _Toast({
+    super.key,
+    required this.request,
+    required this.alignment,
+    required this.onRemoved,
+    this.waiting = 0,
+  });
 
   final _ToastRequest request;
   final Alignment alignment;
   final VoidCallback onRemoved;
+
+  /// How many toasts are queued behind this one, drawn as a deck under it.
+  final int waiting;
 
   @override
   State<_Toast> createState() => _ToastState();
@@ -332,13 +344,19 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
       // slide into place instead of jumping once it is gone.
       child: SizeTransition(
         sizeFactor: _animation.drive(CurveTween(curve: motion.transitionCurve)),
-        alignment: Alignment(0, widget.alignment.y > 0 ? 1 : -1),
+        // Both axes: the size transition lays its child out in a box the full width of the stack,
+        // so leaving the horizontal alignment at zero would centre every toast on the screen.
+        alignment: Alignment(widget.alignment.x, widget.alignment.y > 0 ? 1 : -1),
         child: MochiSurfaceTransition(
           animation: _animation,
           transition: MochiTransition.slide,
           slideFrom: _edge,
           scrim: false,
-          child: widget.request.toast,
+          child: _Deck(
+            waiting: widget.waiting,
+            towards: widget.alignment.y > 0 ? 1 : -1,
+            child: widget.request.toast,
+          ),
         ),
       ),
     );
@@ -350,6 +368,61 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
 Widget? _intentIcon(BuildContext context, MochiIntent intent) {
   final icon = context.theme.icons.of(intent);
   return icon == null ? null : Icon(icon);
+}
+
+/// Draws the queued toasts as edges peeking out from under this one, like a deck of cards.
+///
+/// Nothing is said about how many are waiting beyond "more than one": a number would be read as
+/// something to act on, and there is nothing to do but wait.
+class _Deck extends StatelessWidget {
+  const _Deck({required this.waiting, required this.towards, required this.child});
+
+  final int waiting;
+
+  /// 1 when the stack grows downwards, -1 when it grows up. The deck peels off the far side.
+  final int towards;
+  final Widget child;
+
+  /// However many are queued, at most this many edges: past two it reads as a mess rather than
+  /// as a pile.
+  static const _maxLayers = 2;
+
+  @override
+  Widget build(BuildContext context) {
+    if (waiting == 0) return child;
+
+    final theme = context.theme;
+    final g = theme.geometry;
+    final layers = waiting.clamp(1, _maxLayers);
+    const step = 5.0;
+    const inset = 8.0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        for (var layer = layers; layer >= 1; layer--)
+          Positioned(
+            left: inset * layer,
+            right: inset * layer,
+            top: towards > 0 ? step * layer : null,
+            bottom: towards > 0 ? null : step * layer,
+            // Only the sliver that shows past the toast above needs drawing, but a box is easier
+            // to reason about than a clipped edge and the rest is covered anyway.
+            height: 24,
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
+                color: theme.colors.overlay,
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: g.radius.md,
+                  side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+                ),
+              ),
+            ),
+          ),
+        child,
+      ],
+    );
+  }
 }
 
 /// Raises a [MochiToast] over the page.
