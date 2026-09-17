@@ -214,4 +214,75 @@ void main() {
       expect(find.byType(MochiDialog), findsOneWidget);
     });
   });
+
+  group("helpers", () {
+    Widget host({required Future<void> Function(BuildContext context) onPress}) => MediaQuery(
+      data: const MediaQueryData(size: Size(1000, 700)),
+      child: MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Builder(
+          builder: (context) => Center(
+            child: MochiButton(onPress: () => onPress(context), child: const Text("open")),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("showMochiConfirm answers true, false and false again when dismissed", (tester) async {
+      bool? answer;
+      await tester.pumpWidget(
+        host(
+          onPress: (context) async {
+            answer = await showMochiConfirm(
+              context,
+              title: "Delete record?",
+              message: "This cannot be undone.",
+              confirmLabel: "Delete",
+              destructive: true,
+            );
+          },
+        ),
+      );
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      expect(find.text("This cannot be undone."), findsOneWidget);
+      await tester.tap(find.text("Delete"));
+      await tester.pumpAndSettle();
+      expect(answer, isTrue);
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Cancel"));
+      await tester.pumpAndSettle();
+      expect(answer, isFalse);
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      expect(answer, isFalse, reason: "dismissed is not agreed");
+    });
+
+    testWidgets("showMochiAlert closes on its one button", (tester) async {
+      var done = false;
+      await tester.pumpWidget(
+        host(
+          onPress: (context) async {
+            await showMochiAlert(context, title: "Import finished", message: "42 records added.");
+            done = true;
+          },
+        ),
+      );
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      expect(find.text("42 records added."), findsOneWidget);
+
+      await tester.tap(find.text("OK"));
+      await tester.pumpAndSettle();
+      expect(done, isTrue);
+      expect(find.text("Import finished"), findsNothing);
+    });
+  });
 }

@@ -650,8 +650,10 @@ class _DialogSampleState extends State<_DialogSample> {
   Widget build(BuildContext context) {
     final g = context.theme.geometry;
 
-    return Row(
+    return Wrap(
       spacing: g.space.md,
+      runSpacing: g.space.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
@@ -664,6 +666,32 @@ class _DialogSampleState extends State<_DialogSample> {
           size: MochiButtonSize.sm,
           onPress: () => _long(context),
           child: const Text("long body"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () async {
+            final yes = await showMochiConfirm(
+              context,
+              title: "Delete record?",
+              message: "This record will be permanently deleted. There is no undo yet.",
+              confirmLabel: "Delete",
+              destructive: true,
+            );
+            if (!context.mounted) return;
+            setState(() => _answer = yes ? "deleted" : "kept");
+          },
+          child: const Text("confirm helper"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () async {
+            await showMochiAlert(context, title: "Import finished", message: "42 records added.");
+            if (!context.mounted) return;
+            setState(() => _answer = "acknowledged");
+          },
+          child: const Text("alert helper"),
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,

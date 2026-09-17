@@ -3,7 +3,10 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/motion.dart";
 import "../theme/responsive.dart";
+import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
+import "../theme/tone.dart";
+import "button.dart";
 import "sheet.dart";
 import "transitions.dart";
 
@@ -262,4 +265,87 @@ Future<T?> showMochiModal<T>(
       ),
     ),
   };
+}
+
+/// Asks a yes-or-no question and returns the answer.
+///
+/// False when the question was dismissed rather than answered, so a caller can act on a plain
+/// `if (await showMochiConfirm(...))`. Set [destructive] for something that cannot be undone: the
+/// confirming button then carries the danger intent.
+///
+/// ```dart
+/// if (await showMochiConfirm(
+///   context,
+///   title: "Delete record?",
+///   message: "This record will be permanently deleted.",
+///   confirmLabel: "Delete",
+///   destructive: true,
+/// )) {
+///   await dao.delete(id);
+/// }
+/// ```
+Future<bool> showMochiConfirm(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String confirmLabel = "OK",
+  String cancelLabel = "Cancel",
+  bool destructive = false,
+  MochiModalForm? form,
+  bool barrierDismissible = true,
+}) async {
+  final answer = await showMochiModal<bool>(
+    context,
+    form: form,
+    barrierDismissible: barrierDismissible,
+    title: Text(title),
+    body: message == null ? null : Text(message),
+    actions: [
+      MochiModalAction(label: cancelLabel, appearance: MochiButtonAppearance.outlined, value: false),
+      MochiModalAction(label: confirmLabel, intent: destructive ? MochiIntent.danger : null, value: true),
+    ],
+  );
+
+  return answer ?? false;
+}
+
+/// Says something that only needs acknowledging.
+Future<void> showMochiAlert(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String dismissLabel = "OK",
+  MochiIntent? intent,
+  MochiModalForm? form,
+}) => showMochiModal<void>(
+  context,
+  form: form,
+  title: Text(title),
+  body: message == null ? null : Text(message),
+  actions: [MochiModalAction(label: dismissLabel, intent: intent)],
+);
+
+/// A button in a modal that pops the modal with [value] when pressed.
+///
+/// Saves every caller writing the same `Navigator.of(context).pop(...)`, and is what the helpers
+/// above are built from.
+class MochiModalAction<T> extends StatelessWidget {
+  const MochiModalAction({super.key, required this.label, this.value, this.intent, this.appearance});
+
+  final String label;
+
+  /// What the modal is popped with. Null pops with nothing, which is what a plain acknowledgement
+  /// wants.
+  final T? value;
+
+  final MochiIntent? intent;
+  final MochiButtonAppearance? appearance;
+
+  @override
+  Widget build(BuildContext context) => MochiButton(
+    intent: intent,
+    appearance: appearance,
+    onPress: () => Navigator.of(context).pop(value),
+    child: Text(label),
+  );
 }
