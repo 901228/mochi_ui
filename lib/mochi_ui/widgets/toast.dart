@@ -188,9 +188,22 @@ class MochiToasterState extends State<MochiToaster> {
   /// One taking a slot that just came free was already on screen as a card in the deck, so it
   /// grows into place from there rather than arriving from off screen.
   void _fill({bool promoted = false}) {
-    while (_waiting.isNotEmpty && _toasts.length < widget.maxVisible) {
+    var held = _toasts.where((request) => !request.leaving).length;
+    while (_waiting.isNotEmpty && held < widget.maxVisible) {
       _toasts.add(_waiting.removeAt(0)..promoted = promoted);
+      held++;
     }
+  }
+
+  /// A toast that has started leaving gives up its slot straight away, so the one taking it grows
+  /// while that one shrinks. Waiting for the exit to finish would collapse the stack and then
+  /// stretch it again, which shoves everything above the gap down and back up.
+  void _startLeaving(_ToastRequest request) {
+    if (!mounted || request.leaving) return;
+    setState(() {
+      request.leaving = true;
+      _fill(promoted: true);
+    });
   }
 
   void _remove(_ToastRequest request) {
@@ -226,7 +239,6 @@ class MochiToasterState extends State<MochiToaster> {
                         : alignment.x > 0
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.center,
-                    spacing: g.space.xs,
                     children: [
                       for (final (index, request) in _toasts.indexed)
                         _Toast(
@@ -236,6 +248,11 @@ class MochiToasterState extends State<MochiToaster> {
                           // The deck sits under the toast at the end new ones arrive at, so the
                           // hint appears where the next one will.
                           waiting: index == _toasts.length - 1 ? _waiting.length : 0,
+                          // The gap between toasts belongs to the toast, not to the column: it has
+                          // to be given up along with the height when one leaves, or the stack
+                          // above shifts by that gap as one passes another.
+                          gap: g.space.xs,
+                          onLeaving: () => _startLeaving(request),
                           onRemoved: () => _remove(request),
                         ),
                     ],
@@ -260,6 +277,9 @@ class _ToastRequest {
   /// Whether this one was already showing as a card in the deck before it came up.
   bool promoted = false;
 
+  /// Set the moment it starts leaving, so its slot can be filled while it is still on its way out.
+  bool leaving = false;
+
   /// Set by the entry once it is on screen.
   VoidCallback? dismiss;
 }
@@ -270,12 +290,20 @@ class _Toast extends StatefulWidget {
     required this.request,
     required this.alignment,
     required this.onRemoved,
+    required this.onLeaving,
+    required this.gap,
     this.waiting = 0,
   });
 
   final _ToastRequest request;
   final Alignment alignment;
   final VoidCallback onRemoved;
+
+  /// Called as the exit starts, while the toast is still on screen.
+  final VoidCallback onLeaving;
+
+  /// Space kept between this toast and the one before it, counted as part of its own height.
+  final double gap;
 
   /// How many toasts are queued behind this one, drawn as a deck under it.
   final int waiting;
@@ -299,7 +327,9 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     super.didChangeDependencies();
     final motion = context.theme.motion;
     _animation
-      ..duration = motion.transitionDuration
+      // A promoted toast is filling the gap another one is leaving behind, so it grows at exactly
+      // the rate that gap closes. Anything else and the stack above the gap drifts as they pass.
+      ..duration = widget.request.promoted ? motion.transitionReverseDuration : motion.transitionDuration
       ..reverseDuration = motion.transitionReverseDuration;
 
     if (_animation.isDismissed && !_animation.isAnimating) {
@@ -323,6 +353,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
   void _leave() {
     _timer?.cancel();
     if (!mounted || _animation.status == AnimationStatus.reverse) return;
+    widget.onLeaving();
     _animation.reverse().then((_) {
       if (_animation.isDismissed) widget.onRemoved();
     });
@@ -363,9 +394,15 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
         animation: _animation,
         builder: (context, child) {
           final leaving = _animation.status == AnimationStatus.reverse;
-          final t = (leaving ? motion.transitionReverseCurve : motion.transitionCurve).transform(
-            _animation.value,
-          );
+          // A promoted toast takes the mirror of the exit curve, not the exit curve itself: what
+          // it gains has to be exactly what the toast on its way out gives up at that instant, or
+          // the stack above the two of them drifts as they pass.
+          final curve = switch ((leaving, widget.request.promoted)) {
+            (true, _) => motion.transitionReverseCurve,
+            (false, true) => FlippedCurve(motion.transitionReverseCurve),
+            (false, false) => motion.transitionCurve,
+          };
+          final t = curve.transform(_animation.value);
           final travel = leaving ? _leaveTowards : _enterFrom;
 
           return Align(
@@ -377,16 +414,22 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
             heightFactor: t,
             // The deck sits outside the fade and the travel, so a toast leaving slides out from
             // over its own queue rather than carrying it along.
-            child: _Deck(
-              waiting: widget.waiting,
-              towards: _towards,
-              child: Opacity(
-                opacity: t.clamp(0, 1),
-                child: Transform.scale(
-                  // A promoted toast was a card in the deck a moment ago, so it grows from that
-                  // card's size instead of arriving at full size.
-                  scale: widget.request.promoted ? lerpDouble(_deckScale, 1, t) : 1,
-                  child: FractionalTranslation(translation: travel * (1 - t), child: child),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: _towards > 0 ? widget.gap : 0,
+                bottom: _towards > 0 ? 0 : widget.gap,
+              ),
+              child: _Deck(
+                waiting: widget.waiting,
+                towards: _towards,
+                child: Opacity(
+                  opacity: t.clamp(0, 1),
+                  child: Transform.scale(
+                    // A promoted toast was a card in the deck a moment ago, so it grows from that
+                    // card's size instead of arriving at full size.
+                    scale: widget.request.promoted ? lerpDouble(_deckScale, 1, t) : 1,
+                    child: FractionalTranslation(translation: travel * (1 - t), child: child),
+                  ),
                 ),
               ),
             ),
@@ -434,17 +477,34 @@ class _Deck extends StatelessWidget {
     final g = theme.geometry;
     final layers = waiting.clamp(1, _maxLayers);
 
+    final motion = theme.motion;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         // Each card is the full height of the toast, offset past its edge so only that sliver
         // shows. Positioned outside the stack's own box, which is why nothing is clipped here.
         for (var layer = layers; layer >= 1; layer--)
-          Positioned(
-            left: _inset * layer,
-            right: _inset * layer,
-            top: towards > 0 ? _step * layer : -_step * layer,
-            bottom: towards > 0 ? -_step * layer : _step * layer,
+          // Every card arrives from one layer deeper than it belongs. A card appearing at the
+          // back of the deck slides up out of nothing, and when the front one is taken to become
+          // a toast the deck is rebuilt one card shorter — each card then animates up into the
+          // place the one in front of it just left.
+          TweenAnimationBuilder(
+            key: ValueKey(layer),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: motion.transitionDuration,
+            curve: motion.transitionCurve,
+            builder: (context, t, card) {
+              final depth = layer + 1 - t;
+
+              return Positioned(
+                left: _inset * depth,
+                right: _inset * depth,
+                top: towards > 0 ? _step * depth : -_step * depth,
+                bottom: towards > 0 ? -_step * depth : _step * depth,
+                child: Opacity(opacity: t, child: card),
+              );
+            },
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 color: theme.colors.overlay,

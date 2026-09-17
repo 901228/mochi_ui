@@ -134,6 +134,49 @@ void main() {
     expect(600 - toast.bottom, lessThan(24), reason: "against the bottom edge");
   });
 
+  testWidgets("closing a middle toast holds the ones above it still", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  for (var i = 1; i <= 4; i++) {
+                    showMochiToast(
+                      context,
+                      title: Text("Message $i"),
+                      closeable: false,
+                      duration: i == 2 ? const Duration(milliseconds: 500) : const Duration(minutes: 1),
+                    );
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+    final oldest = tester.getRect(find.text("Message 1"));
+
+    // Message 2 leaves and Message 4 comes up in its place; the one above the gap stays put
+    // rather than being shoved down and pulled back.
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(tester.getRect(find.text("Message 1")).top, closeTo(oldest.top, 4));
+
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.text("Message 1")).top, closeTo(oldest.top, 1));
+    expect(find.text("Message 4"), findsOneWidget);
+  });
+
   testWidgets("the close button sits against the right edge", (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text("raise"));
