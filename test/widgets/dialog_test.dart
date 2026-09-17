@@ -264,6 +264,66 @@ void main() {
       expect(answer, isFalse, reason: "dismissed is not agreed");
     });
 
+    testWidgets("showMochiChoice returns the option picked, and null when dismissed", (tester) async {
+      String? picked = "untouched";
+      await tester.pumpWidget(
+        host(
+          onPress: (context) async {
+            picked = await showMochiChoice<String>(
+              context,
+              title: "Move to",
+              selected: "3x3",
+              choices: const [
+                MochiChoice(value: "3x3", label: "3x3"),
+                MochiChoice(value: "4x4", label: "4x4", description: "Bigger cube"),
+                MochiChoice(value: "skewb", label: "Skewb", enabled: false),
+              ],
+            );
+          },
+        ),
+      );
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      expect(find.text("Bigger cube"), findsOneWidget);
+
+      await tester.tap(find.text("4x4"));
+      await tester.pumpAndSettle();
+      expect(picked, "4x4");
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Cancel"));
+      await tester.pumpAndSettle();
+      expect(picked, isNull);
+    });
+
+    testWidgets("a disabled choice can not be picked", (tester) async {
+      String? picked = "untouched";
+      await tester.pumpWidget(
+        host(
+          onPress: (context) async {
+            picked = await showMochiChoice<String>(
+              context,
+              title: "Move to",
+              cancelLabel: null,
+              choices: const [
+                MochiChoice(value: "3x3", label: "3x3"),
+                MochiChoice(value: "skewb", label: "Skewb", enabled: false),
+              ],
+            );
+          },
+        ),
+      );
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Skewb"));
+      await tester.pumpAndSettle();
+      expect(picked, "untouched", reason: "still open, nothing answered");
+      expect(find.text("Move to"), findsOneWidget);
+    });
+
     testWidgets("showMochiAlert closes on its one button", (tester) async {
       var done = false;
       await tester.pumpWidget(

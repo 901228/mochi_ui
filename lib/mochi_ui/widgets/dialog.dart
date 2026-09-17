@@ -8,6 +8,7 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
 import "sheet.dart";
+import "tile.dart";
 import "transitions.dart";
 
 /// A modal box: a title, some content, and the actions that answer it.
@@ -348,4 +349,99 @@ class MochiModalAction<T> extends StatelessWidget {
     onPress: () => Navigator.of(context).pop(value),
     child: Text(label),
   );
+}
+
+/// One of the options offered by [showMochiChoice].
+@immutable
+class MochiChoice<T> {
+  const MochiChoice({
+    required this.value,
+    required this.label,
+    this.description,
+    this.icon,
+    this.intent,
+    this.enabled = true,
+  });
+
+  /// What [showMochiChoice] returns when this option is picked.
+  final T value;
+
+  final String label;
+
+  /// A second line under the label.
+  final String? description;
+
+  final IconData? icon;
+
+  /// Colours the row when it is the one already chosen, and marks out an option that stands
+  /// apart from the rest.
+  final MochiIntent? intent;
+
+  final bool enabled;
+}
+
+/// Asks which one, and returns it — or null if the question was dismissed.
+///
+/// Takes the options as data rather than widgets for the same reason [showMochiModal] takes the
+/// parts of a question: a dialog and a sheet lay a list out differently.
+Future<T?> showMochiChoice<T>(
+  BuildContext context, {
+  required String title,
+  required List<MochiChoice<T>> choices,
+  String? message,
+  T? selected,
+  String? cancelLabel = "Cancel",
+  MochiModalForm? form,
+  bool barrierDismissible = true,
+}) => showMochiModal<T>(
+  context,
+  form: form,
+  barrierDismissible: barrierDismissible,
+  title: Text(title),
+  body: _ChoiceList(choices: choices, selected: selected, message: message),
+  actions: [
+    if (cancelLabel != null)
+      MochiModalAction<T>(label: cancelLabel, appearance: MochiButtonAppearance.outlined),
+  ],
+);
+
+class _ChoiceList<T> extends StatelessWidget {
+  const _ChoiceList({required this.choices, required this.selected, required this.message});
+
+  final List<MochiChoice<T>> choices;
+  final T? selected;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      spacing: g.space.sm,
+      children: [
+        if (message case final message?) Text(message),
+        MochiTileGroup(
+          reservePrefix: choices.any((choice) => choice.icon != null),
+          children: [
+            for (final choice in choices)
+              MochiTile(
+                title: Text(choice.label),
+                subtitle: choice.description == null ? null : Text(choice.description!),
+                prefix: choice.icon == null ? null : Icon(choice.icon),
+                intent: choice.intent ?? MochiIntent.primary,
+                enabled: choice.enabled,
+                selected: choice.value == selected,
+                // The check marks what is already chosen, so the list reads the same whether or
+                // not picking one closes it.
+                suffix: choice.value == selected ? Icon(theme.icons.check) : null,
+                onPress: () => Navigator.of(context).pop(choice.value),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }

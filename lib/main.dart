@@ -579,6 +579,7 @@ class _DialogSample extends StatefulWidget {
 
 class _DialogSampleState extends State<_DialogSample> {
   String _answer = "nothing yet";
+  String _session = "3x3";
 
   Future<void> _confirm(BuildContext context) async {
     final answer = await showMochiDialog<bool>(
@@ -682,6 +683,29 @@ class _DialogSampleState extends State<_DialogSample> {
             setState(() => _answer = yes ? "deleted" : "kept");
           },
           child: const Text("confirm helper"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiButtonSize.sm,
+          onPress: () async {
+            final picked = await showMochiChoice<String>(
+              context,
+              title: "Move to session",
+              message: "Records move with the session they belong to.",
+              selected: _session,
+              choices: const [
+                MochiChoice(value: "3x3", label: "3x3", icon: TablerIcons.cube),
+                MochiChoice(value: "4x4", label: "4x4", description: "Bigger cube", icon: TablerIcons.cube),
+                MochiChoice(value: "skewb", label: "Skewb", icon: TablerIcons.triangle, enabled: false),
+              ],
+            );
+            if (!context.mounted || picked == null) return;
+            setState(() {
+              _session = picked;
+              _answer = "moved to $picked";
+            });
+          },
+          child: const Text("choice helper"),
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
