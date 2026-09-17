@@ -3,6 +3,7 @@ import "dart:async";
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
+import "../theme/icons.dart";
 import "../theme/responsive.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
@@ -309,24 +310,52 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     });
   }
 
+  /// The edge a toast comes from and goes back to: the side of the screen it is stacked against,
+  /// or the top or bottom when the stack sits in the middle. Leaving sideways keeps a toast from
+  /// travelling across the ones below it on its way out.
+  AxisDirection get _edge => switch (widget.alignment) {
+    final a when a.x > 0 => AxisDirection.right,
+    final a when a.x < 0 => AxisDirection.left,
+    final a when a.y > 0 => AxisDirection.down,
+    _ => AxisDirection.up,
+  };
+
   @override
   Widget build(BuildContext context) {
+    final motion = context.theme.motion;
+
     return MouseRegion(
       // A toast with an Undo in it has to still be there when the pointer arrives.
       onEnter: (_) => _timer?.cancel(),
       onExit: (_) => _wait(),
-      child: MochiSurfaceTransition(
-        animation: _animation,
-        transition: MochiTransition.slide,
-        slideFrom: widget.alignment.y > 0 ? AxisDirection.down : AxisDirection.up,
-        scrim: false,
-        child: widget.request.toast,
+      // The gap a toast leaves behind closes over the same time as its exit, so the ones still up
+      // slide into place instead of jumping once it is gone.
+      child: SizeTransition(
+        sizeFactor: _animation.drive(CurveTween(curve: motion.transitionCurve)),
+        alignment: Alignment(0, widget.alignment.y > 0 ? 1 : -1),
+        child: MochiSurfaceTransition(
+          animation: _animation,
+          transition: MochiTransition.slide,
+          slideFrom: _edge,
+          scrim: false,
+          child: widget.request.toast,
+        ),
       ),
     );
   }
 }
 
+/// The icon an intent speaks for itself with, so a success or a failure doesn't need one passed
+/// in every time.
+Widget? _intentIcon(BuildContext context, MochiIntent intent) {
+  final icon = context.theme.icons.of(intent);
+  return icon == null ? null : Icon(icon);
+}
+
 /// Raises a [MochiToast] over the page.
+///
+/// [intent] brings its own icon from [MochiIcons] unless [icon] says otherwise, so an alert is
+/// `showMochiToast(context, title: ..., intent: MochiIntent.danger)`.
 ///
 /// Returns a handle that takes it away early, for a toast whose reason has passed.
 MochiToastHandle showMochiToast(
@@ -344,10 +373,12 @@ MochiToastHandle showMochiToast(
 
   handle = toaster.show(
     Builder(
+      // Built in the toaster's context rather than the caller's, so the icon for an intent comes
+      // from the theme the toast is painted in.
       builder: (context) => MochiToast(
         title: title,
         description: description,
-        icon: icon,
+        icon: icon ?? _intentIcon(context, intent),
         action: action,
         intent: intent,
         onClose: closeable ? () => handle.dismiss() : null,

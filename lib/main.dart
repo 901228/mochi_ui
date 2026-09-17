@@ -760,17 +760,27 @@ class _ToastSample extends StatelessWidget {
       spacing: g.space.sm,
       runSpacing: g.space.sm,
       children: [
-        MochiButton(
-          appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
-          onPress: () => showMochiToast(
-            context,
-            title: const Text("Saved"),
-            icon: const Icon(TablerIcons.check),
-            intent: MochiIntent.success,
+        for (final intent in [
+          MochiIntent.neutral,
+          MochiIntent.success,
+          MochiIntent.warning,
+          MochiIntent.danger,
+        ])
+          MochiButton(
+            appearance: MochiButtonAppearance.outlined,
+            size: MochiButtonSize.sm,
+            onPress: () => showMochiToast(
+              context,
+              intent: intent,
+              title: Text(switch (intent) {
+                MochiIntent.success => "Saved",
+                MochiIntent.warning => "Check your connection",
+                MochiIntent.danger => "Could not save",
+                _ => "Nothing to report",
+              }),
+            ),
+            child: Text(intent.name),
           ),
-          child: const Text("plain"),
-        ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
           size: MochiButtonSize.sm,
