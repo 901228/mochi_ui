@@ -208,10 +208,11 @@ void main() {
     await tester.tap(find.text("raise"));
     await tester.pumpAndSettle();
 
-    final widths = tester
-        .widgetList(find.byType(MochiToast))
-        .map((toast) => tester.getRect(find.byWidget(toast)).width)
-        .toSet();
+    // Only the ones standing in the stack: the queue behind them is drawn smaller on purpose.
+    final widths = {
+      for (final title in ["Hi", "A much longer message, number 2", "A much longer message, number 3"])
+        tester.getRect(find.ancestor(of: find.text(title), matching: find.byType(MochiToast))).width,
+    };
     expect(widths, hasLength(1), reason: "a ragged stack has nothing for the deck to line up with");
     expect(widths.single, MochiGeometry.standard.toastWidth);
   });
@@ -341,11 +342,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text("Message 1"), findsOneWidget, reason: "the first one raised is shown first");
     expect(find.text("Message 3"), findsOneWidget);
-    expect(find.text("Message 4"), findsNothing, reason: "waiting, not dropped");
+
+    // Waiting its turn: in the deck past the end of the stack, where only its edge shows.
+    final third = tester.getRect(
+      find.ancestor(of: find.text("Message 3"), matching: find.byType(MochiToast)),
+    );
+    final fourth = tester.getRect(
+      find.ancestor(of: find.text("Message 4"), matching: find.byType(MochiToast)),
+    );
+    expect(fourth.width, lessThan(third.width), reason: "in the deck, drawn smaller than the stack");
 
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
     expect(find.text("Message 1"), findsNothing);
-    expect(find.text("Message 4"), findsOneWidget);
+    expect(
+      tester.getRect(find.ancestor(of: find.text("Message 4"), matching: find.byType(MochiToast))).width,
+      third.width,
+      reason: "came up into the stack, at the stack's width",
+    );
   });
 }

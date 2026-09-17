@@ -270,7 +270,7 @@ class MochiToasterState extends State<MochiToaster> {
                       children: [
                         // Outside the toasts rather than under the newest one: the deck stands
                         // still while a toast leaves, and the cards shuffle up on their own.
-                        _DeckStrip(waiting: _waiting.length, towards: towards),
+                        _Deck(waiting: [for (final request in _waiting) request.toast], towards: towards),
                         for (final request in _toasts.reversed)
                           _Toast(
                             key: request.key,
@@ -510,40 +510,42 @@ Widget? _intentIcon(BuildContext context, MochiIntent intent) {
   return icon == null ? null : Icon(icon);
 }
 
-/// Shows the toasts waiting their turn as the top edges of a small pile of cards, at the end of
-/// the stack the next one will come up at.
+/// The toasts waiting their turn, each showing the edge of itself past the end of the stack, like
+/// a pile of cards.
 ///
-/// Its own item in the stack rather than something drawn under the newest toast: a toast leaving
-/// must not take the queue with it, and the cards have to be able to shuffle forward on their own
-/// while that happens.
+/// They are the real toasts, not stand-ins drawn to look like them: the front one is what comes up
+/// next, and the only difference between it and a toast in the stack is how much of it can be
+/// seen. Only its trailing edge shows, so nothing of the message is legible there — which is the
+/// point, since there is nothing to do about it but wait.
 ///
-/// Nothing is said about how many are waiting beyond "more than one": a number would be read as
-/// something to act on, and there is nothing to do but wait.
-class _DeckStrip extends StatelessWidget {
-  const _DeckStrip({required this.waiting, required this.towards});
+/// Its own item in the column rather than something drawn under the newest toast: a toast leaving
+/// must not take the queue with it.
+class _Deck extends StatelessWidget {
+  const _Deck({required this.waiting, required this.towards});
 
-  final int waiting;
+  /// The toasts still queued, newest last.
+  final List<Widget> waiting;
 
   /// 1 when the stack grows downwards, -1 when it grows up.
   final double towards;
 
-  /// However many are queued, at most this many cards: past two it reads as a mess rather than
+  /// However many are queued, at most this many show: past two it reads as a mess rather than
   /// as a pile.
   static const _maxLayers = 2;
 
-  /// How much of each card shows, and how much narrower it is than the one in front of it.
-  static const _step = 6.0;
-  static const _inset = 10.0;
+  /// How much of each one shows, and how much of the width it gives up, per place back in the
+  /// queue. The front of the queue matches where a promoted toast starts from, so the two are the
+  /// same thing seen twice: see [_ToastState._deckScale].
+  static const step = 6.0;
+  static const _shrink = 0.06;
 
-  /// How far a card reaches up behind the toast in front of it. Anything past the sliver that
-  /// shows is hidden by that toast, which is painted over it.
-  static const _hidden = 40.0;
+  /// How far each reaches back behind the toast in front of it. All of that stays hidden.
+  static const _hidden = 60.0;
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.theme;
-    final motion = theme.motion;
-    final layers = waiting.clamp(0, _maxLayers);
+    final motion = context.theme.motion;
+    final layers = waiting.length.clamp(0, _maxLayers);
 
     return TweenAnimationBuilder(
       tween: Tween<double>(begin: 0, end: layers.toDouble()),
@@ -555,18 +557,19 @@ class _DeckStrip extends StatelessWidget {
         height: 0,
         child: OverflowBox(
           alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
-          // Only the band past the end of the stack, and clipped to it: the rest of each card
-          // reaches back behind the toast in front, and must stay hidden even while that toast is
+          // Only the band past the end of the stack, and clipped to it: the rest of each toast
+          // reaches back behind the one in front, and must stay hidden even while that one is
           // sliding out of the way.
-          maxHeight: _step * _maxLayers,
+          maxHeight: step * _maxLayers,
           child: Stack(
             clipBehavior: Clip.hardEdge,
             fit: StackFit.passthrough,
             children: [
-              // Furthest back first, so each card lies over the one behind it. Every card slides
-              // out from under the toast in front as its turn in the queue comes round.
+              // Furthest back first, so each lies over the one behind it. Every one slides out
+              // from under the toast in front as its turn in the queue comes round.
               for (var layer = _maxLayers - 1; layer >= 0; layer--)
-                if ((shown - layer).clamp(0, 1) > 0) _card(theme, layer, (shown - layer).clamp(0, 1)),
+                if (layer < waiting.length && (shown - layer).clamp(0, 1) > 0)
+                  _card(layer, (shown - layer).clamp(0, 1)),
             ],
           ),
         ),
@@ -574,30 +577,22 @@ class _DeckStrip extends StatelessWidget {
     );
   }
 
-  /// [reveal] is how much of this card's own sliver has come out, 0 to 1.
-  Widget _card(MochiTheme theme, int layer, double reveal) {
-    final g = theme.geometry;
-    final out = _step * layer + _step * reveal;
-    final corner = g.radius.md.topLeft;
+  /// [reveal] is how much of this one's own sliver has come out, 0 to 1.
+  Widget _card(int layer, double reveal) {
+    final out = step * layer + step * reveal;
 
     return Positioned(
-      left: _inset * (layer + 1),
-      right: _inset * (layer + 1),
+      left: 0,
+      right: 0,
       // Anchored at the end of the stack and reaching back behind the toast there: only the part
-      // past that toast's edge is ever seen, which is a card's trailing edge.
+      // past that toast's edge is ever seen, which is this one's trailing edge.
       top: towards > 0 ? -_hidden : null,
       bottom: towards > 0 ? null : -_hidden,
       height: _hidden + out,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: theme.colors.overlay,
-          shape: RoundedSuperellipseBorder(
-            borderRadius: towards > 0
-                ? BorderRadius.vertical(bottom: corner)
-                : BorderRadius.vertical(top: corner),
-            side: BorderSide(color: theme.colors.border, width: g.borderWidth),
-          ),
-        ),
+      child: Align(
+        alignment: towards > 0 ? Alignment.bottomCenter : Alignment.topCenter,
+        heightFactor: 1,
+        child: Transform.scale(scale: 1 - _shrink * (layer + 1), child: waiting[layer]),
       ),
     );
   }
