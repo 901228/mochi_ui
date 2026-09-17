@@ -86,6 +86,7 @@
 - [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單。要含 **multi select**（多選時用 badge 顯示已選項目）
 - [ ] ⭐ Autocomplete — 建議加，但排在 TextField + Select 之後：它等於兩者相加，而且 widgets 層已經有 `RawAutocomplete` 可以包，成本低
 - [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
+- [ ] ⭐ SearchBar — TextField 加上搜尋圖示、清除鈕、debounce；接上 Autocomplete 就是搜尋建議
 - [ ] ⭐ Slider — 檢查時間、音量類設定
 - [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）
 
