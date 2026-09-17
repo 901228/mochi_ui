@@ -160,21 +160,41 @@ class MochiToaster extends StatefulWidget {
 
 class MochiToasterState extends State<MochiToaster> {
   final _toasts = <_ToastRequest>[];
+  final _waiting = <_ToastRequest>[];
 
   /// Raises [toast]. See [showMochiToast] for the usual way in.
   MochiToastHandle show(Widget toast, {Duration duration = const Duration(seconds: 4)}) {
     final request = _ToastRequest(toast: toast, duration: duration);
     setState(() {
-      _toasts.add(request);
-      if (_toasts.length > widget.maxVisible) _toasts.removeAt(0);
+      _waiting.add(request);
+      _fill();
     });
 
-    return MochiToastHandle._(() => request.dismiss?.call());
+    return MochiToastHandle._(() {
+      // Nothing has been seen of a toast still waiting its turn, so it just leaves the queue.
+      if (_waiting.remove(request)) {
+        setState(() {});
+        return;
+      }
+      request.dismiss?.call();
+    });
+  }
+
+  /// Moves waiting toasts up as room appears. Raising more than [MochiToaster.maxVisible] at once
+  /// queues the rest rather than dropping them: a toast nobody saw may as well not have been
+  /// raised, and the one pushed out would be the oldest, which is the one that has been waiting.
+  void _fill() {
+    while (_waiting.isNotEmpty && _toasts.length < widget.maxVisible) {
+      _toasts.add(_waiting.removeAt(0));
+    }
   }
 
   void _remove(_ToastRequest request) {
     if (!mounted) return;
-    setState(() => _toasts.remove(request));
+    setState(() {
+      _toasts.remove(request);
+      _fill();
+    });
   }
 
   @override

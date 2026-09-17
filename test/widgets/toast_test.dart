@@ -118,14 +118,37 @@ void main() {
     expect(toast.right - close.right, lessThan(24), reason: "against the edge, not trailing the text");
   });
 
-  testWidgets("only the newest few stay up", (tester) async {
-    await tester.pumpWidget(app());
-    for (var i = 0; i < 5; i++) {
-      await tester.tap(find.text("raise"));
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-    await tester.pumpAndSettle();
+  testWidgets("only a few are up at once, and the rest wait their turn", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  for (var i = 1; i <= 4; i++) {
+                    showMochiToast(context, title: Text("Message $i"), duration: const Duration(seconds: 2));
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
 
-    expect(find.text("Record deleted"), findsNWidgets(3));
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+    expect(find.text("Message 1"), findsOneWidget, reason: "the first one raised is shown first");
+    expect(find.text("Message 3"), findsOneWidget);
+    expect(find.text("Message 4"), findsNothing, reason: "waiting, not dropped");
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.text("Message 1"), findsNothing);
+    expect(find.text("Message 4"), findsOneWidget);
   });
 }
