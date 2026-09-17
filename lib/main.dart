@@ -535,8 +535,10 @@ class _MenuSampleState extends State<_MenuSample> {
   Widget build(BuildContext context) {
     final g = context.theme.geometry;
 
-    return Row(
+    return Wrap(
       spacing: g.space.md,
+      runSpacing: g.space.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         MochiPopoverMenu(
           menuBuilder: _items,
@@ -1098,9 +1100,10 @@ class _TileSampleState extends State<_TileSample> {
     final g = context.theme.geometry;
     final icons = context.theme.icons;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: g.space.lg,
+    return Wrap(
+      spacing: g.space.md,
+      runSpacing: g.space.sm,
+      crossAxisAlignment: WrapCrossAlignment.start,
       children: [
         SizedBox(
           width: 320,

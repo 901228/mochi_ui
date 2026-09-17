@@ -162,6 +162,9 @@ class MochiToaster extends StatefulWidget {
 }
 
 class MochiToasterState extends State<MochiToaster> {
+  /// How wide the stack is, or as much of it as the screen allows.
+  static const _stackWidth = 400.0;
+
   final _toasts = <_ToastRequest>[];
   final _waiting = <_ToastRequest>[];
 
@@ -237,10 +240,12 @@ class MochiToasterState extends State<MochiToaster> {
                   // Laid out from the end new toasts arrive at, with the list reversed to match.
                   // That end is also painted first, so a toast arriving goes behind the ones
                   // already up rather than over them, and the deck goes behind the lot.
-                  // Every toast takes the width of the widest one, which also gives the deck a
-                  // width to be drawn against: a stack of ragged widths reads as a mess, and the
-                  // deck has nothing of its own to size from.
-                  child: IntrinsicWidth(
+                  // One width for the whole stack rather than one per toast. A stack that resized
+                  // itself around whatever had just arrived would jump every time a longer
+                  // message came up and again when it left, and the deck would have nothing
+                  // steady to line up with.
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: _stackWidth),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       verticalDirection: alignment.y > 0 ? VerticalDirection.up : VerticalDirection.down,
@@ -505,15 +510,18 @@ class _DeckStrip extends StatelessWidget {
         height: 0,
         child: OverflowBox(
           alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
-          maxHeight: _hidden + _step * _maxLayers,
+          // Only the band past the end of the stack, and clipped to it: the rest of each card
+          // reaches back behind the toast in front, and must stay hidden even while that toast is
+          // sliding out of the way.
+          maxHeight: _step * _maxLayers,
           child: Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge,
             fit: StackFit.passthrough,
             children: [
               // Furthest back first, so each card lies over the one behind it. Every card slides
               // out from under the toast in front as its turn in the queue comes round.
               for (var layer = _maxLayers - 1; layer >= 0; layer--)
-                _card(theme, layer, (shown - layer).clamp(0, 1)),
+                if ((shown - layer).clamp(0, 1) > 0) _card(theme, layer, (shown - layer).clamp(0, 1)),
             ],
           ),
         ),
