@@ -10,7 +10,6 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
 import "button.dart";
-import "transitions.dart";
 
 /// A brief message over the page: what just happened, and sometimes how to undo it.
 ///
@@ -322,42 +321,56 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     });
   }
 
-  /// The edge a toast comes from and goes back to: the side of the screen it is stacked against,
-  /// or the top or bottom when the stack sits in the middle. Leaving sideways keeps a toast from
-  /// travelling across the ones below it on its way out.
-  AxisDirection get _edge => switch (widget.alignment) {
-    final a when a.x > 0 => AxisDirection.right,
-    final a when a.x < 0 => AxisDirection.left,
-    final a when a.y > 0 => AxisDirection.down,
-    _ => AxisDirection.up,
+  /// Which way the stack grows: 1 when new toasts arrive at the bottom, -1 at the top.
+  double get _towards => widget.alignment.y > 0 ? 1 : -1;
+
+  /// A toast rises out of the edge its stack is anchored to, which is the same direction the
+  /// column grows in, so arriving is one movement rather than two.
+  Offset get _enterFrom => Offset(0, _towards);
+
+  /// It leaves towards the side of the screen instead, so it doesn't travel across the toasts
+  /// below it on the way out. A stack down the middle has no side to leave by.
+  Offset get _leaveTowards => switch (widget.alignment.x) {
+    > 0 => const Offset(1, 0),
+    < 0 => const Offset(-1, 0),
+    _ => Offset(0, _towards),
   };
 
   @override
   Widget build(BuildContext context) {
     final motion = context.theme.motion;
+    final toast = _Deck(waiting: widget.waiting, towards: _towards, child: widget.request.toast);
 
+    // Hand-rolled rather than MochiSurfaceTransition: a toast comes from one edge and leaves by
+    // another, and the height it gives up has to collapse without a clip, which would cut off its
+    // own shadow.
     return MouseRegion(
       // A toast with an Undo in it has to still be there when the pointer arrives.
       onEnter: (_) => _timer?.cancel(),
       onExit: (_) => _wait(),
-      // The gap a toast leaves behind closes over the same time as its exit, so the ones still up
-      // slide into place instead of jumping once it is gone.
-      child: SizeTransition(
-        sizeFactor: _animation.drive(CurveTween(curve: motion.transitionCurve)),
-        // Both axes: the size transition lays its child out in a box the full width of the stack,
-        // so leaving the horizontal alignment at zero would centre every toast on the screen.
-        alignment: Alignment(widget.alignment.x, widget.alignment.y > 0 ? 1 : -1),
-        child: MochiSurfaceTransition(
-          animation: _animation,
-          transition: MochiTransition.slide,
-          slideFrom: _edge,
-          scrim: false,
-          child: _Deck(
-            waiting: widget.waiting,
-            towards: widget.alignment.y > 0 ? 1 : -1,
-            child: widget.request.toast,
-          ),
-        ),
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          final leaving = _animation.status == AnimationStatus.reverse;
+          final t = (leaving ? motion.transitionReverseCurve : motion.transitionCurve).transform(
+            _animation.value,
+          );
+          final travel = leaving ? _leaveTowards : _enterFrom;
+
+          return Align(
+            // Aligned on both axes: the box this lays out in is as wide as the stack, so leaving
+            // the horizontal alignment at zero would centre every toast on the screen.
+            alignment: Alignment(widget.alignment.x, _towards),
+            // The gap a toast gives up closes over the same time as its exit, so the ones still
+            // up slide into place instead of jumping once it is gone.
+            heightFactor: t,
+            child: Opacity(
+              opacity: t.clamp(0, 1),
+              child: FractionalTranslation(translation: travel * (1 - t), child: child),
+            ),
+          );
+        },
+        child: toast,
       ),
     );
   }
@@ -380,12 +393,16 @@ class _Deck extends StatelessWidget {
   final int waiting;
 
   /// 1 when the stack grows downwards, -1 when it grows up. The deck peels off the far side.
-  final int towards;
+  final double towards;
   final Widget child;
 
   /// However many are queued, at most this many edges: past two it reads as a mess rather than
   /// as a pile.
   static const _maxLayers = 2;
+
+  /// How far each card below shows past the one above it, and how much narrower it is.
+  static const _step = 6.0;
+  static const _inset = 10.0;
 
   @override
   Widget build(BuildContext context) {
@@ -394,21 +411,18 @@ class _Deck extends StatelessWidget {
     final theme = context.theme;
     final g = theme.geometry;
     final layers = waiting.clamp(1, _maxLayers);
-    const step = 5.0;
-    const inset = 8.0;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // Each card is the full height of the toast, offset past its edge so only that sliver
+        // shows. Positioned outside the stack's own box, which is why nothing is clipped here.
         for (var layer = layers; layer >= 1; layer--)
           Positioned(
-            left: inset * layer,
-            right: inset * layer,
-            top: towards > 0 ? step * layer : null,
-            bottom: towards > 0 ? null : step * layer,
-            // Only the sliver that shows past the toast above needs drawing, but a box is easier
-            // to reason about than a clipped edge and the rest is covered anyway.
-            height: 24,
+            left: _inset * layer,
+            right: _inset * layer,
+            top: towards > 0 ? _step * layer : -_step * layer,
+            bottom: towards > 0 ? -_step * layer : _step * layer,
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 color: theme.colors.overlay,
