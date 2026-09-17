@@ -3,9 +3,6 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
-double _opacityOf(WidgetTester tester, String title) =>
-    tester.widget<Opacity>(find.ancestor(of: find.text(title), matching: find.byType(Opacity)).first).opacity;
-
 void main() {
   late List<String> events;
 
@@ -243,7 +240,7 @@ void main() {
     expect(tester.getRect(find.byType(MochiToast)).width, 280);
   });
 
-  testWidgets("the deck gives up a card the moment a toast starts leaving", (tester) async {
+  testWidgets("a toast leaving hands its place straight to the next one", (tester) async {
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(800, 600)),
@@ -276,16 +273,20 @@ void main() {
     // Settled, but not so far that the 500ms toast has gone.
     await tester.pump(const Duration(milliseconds: 450));
     expect(find.text("Message 4"), findsNothing, reason: "queued, not up yet");
+    final places = [for (var i = 1; i <= 3; i++) tester.getRect(find.text("Message $i"))];
 
-    // The newest toast starts leaving: the toast that replaces it comes out of the deck there and
-    // then, but shows nothing until that one has slid away.
+    // The newest starts sliding off. Its place goes straight to the card at the front of the
+    // deck, which stands in it while the other slides clear: nothing collapses, nothing moves.
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 160));
     expect(find.text("Message 4"), findsOneWidget);
-    expect(_opacityOf(tester, "Message 4"), 0, reason: "out of the deck, but not yet showing");
+    expect(tester.getRect(find.text("Message 1")), places[0]);
+    expect(tester.getRect(find.text("Message 2")), places[1]);
 
     await tester.pumpAndSettle();
-    expect(_opacityOf(tester, "Message 4"), 1);
     expect(find.text("Message 3"), findsNothing);
+    expect(tester.getRect(find.text("Message 4")), places[2], reason: "the very place it took over");
+    expect(tester.getRect(find.text("Message 1")), places[0]);
   });
 
   testWidgets("the close button sits against the right edge", (tester) async {
