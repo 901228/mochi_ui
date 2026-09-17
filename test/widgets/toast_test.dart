@@ -240,7 +240,7 @@ void main() {
     expect(tester.getRect(find.byType(MochiToast)).width, 280);
   });
 
-  testWidgets("a toast leaving hands its place straight to the next one", (tester) async {
+  testWidgets("a place closes as the next toast comes up at the end of the stack", (tester) async {
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(800, 600)),
@@ -251,12 +251,12 @@ void main() {
             builder: (context) => Center(
               child: MochiButton(
                 onPress: () {
-                  for (var i = 1; i <= 5; i++) {
+                  for (var i = 1; i <= 4; i++) {
                     showMochiToast(
                       context,
                       title: Text("Message $i"),
                       closeable: false,
-                      duration: i == 3 ? const Duration(milliseconds: 500) : const Duration(minutes: 1),
+                      duration: i == 2 ? const Duration(milliseconds: 500) : const Duration(minutes: 1),
                     );
                   }
                 },
@@ -272,21 +272,24 @@ void main() {
     await tester.pump();
     // Settled, but not so far that the 500ms toast has gone.
     await tester.pump(const Duration(milliseconds: 450));
-    expect(find.text("Message 4"), findsNothing, reason: "queued, not up yet");
     final places = [for (var i = 1; i <= 3; i++) tester.getRect(find.text("Message $i"))];
 
-    // The newest starts sliding off. Its place goes straight to the card at the front of the
-    // deck, which stands in it while the other slides clear: nothing collapses, nothing moves.
+    // While it slides clear the stack is untouched, and the deck still has its card: nothing has
+    // come up yet.
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump(const Duration(milliseconds: 160));
-    expect(find.text("Message 4"), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text("Message 4"), findsNothing);
     expect(tester.getRect(find.text("Message 1")), places[0]);
-    expect(tester.getRect(find.text("Message 2")), places[1]);
+    expect(tester.getRect(find.text("Message 3")), places[2]);
 
+    // Then its place closes while the next one comes up at the end of the stack: what was below
+    // the gap moves up by exactly what the new one takes at the bottom, and what was above it
+    // does not move at all.
     await tester.pumpAndSettle();
-    expect(find.text("Message 3"), findsNothing);
-    expect(tester.getRect(find.text("Message 4")), places[2], reason: "the very place it took over");
-    expect(tester.getRect(find.text("Message 1")), places[0]);
+    expect(find.text("Message 2"), findsNothing);
+    expect(tester.getRect(find.text("Message 1")), places[0], reason: "above the gap, untouched");
+    expect(tester.getRect(find.text("Message 3")), places[1], reason: "moved up into the gap");
+    expect(tester.getRect(find.text("Message 4")), places[2], reason: "came up at the end");
   });
 
   testWidgets("the close button sits against the right edge", (tester) async {

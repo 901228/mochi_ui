@@ -165,9 +165,7 @@ class MochiToaster extends StatefulWidget {
 }
 
 class MochiToasterState extends State<MochiToaster> {
-  /// Places in the stack, oldest first. A place outlives the toast in it: one leaving hands its
-  /// place straight to whatever was at the front of the queue, so nothing collapses and reopens.
-  final _slots = <_Slot>[];
+  final _toasts = <_ToastRequest>[];
   final _waiting = <_ToastRequest>[];
 
   /// Raises [toast]. See [showMochiToast] for the usual way in.
@@ -188,38 +186,35 @@ class MochiToasterState extends State<MochiToaster> {
     });
   }
 
-  /// Opens places for waiting toasts as there is room for them. Raising more than
-  /// [MochiToaster.maxVisible] at once queues the rest rather than dropping them: a toast nobody
-  /// saw may as well not have been raised.
-  void _fill() {
-    while (_waiting.isNotEmpty && _slots.where((slot) => slot.current != null).length < widget.maxVisible) {
-      _slots.add(_Slot(_waiting.removeAt(0)));
+  /// Brings waiting toasts up as there is room for them, at the end new ones arrive at — which is
+  /// where the deck is, so one comes up out of the deck wherever in the stack the room appeared.
+  ///
+  /// Raising more than [MochiToaster.maxVisible] at once queues the rest rather than dropping
+  /// them: a toast nobody saw may as well not have been raised.
+  void _fill({bool promoted = false}) {
+    var taken = _toasts.where((request) => !request.leaving).length;
+    while (_waiting.isNotEmpty && taken < widget.maxVisible) {
+      _toasts.add(_waiting.removeAt(0)..promoted = promoted);
+      taken++;
     }
   }
 
-  /// A toast starts sliding away. Its place is handed to the card at the front of the deck there
-  /// and then — that card is what becomes the next toast, so it leaves the deck at that moment
-  /// and grows into the place behind the one on its way out, which slides off it.
-  ///
-  /// With nothing queued the place has no one to pass to, and closes once the slide is done.
-  void _startLeaving(_Slot slot) {
-    if (!mounted || slot.leaving != null) return;
+  /// The toast has slid clear and is about to give its place back. Whatever was at the front of
+  /// the deck comes up now, so the place closing and the new one opening are one movement: the
+  /// stack below the gap slides up by exactly what the new toast takes at the bottom.
+  void _startClosing(_ToastRequest request) {
+    if (!mounted || request.leaving) return;
     setState(() {
-      slot.leaving = slot.current;
-      slot.current = _waiting.isEmpty ? null : (_waiting.removeAt(0)..promoted = true);
+      request.leaving = true;
+      _fill(promoted: true);
     });
   }
 
-  /// The toast has slid clear. If something took its place it is already standing there, so the
-  /// one that left just stops being drawn; otherwise the place closes.
-  void _finishLeaving(_Slot slot) {
+  void _remove(_ToastRequest request) {
     if (!mounted) return;
     setState(() {
-      slot.leaving = null;
-      if (slot.current == null) {
-        _slots.remove(slot);
-        _fill();
-      }
+      _toasts.remove(request);
+      _fill(promoted: true);
     });
   }
 
@@ -235,7 +230,7 @@ class MochiToasterState extends State<MochiToaster> {
     return Stack(
       children: [
         widget.child,
-        if (_slots.isNotEmpty)
+        if (_toasts.isNotEmpty)
           Positioned.fill(
             child: SafeArea(
               child: Padding(
@@ -257,7 +252,18 @@ class MochiToasterState extends State<MochiToaster> {
                         // Outside the toasts rather than under the newest one: the deck stands
                         // still while a toast leaves, and the cards shuffle up on their own.
                         _DeckStrip(waiting: _waiting.length, towards: towards),
-                        for (final slot in _slots.reversed) _place(slot, alignment, g.space.xs),
+                        for (final request in _toasts.reversed)
+                          _Toast(
+                            key: request.key,
+                            request: request,
+                            alignment: alignment,
+                            // The gap between toasts belongs to the toast, not to the column: it
+                            // has to be given up along with the height when one leaves, or the
+                            // stack above shifts by that gap as one passes another.
+                            gap: g.space.xs,
+                            onClosing: () => _startClosing(request),
+                            onRemoved: () => _remove(request),
+                          ),
                       ],
                     ),
                   ),
@@ -268,41 +274,6 @@ class MochiToasterState extends State<MochiToaster> {
       ],
     );
   }
-
-  /// One place in the stack: the toast standing in it, and over that the one sliding off it. The
-  /// place is as tall as the taller of the two, so handing it over costs no movement at all.
-  Widget _place(_Slot slot, Alignment alignment, double gap) => Stack(
-    key: slot.key,
-    // Against the edge the stack is anchored to. A toast growing into a place is shorter than the
-    // one sliding off it, and the default here would hang it from the other end, so it would
-    // arrive from the wrong side.
-    alignment: Alignment(alignment.x, alignment.y > 0 ? 1 : -1),
-    children: [
-      for (final (request, leaving) in [(slot.current, false), (slot.leaving, true)])
-        if (request != null)
-          _Toast(
-            key: request.key,
-            request: request,
-            alignment: alignment,
-            // The gap between toasts belongs to the toast, not to the column: it has to be given
-            // up along with the height when a place closes, or the stack above shifts by that gap.
-            gap: gap,
-            // A place with someone else standing in it has no height to give back.
-            collapse: leaving && slot.current == null,
-            onLeaving: () => _startLeaving(slot),
-            onRemoved: () => _finishLeaving(slot),
-          ),
-    ],
-  );
-}
-
-/// A place in the stack. [current] is the toast standing in it; [leaving] is the one sliding off.
-class _Slot {
-  _Slot(this.current);
-
-  final key = UniqueKey();
-  _ToastRequest? current;
-  _ToastRequest? leaving;
 }
 
 /// One raised toast, kept outside the widget so its handle survives a rebuild of the list.
@@ -316,6 +287,9 @@ class _ToastRequest {
   /// Whether this one was already showing as a card in the deck before it came up.
   bool promoted = false;
 
+  /// Set once it has slid clear and its place is closing, so that place can be counted as free.
+  bool leaving = false;
+
   /// Set by the entry once it is on screen.
   VoidCallback? dismiss;
 }
@@ -326,21 +300,16 @@ class _Toast extends StatefulWidget {
     required this.request,
     required this.alignment,
     required this.onRemoved,
-    required this.onLeaving,
+    required this.onClosing,
     required this.gap,
-    required this.collapse,
   });
 
   final _ToastRequest request;
   final Alignment alignment;
   final VoidCallback onRemoved;
 
-  /// Called as the exit starts, while the toast is still on screen.
-  final VoidCallback onLeaving;
-
-  /// Whether the place this toast holds closes when it goes. False when someone else is already
-  /// standing in it.
-  final bool collapse;
+  /// Called once it has slid clear, as the place it holds starts to close.
+  final VoidCallback onClosing;
 
   /// Space kept between this toast and the one before it, counted as part of its own height.
   final double gap;
@@ -411,14 +380,9 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
     _timer?.cancel();
     if (!mounted || _slide.isAnimating || _slide.isCompleted) return;
 
-    widget.onLeaving();
     _slide.forward().then((_) {
       if (!mounted) return;
-      // Nothing to give back when someone has already taken the place: stop being drawn.
-      if (!widget.collapse) {
-        widget.onRemoved();
-        return;
-      }
+      widget.onClosing();
       _size.reverse().then((_) {
         if (_size.isDismissed) widget.onRemoved();
       });
