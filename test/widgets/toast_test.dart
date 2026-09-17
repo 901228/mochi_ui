@@ -177,6 +177,41 @@ void main() {
     expect(find.text("Message 4"), findsOneWidget);
   });
 
+  testWidgets("the queue's deck is no wider than the toasts", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  for (var i = 1; i <= 6; i++) {
+                    showMochiToast(context, title: Text("Message $i"), duration: const Duration(minutes: 1));
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+
+    final toast = tester.getRect(find.byType(MochiToast).first);
+    // The deck's cards are inset from the toast above them, never wider.
+    for (final card in find.byType(ClipRect).evaluate()) {
+      final rect = tester.getRect(find.byWidget(card.widget));
+      expect(rect.width, lessThan(toast.width));
+      expect(rect.left, greaterThanOrEqualTo(toast.left));
+    }
+  });
+
   testWidgets("the close button sits against the right edge", (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text("raise"));

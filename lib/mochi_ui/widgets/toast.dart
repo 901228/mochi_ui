@@ -56,7 +56,9 @@ class MochiToast extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
         decoration: ShapeDecoration(
           color: colors.overlay,
-          shadows: g.shadows.of(MochiElevation.lg, colors.shadow),
+          // Smaller than a dialog's: toasts stack a few pixels apart, and the one in front casts
+          // onto the one behind it, where a large shadow reads as dirt in the gap.
+          shadows: g.shadows.of(MochiElevation.md, colors.shadow),
           shape: RoundedSuperellipseBorder(
             borderRadius: g.radius.md,
             // A toast carries its intent in its edge rather than its fill: it sits over the page
@@ -235,31 +237,32 @@ class MochiToasterState extends State<MochiToaster> {
                   // Laid out from the end new toasts arrive at, with the list reversed to match.
                   // That end is also painted first, so a toast arriving goes behind the ones
                   // already up rather than over them, and the deck goes behind the lot.
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    verticalDirection: alignment.y > 0 ? VerticalDirection.up : VerticalDirection.down,
-                    crossAxisAlignment: alignment.x < 0
-                        ? CrossAxisAlignment.start
-                        : alignment.x > 0
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.center,
-                    children: [
-                      // Outside the toasts rather than under the newest one: the deck stands
-                      // still while a toast leaves, and the cards shuffle up on their own.
-                      _DeckStrip(waiting: _waiting.length, towards: alignment.y > 0 ? 1 : -1),
-                      for (final request in _toasts.reversed)
-                        _Toast(
-                          key: request.key,
-                          request: request,
-                          alignment: alignment,
-                          // The gap between toasts belongs to the toast, not to the column: it has
-                          // to be given up along with the height when one leaves, or the stack
-                          // above shifts by that gap as one passes another.
-                          gap: g.space.xs,
-                          onLeaving: () => _startLeaving(request),
-                          onRemoved: () => _remove(request),
-                        ),
-                    ],
+                  // Every toast takes the width of the widest one, which also gives the deck a
+                  // width to be drawn against: a stack of ragged widths reads as a mess, and the
+                  // deck has nothing of its own to size from.
+                  child: IntrinsicWidth(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      verticalDirection: alignment.y > 0 ? VerticalDirection.up : VerticalDirection.down,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Outside the toasts rather than under the newest one: the deck stands
+                        // still while a toast leaves, and the cards shuffle up on their own.
+                        _DeckStrip(waiting: _waiting.length, towards: alignment.y > 0 ? 1 : -1),
+                        for (final request in _toasts.reversed)
+                          _Toast(
+                            key: request.key,
+                            request: request,
+                            alignment: alignment,
+                            // The gap between toasts belongs to the toast, not to the column: it
+                            // has to be given up along with the height when one leaves, or the
+                            // stack above shifts by that gap as one passes another.
+                            gap: g.space.xs,
+                            onLeaving: () => _startLeaving(request),
+                            onRemoved: () => _remove(request),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
