@@ -270,7 +270,7 @@ class MochiToasterState extends State<MochiToaster> {
                       children: [
                         // Outside the toasts rather than under the newest one: the deck stands
                         // still while a toast leaves, and the cards shuffle up on their own.
-                        _Deck(waiting: [for (final request in _waiting) request.toast], towards: towards),
+                        _Deck(waiting: _waiting, towards: towards),
                         for (final request in _toasts.reversed)
                           _Toast(
                             key: request.key,
@@ -424,14 +424,16 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
   /// Which way the stack grows: 1 when new toasts arrive at the bottom, -1 at the top.
   double get _towards => widget.alignment.y > 0 ? 1 : -1;
 
-  /// Roughly how much narrower a deck card is than the toast above it, which is where a promoted
-  /// toast grows from.
-  static const _deckScale = 0.94;
-
   /// A toast rises out of the edge its stack is anchored to, which is the same direction the
-  /// column grows in, so arriving is one movement rather than two. One promoted out of the deck
-  /// only nudges, since it was already sitting there.
-  Offset get _enterFrom => Offset(0, _towards * (widget.request.promoted ? 0.15 : 1));
+  /// column grows in, so arriving is one movement rather than two.
+  ///
+  /// One promoted out of the queue has no distance to cover: it is already standing at the front
+  /// of the queue, and [_promotedFrom] takes it from there.
+  Offset get _enterFrom => widget.request.promoted ? Offset.zero : Offset(0, _towards);
+
+  /// Where a promoted toast starts: exactly where it was standing as the front of the queue, in
+  /// pixels rather than a fraction of its height, so the two line up to the pixel.
+  double get _promotedFrom => widget.request.promoted ? _towards * _DeckPlace.step : 0;
 
   /// It leaves towards the side of the screen instead, so it doesn't travel across the toasts
   /// below it on the way out. A stack down the middle has no side to leave by.
@@ -480,18 +482,18 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
                 bottom: _towards > 0 ? 0 : widget.gap,
               ),
               child: Opacity(
-                // A promoted toast is already on screen, standing where the front card of the
-                // deck was, so it is there in full from the start rather than fading in — that
-                // card is what the toast in front uncovers as it slides away.
-                // A promoted toast is already on screen, standing where the front card of the
-                // deck was, so it is there in full from the start rather than fading in — that
-                // is what the toast in front uncovers as it slides away.
+                // A promoted toast is already on screen, standing at the front of the queue, so
+                // it is there in full from the start rather than fading in — that is what the
+                // toast in front uncovers as it slides away.
                 opacity: ((widget.request.promoted ? 1.0 : t) * (1 - gone)).clamp(0, 1),
                 child: Transform.scale(
-                  // A promoted toast was a card in the deck a moment ago, so it grows from that
-                  // card's size instead of arriving at full size.
-                  scale: widget.request.promoted ? lerpDouble(_deckScale, 1, t) : 1,
-                  child: FractionalTranslation(translation: travel, child: child),
+                  // It grows out of the size it was standing at, and moves up out of the place it
+                  // was standing in, over the same half of the exit that closes the gap for it.
+                  scale: widget.request.promoted ? lerpDouble(_DeckPlace.scaleAt(0), 1, t) : 1,
+                  child: Transform.translate(
+                    offset: Offset(0, _promotedFrom * (1 - t)),
+                    child: FractionalTranslation(translation: travel, child: child),
+                  ),
                 ),
               ),
             ),
@@ -523,76 +525,102 @@ Widget? _intentIcon(BuildContext context, MochiIntent intent) {
 class _Deck extends StatelessWidget {
   const _Deck({required this.waiting, required this.towards});
 
-  /// The toasts still queued, newest last.
-  final List<Widget> waiting;
+  /// The toasts still queued, front of the queue first.
+  final List<_ToastRequest> waiting;
 
   /// 1 when the stack grows downwards, -1 when it grows up.
   final double towards;
 
-  /// However many are queued, at most this many show: past two it reads as a mess rather than
-  /// as a pile.
-  static const _maxLayers = 2;
-
-  /// How much of each one shows, and how much of the width it gives up, per place back in the
-  /// queue. The front of the queue matches where a promoted toast starts from, so the two are the
-  /// same thing seen twice: see [_ToastState._deckScale].
-  static const step = 6.0;
-  static const _shrink = 0.06;
-
-  /// How far each reaches back behind the toast in front of it. All of that stays hidden.
-  static const _hidden = 60.0;
-
   @override
   Widget build(BuildContext context) {
-    final motion = context.theme.motion;
-    final layers = waiting.length.clamp(0, _maxLayers);
-
-    return TweenAnimationBuilder(
-      tween: Tween<double>(begin: 0, end: layers.toDouble()),
-      duration: motion.toastDuration,
-      curve: motion.transitionCurve,
-      // No height of its own: the deck hangs past the end of the stack, into the padding, rather
-      // than taking a place in it and pushing every toast along as the queue fills and drains.
-      builder: (context, shown, _) => SizedBox(
-        height: 0,
-        child: OverflowBox(
-          alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
-          // Only the band past the end of the stack, and clipped to it: the rest of each toast
-          // reaches back behind the one in front, and must stay hidden even while that one is
-          // sliding out of the way.
-          maxHeight: step * _maxLayers,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            fit: StackFit.passthrough,
-            children: [
-              // Furthest back first, so each lies over the one behind it. Every one slides out
-              // from under the toast in front as its turn in the queue comes round.
-              for (var layer = _maxLayers - 1; layer >= 0; layer--)
-                if (layer < waiting.length && (shown - layer).clamp(0, 1) > 0)
-                  _card(layer, (shown - layer).clamp(0, 1)),
-            ],
-          ),
+    // No height of its own: the queue hangs past the end of the stack, into the padding, rather
+    // than taking a place in it and pushing every toast along as it fills and drains.
+    return SizedBox(
+      height: 0,
+      child: OverflowBox(
+        alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
+        // Only the band past the end of the stack, and clipped to it: the rest of each toast
+        // reaches back behind the one in front, and must stay hidden even while that one is
+        // sliding out of the way.
+        maxHeight: _DeckPlace.step * _DeckPlace.maxLayers,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          fit: StackFit.passthrough,
+          children: [
+            // Furthest back first, so each lies over the one behind it.
+            for (var depth = _DeckPlace.maxLayers - 1; depth >= 0; depth--)
+              if (depth < waiting.length)
+                // Keyed by the toast itself, so one moving up a place in the queue is that same
+                // widget at a new depth and can travel there, rather than the place being redrawn
+                // with someone else standing in it.
+                _DeckCard(
+                  key: waiting[depth].key,
+                  depth: depth,
+                  towards: towards,
+                  child: waiting[depth].toast,
+                ),
+          ],
         ),
       ),
     );
   }
+}
 
-  /// [reveal] is how much of this one's own sliver has come out, 0 to 1.
-  Widget _card(int layer, double reveal) {
-    final out = step * layer + step * reveal;
+/// Where a toast stands while it waits its turn. Depth 0 is the front of the queue, which is also
+/// where a toast promoted out of it starts from, so both read these.
+abstract final class _DeckPlace {
+  /// However many are queued, at most this many show: past two it reads as a mess rather than as
+  /// a pile.
+  static const maxLayers = 2;
 
-    return Positioned(
-      left: 0,
-      right: 0,
-      // Anchored at the end of the stack and reaching back behind the toast there: only the part
-      // past that toast's edge is ever seen, which is this one's trailing edge.
-      top: towards > 0 ? -_hidden : null,
-      bottom: towards > 0 ? null : -_hidden,
-      height: _hidden + out,
-      child: Align(
-        alignment: towards > 0 ? Alignment.bottomCenter : Alignment.topCenter,
-        heightFactor: 1,
-        child: Transform.scale(scale: 1 - _shrink * (layer + 1), child: waiting[layer]),
+  /// How much more of its trailing edge each place further back shows.
+  static const step = 6.0;
+
+  /// How much of its width each place further back gives up.
+  static const shrink = 0.06;
+
+  /// The edge showing at [depth] places back, and the width it is drawn at there.
+  static double outAt(double depth) => step * (depth + 1);
+  static double scaleAt(double depth) => 1 - shrink * (depth + 1);
+}
+
+/// One waiting toast, at its place in the queue.
+///
+/// It arrives from a place further back, and moves up as the queue empties in front of it: the
+/// front of the queue coming up into the stack pulls the rest along behind it.
+class _DeckCard extends StatelessWidget {
+  const _DeckCard({super.key, required this.depth, required this.towards, required this.child});
+
+  final int depth;
+  final double towards;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = context.theme.motion;
+
+    return Positioned.fill(
+      child: TweenAnimationBuilder(
+        // Only the end is read after the first build: moving up a place travels from wherever
+        // this one currently stands, and a new one starts a place further back than it belongs.
+        tween: Tween<double>(begin: depth + 1, end: depth.toDouble()),
+        duration: motion.toastDuration,
+        curve: motion.transitionCurve,
+        builder: (context, at, card) => Align(
+          alignment: towards > 0 ? Alignment.topCenter : Alignment.bottomCenter,
+          heightFactor: 1,
+          child: SizedBox(
+            // The sliver of it that shows. The rest overflows back behind the toast in front,
+            // where the band clips it away.
+            height: _DeckPlace.outAt(at),
+            child: OverflowBox(
+              alignment: towards > 0 ? Alignment.bottomCenter : Alignment.topCenter,
+              maxHeight: double.infinity,
+              child: Transform.scale(scale: _DeckPlace.scaleAt(at), child: card),
+            ),
+          ),
+        ),
+        child: child,
       ),
     );
   }
