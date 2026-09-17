@@ -14,6 +14,8 @@ class MochiMotion {
     this.transitionReverseDuration = const Duration(milliseconds: 240),
     this.transitionCurve = Curves.easeOutCubic,
     this.transitionReverseCurve = Curves.easeInCubic,
+    this.toastDuration = const Duration(milliseconds: 420),
+    this.toastReverseDuration = const Duration(milliseconds: 320),
     this.pressScale = 1.06,
     this.pressMaxGrowth = 3,
     SpringDescription? pressSpring,
@@ -56,6 +58,15 @@ class MochiMotion {
   final Curve transitionCurve;
   final Curve transitionReverseCurve;
 
+  /// A toast arriving. Its own token rather than [transitionDuration]: a toast appears without
+  /// being asked for, off to one side of whatever is being read, so it is worth a slower arrival
+  /// than a surface someone just opened and is looking straight at.
+  final Duration toastDuration;
+
+  /// A toast leaving, which is also how long the one taking its place takes to grow: the two
+  /// move against each other, so they share a duration.
+  final Duration toastReverseDuration;
+
   /// One cycle of an indeterminate spinner or bar. Both move at a constant speed and keep a
   /// constant size, so the two read as one family.
   final Duration indeterminateDuration;
@@ -89,6 +100,8 @@ class MochiMotion {
           sizeCurve == other.sizeCurve &&
           transitionDuration == other.transitionDuration &&
           transitionReverseDuration == other.transitionReverseDuration &&
+          toastDuration == other.toastDuration &&
+          toastReverseDuration == other.toastReverseDuration &&
           transitionCurve == other.transitionCurve &&
           transitionReverseCurve == other.transitionReverseCurve &&
           pressScale == other.pressScale &&
@@ -106,6 +119,8 @@ class MochiMotion {
     sizeCurve,
     transitionDuration,
     transitionReverseDuration,
+    toastDuration,
+    toastReverseDuration,
     transitionCurve,
     transitionReverseCurve,
     pressScale,

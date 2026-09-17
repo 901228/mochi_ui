@@ -329,8 +329,8 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     _animation
       // A promoted toast is filling the gap another one is leaving behind, so it grows at exactly
       // the rate that gap closes. Anything else and the stack above the gap drifts as they pass.
-      ..duration = widget.request.promoted ? motion.transitionReverseDuration : motion.transitionDuration
-      ..reverseDuration = motion.transitionReverseDuration;
+      ..duration = widget.request.promoted ? motion.toastReverseDuration : motion.toastDuration
+      ..reverseDuration = motion.toastReverseDuration;
 
     if (_animation.isDismissed && !_animation.isAnimating) {
       _animation.forward();
@@ -492,7 +492,7 @@ class _Deck extends StatelessWidget {
           TweenAnimationBuilder(
             key: ValueKey(layer),
             tween: Tween<double>(begin: 0, end: 1),
-            duration: motion.transitionDuration,
+            duration: motion.toastDuration,
             curve: motion.transitionCurve,
             builder: (context, t, card) {
               final depth = layer + 1 - t;
