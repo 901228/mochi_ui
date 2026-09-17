@@ -137,7 +137,7 @@ class MochiToastHandle {
 /// [MochiApp] installs one above the navigator, so a toast outlives the page that raised it and
 /// stays visible over a dialog.
 class MochiToaster extends StatefulWidget {
-  const MochiToaster({super.key, required this.child, this.alignment, this.maxVisible = 3});
+  const MochiToaster({super.key, required this.child, this.alignment, this.maxVisible = 3, this.width});
 
   final Widget child;
 
@@ -147,6 +147,9 @@ class MochiToaster extends StatefulWidget {
 
   /// Older toasts beyond this many are taken away as new ones arrive.
   final int maxVisible;
+
+  /// How wide the stack is. Defaults to `geometry.toastWidth`.
+  final double? width;
 
   @override
   State<MochiToaster> createState() => MochiToasterState();
@@ -162,9 +165,6 @@ class MochiToaster extends StatefulWidget {
 }
 
 class MochiToasterState extends State<MochiToaster> {
-  /// How wide the stack is, or as much of it as the screen allows.
-  static const _stackWidth = 400.0;
-
   final _toasts = <_ToastRequest>[];
   final _waiting = <_ToastRequest>[];
 
@@ -240,12 +240,10 @@ class MochiToasterState extends State<MochiToaster> {
                   // Laid out from the end new toasts arrive at, with the list reversed to match.
                   // That end is also painted first, so a toast arriving goes behind the ones
                   // already up rather than over them, and the deck goes behind the lot.
-                  // One width for the whole stack rather than one per toast. A stack that resized
-                  // itself around whatever had just arrived would jump every time a longer
-                  // message came up and again when it left, and the deck would have nothing
-                  // steady to line up with.
+                  // One width for the whole stack rather than one per toast; see
+                  // [MochiGeometry.toastWidth].
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: _stackWidth),
+                    constraints: BoxConstraints(maxWidth: widget.width ?? g.toastWidth),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       verticalDirection: alignment.y > 0 ? VerticalDirection.up : VerticalDirection.down,

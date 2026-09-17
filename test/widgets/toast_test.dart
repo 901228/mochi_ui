@@ -213,7 +213,31 @@ void main() {
         .map((toast) => tester.getRect(find.byWidget(toast)).width)
         .toSet();
     expect(widths, hasLength(1), reason: "a ragged stack has nothing for the deck to line up with");
-    expect(widths.single, lessThanOrEqualTo(420));
+    expect(widths.single, MochiGeometry.standard.toastWidth);
+  });
+
+  testWidgets("the stack takes the width it was given", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastWidth: 280,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () => showMochiToast(context, title: const Text("Saved")),
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(MochiToast)).width, 280);
   });
 
   testWidgets("the close button sits against the right edge", (tester) async {

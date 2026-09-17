@@ -172,6 +172,7 @@ class MochiGeometry {
     this.focusRingWidth = 2,
     this.focusRingGap = 2,
     this.pagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.toastWidth = 400,
   });
 
   final MochiRadius radius;
@@ -188,6 +189,13 @@ class MochiGeometry {
   /// Default padding around page content.
   final EdgeInsets pagePadding;
 
+  /// How wide a stack of toasts is, or as much of it as the screen allows.
+  ///
+  /// One width for the whole stack rather than one per toast: a stack that sized itself around
+  /// whatever had just arrived would jump every time a longer message came up and again when it
+  /// left, and the queue's deck would have nothing steady to line up with.
+  final double toastWidth;
+
   static const standard = MochiGeometry();
 
   @override
@@ -200,9 +208,10 @@ class MochiGeometry {
           borderWidth == other.borderWidth &&
           focusRingWidth == other.focusRingWidth &&
           focusRingGap == other.focusRingGap &&
-          pagePadding == other.pagePadding;
+          pagePadding == other.pagePadding &&
+          toastWidth == other.toastWidth;
 
   @override
   int get hashCode =>
-      Object.hash(radius, space, shadows, borderWidth, focusRingWidth, focusRingGap, pagePadding);
+      Object.hash(radius, space, shadows, borderWidth, focusRingWidth, focusRingGap, pagePadding, toastWidth);
 }
