@@ -63,6 +63,7 @@ class MochiPopover extends StatefulWidget {
     this.padding,
     this.surface = true,
     this.consumeOutsideTaps = false,
+    this.closeOnAnchorPress = false,
     this.autofocus = true,
     this.onOpen,
     this.onClose,
@@ -97,6 +98,15 @@ class MochiPopover extends StatefulWidget {
 
   /// Whether the tap that closes the popover is also delivered to whatever is underneath.
   final bool consumeOutsideTaps;
+
+  /// Whether pressing the anchor while the popover is open puts it away.
+  ///
+  /// The anchor counts as part of the popover, so a press on it is not an outside tap and leaves
+  /// the popover standing. That is what an anchor which toggles wants — it closes itself, and
+  /// closing here first would just reopen it. An anchor that only opens (a row with a context
+  /// menu, a panel opened at the pointer) wants the opposite: pressing it is the same gesture as
+  /// pressing anywhere else on the page, and should put the popover away.
+  final bool closeOnAnchorPress;
 
   /// Whether the panel takes focus when it opens, so Escape and arrow keys reach it.
   final bool autofocus;
@@ -176,7 +186,19 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
       onOpen: widget.onOpen,
       onClose: _handleClose,
       overlayBuilder: _buildOverlay,
-      builder: (context, controller, child) => widget.builder(context, anchor, child),
+      builder: (context, controller, child) {
+        final built = widget.builder(context, anchor, child);
+        if (!widget.closeOnAnchorPress) return built;
+
+        // A Listener rather than a tap callback: the anchor's own gesture would win the arena,
+        // and this has to happen whatever the press turns out to mean.
+        return Listener(
+          onPointerDown: (_) {
+            if (controller.isOpen) controller.close();
+          },
+          child: built,
+        );
+      },
       child: widget.child,
     );
   }

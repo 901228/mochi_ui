@@ -433,6 +433,7 @@ class MochiPopoverMenu extends StatelessWidget {
     this.gap,
     this.minWidth = 160,
     this.constraints,
+    this.closeOnAnchorPress = false,
     this.onOpen,
     this.onClose,
   });
@@ -451,6 +452,10 @@ class MochiPopoverMenu extends StatelessWidget {
 
   final double minWidth;
   final BoxConstraints? constraints;
+
+  /// See [MochiPopover.closeOnAnchorPress].
+  final bool closeOnAnchorPress;
+
   final VoidCallback? onOpen;
   final VoidCallback? onClose;
 
@@ -462,6 +467,7 @@ class MochiPopoverMenu extends StatelessWidget {
       align: align,
       gap: gap,
       constraints: constraints,
+      closeOnAnchorPress: closeOnAnchorPress,
       // Rows carry their own padding, so the panel only insets them from its corners.
       padding: EdgeInsets.all(context.theme.geometry.space.xs2),
       onOpen: onOpen,
@@ -515,32 +521,25 @@ class MochiContextMenu extends StatelessWidget {
       align: MochiPopoverAlign.start,
       // The panel's corner goes exactly where the pointer was; there is no anchor to clear.
       gap: 0,
+      // Its anchor only opens, never toggles, so pressing it again is what closes the menu.
+      closeOnAnchorPress: true,
       minWidth: minWidth,
       constraints: constraints,
       menuBuilder: menuBuilder,
       onOpen: onOpen,
       onClose: onClose,
       child: child,
-      builder: (context, anchor, child) => Listener(
-        // A press on the child itself puts the menu away. The child is inside the menu's tap
-        // region, so it counts as "in the menu" and wouldn't otherwise close it — but pressing
-        // the row a menu belongs to is the same gesture as pressing anywhere else on the page.
-        // A Listener rather than a tap callback, which the child's own would win in the arena.
-        onPointerDown: (_) {
-          if (anchor.isOpen) anchor.close();
-        },
-        child: GestureDetector(
-          // Opaque would swallow taps meant for the child.
-          behavior: HitTestBehavior.translucent,
-          onSecondaryTapUp: secondaryTap ? (details) => anchor.open(position: details.localPosition) : null,
-          onLongPressStart: longPress
-              ? (details) {
-                  HapticFeedback.selectionClick();
-                  anchor.open(position: details.localPosition);
-                }
-              : null,
-          child: child,
-        ),
+      builder: (context, anchor, child) => GestureDetector(
+        // Opaque would swallow taps meant for the child.
+        behavior: HitTestBehavior.translucent,
+        onSecondaryTapUp: secondaryTap ? (details) => anchor.open(position: details.localPosition) : null,
+        onLongPressStart: longPress
+            ? (details) {
+                HapticFeedback.selectionClick();
+                anchor.open(position: details.localPosition);
+              }
+            : null,
+        child: child,
       ),
     );
   }
