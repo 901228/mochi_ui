@@ -193,21 +193,38 @@ class MochiToasterState extends State<MochiToaster> {
   /// One taking a slot that just came free was already on screen as a card in the deck, so it
   /// grows into place from there rather than arriving from off screen.
   void _fill({bool promoted = false}) {
-    var held = _toasts.where((request) => !request.leaving).length;
-    while (_waiting.isNotEmpty && held < widget.maxVisible) {
-      _toasts.add(_waiting.removeAt(0)..promoted = promoted);
-      held++;
+    var taken = _toasts.where((request) => !request.leaving).length;
+    while (_waiting.isNotEmpty && taken < widget.maxVisible) {
+      _toasts.add(
+        _waiting.removeAt(0)
+          ..promoted = promoted
+          ..held = promoted,
+      );
+      taken++;
     }
   }
 
-  /// A toast that has started leaving gives up its slot straight away, so the one taking it grows
-  /// while that one shrinks. Waiting for the exit to finish would collapse the stack and then
-  /// stretch it again, which shoves everything above the gap down and back up.
+  /// A toast gives up its slot the moment it starts sliding away, and the one taking it is
+  /// promoted there and then: the card at the front of the deck is what becomes that toast, so it
+  /// has to leave the deck as soon as the place it is going to is on its way out.
+  ///
+  /// It waits there, showing nothing, until [_finishLeaving].
   void _startLeaving(_ToastRequest request) {
     if (!mounted || request.leaving) return;
     setState(() {
       request.leaving = true;
       _fill(promoted: true);
+    });
+  }
+
+  /// The toast has slid away; whatever was waiting on it can now grow into the place it is about
+  /// to give up.
+  void _finishLeaving() {
+    if (!mounted) return;
+    setState(() {
+      for (final request in _toasts) {
+        request.held = false;
+      }
     });
   }
 
@@ -262,6 +279,7 @@ class MochiToasterState extends State<MochiToaster> {
                             // stack above shifts by that gap as one passes another.
                             gap: g.space.xs,
                             onLeaving: () => _startLeaving(request),
+                            onSlid: _finishLeaving,
                             onRemoved: () => _remove(request),
                           ),
                       ],
@@ -290,6 +308,10 @@ class _ToastRequest {
   /// Set the moment it starts leaving, so its slot can be filled while it is still on its way out.
   bool leaving = false;
 
+  /// Set on a toast promoted out of the queue while the toast it replaces is still sliding away.
+  /// It waits, taking no room and showing nothing, until that one has gone.
+  bool held = false;
+
   /// Set by the entry once it is on screen.
   VoidCallback? dismiss;
 }
@@ -301,6 +323,7 @@ class _Toast extends StatefulWidget {
     required this.alignment,
     required this.onRemoved,
     required this.onLeaving,
+    required this.onSlid,
     required this.gap,
   });
 
@@ -310,6 +333,9 @@ class _Toast extends StatefulWidget {
 
   /// Called as the exit starts, while the toast is still on screen.
   final VoidCallback onLeaving;
+
+  /// Called once it has slid away, before it gives up the room it takes.
+  final VoidCallback onSlid;
 
   /// Space kept between this toast and the one before it, counted as part of its own height.
   final double gap;
@@ -345,10 +371,21 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
       ..reverseDuration = motion.toastReverseDuration;
     _slide.duration = motion.toastReverseDuration;
 
-    if (_size.isDismissed && !_size.isAnimating) {
-      _size.forward();
-      _wait();
-    }
+    _start();
+  }
+
+  @override
+  void didUpdateWidget(_Toast old) {
+    super.didUpdateWidget(old);
+    _start();
+  }
+
+  /// A promoted toast is created while the one it replaces is still sliding away, and does
+  /// nothing at all until that has finished.
+  void _start() {
+    if (widget.request.held || !_size.isDismissed || _size.isAnimating) return;
+    _size.forward();
+    _wait();
   }
 
   @override
@@ -371,9 +408,10 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
     _timer?.cancel();
     if (!mounted || _slide.isAnimating || _slide.isCompleted) return;
 
+    widget.onLeaving();
     _slide.forward().then((_) {
       if (!mounted) return;
-      widget.onLeaving();
+      widget.onSlid();
       _size.reverse().then((_) {
         if (_size.isDismissed) widget.onRemoved();
       });

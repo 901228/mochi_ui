@@ -3,6 +3,9 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+double _opacityOf(WidgetTester tester, String title) =>
+    tester.widget<Opacity>(find.ancestor(of: find.text(title), matching: find.byType(Opacity)).first).opacity;
+
 void main() {
   late List<String> events;
 
@@ -238,6 +241,51 @@ void main() {
     await tester.tap(find.text("raise"));
     await tester.pumpAndSettle();
     expect(tester.getRect(find.byType(MochiToast)).width, 280);
+  });
+
+  testWidgets("the deck gives up a card the moment a toast starts leaving", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  for (var i = 1; i <= 5; i++) {
+                    showMochiToast(
+                      context,
+                      title: Text("Message $i"),
+                      closeable: false,
+                      duration: i == 3 ? const Duration(milliseconds: 500) : const Duration(minutes: 1),
+                    );
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pump();
+    // Settled, but not so far that the 500ms toast has gone.
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(find.text("Message 4"), findsNothing, reason: "queued, not up yet");
+
+    // The newest toast starts leaving: the toast that replaces it comes out of the deck there and
+    // then, but shows nothing until that one has slid away.
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text("Message 4"), findsOneWidget);
+    expect(_opacityOf(tester, "Message 4"), 0, reason: "out of the deck, but not yet showing");
+
+    await tester.pumpAndSettle();
+    expect(_opacityOf(tester, "Message 4"), 1);
+    expect(find.text("Message 3"), findsNothing);
   });
 
   testWidgets("the close button sits against the right edge", (tester) async {
