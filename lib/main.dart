@@ -456,6 +456,8 @@ class _PopoverSample extends StatelessWidget {
         // once MochiContextMenu lands.
         MochiPopover(
           align: MochiPopoverAlign.start,
+          // Its anchor only opens, so pressing it again has to be what closes it.
+          closeOnAnchorPress: true,
           popoverBuilder: (context) => const SizedBox(width: 160, child: Text("Opened at the pointer")),
           builder: (context, anchor, _) => GestureDetector(
             onSecondaryTapUp: (details) => anchor.open(position: details.localPosition),
@@ -831,11 +833,11 @@ class _ToastSample extends StatelessWidget {
           appearance: MochiButtonAppearance.outlined,
           size: MochiButtonSize.sm,
           onPress: () {
-            for (var i = 1; i <= 4; i++) {
-              showMochiToast(context, title: Text("Message $i"), duration: const Duration(seconds: 6));
+            for (var i = 1; i <= 6; i++) {
+              showMochiToast(context, title: Text("Message $i"), duration: const Duration(seconds: 3));
             }
           },
-          child: const Text("four at once"),
+          child: const Text("six at once"),
         ),
       ],
     );
