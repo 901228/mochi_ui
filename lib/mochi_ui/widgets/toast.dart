@@ -50,8 +50,10 @@ class MochiToast extends StatelessWidget {
     final tone = colors.of(intent);
     final neutral = intent == MochiIntent.neutral;
 
+    // Only bites on a toast standing on its own: inside a stack the width is settled there and
+    // handed down tight. The floor keeps a one-word message from shrinking to a stub.
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 240, maxWidth: 420),
+      constraints: BoxConstraints(minWidth: 240, maxWidth: g.toastWidth),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
         decoration: ShapeDecoration(
