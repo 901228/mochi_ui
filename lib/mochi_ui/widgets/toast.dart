@@ -273,6 +273,10 @@ class MochiToasterState extends State<MochiToaster> {
   /// place is as tall as the taller of the two, so handing it over costs no movement at all.
   Widget _place(_Slot slot, Alignment alignment, double gap) => Stack(
     key: slot.key,
+    // Against the edge the stack is anchored to. A toast growing into a place is shorter than the
+    // one sliding off it, and the default here would hang it from the other end, so it would
+    // arrive from the wrong side.
+    alignment: Alignment(alignment.x, alignment.y > 0 ? 1 : -1),
     children: [
       for (final (request, leaving) in [(slot.current, false), (slot.leaving, true)])
         if (request != null)
