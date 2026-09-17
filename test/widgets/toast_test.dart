@@ -314,6 +314,59 @@ void main() {
     expect(tester.getRect(find.text("Message 4")), places[2], reason: "came up at the end");
   });
 
+  testWidgets("several leaving at once each come up from their own place in the queue", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  // Three up, three queued, and all three up leave together.
+                  for (var i = 1; i <= 6; i++) {
+                    showMochiToast(
+                      context,
+                      title: Text("Message $i"),
+                      closeable: false,
+                      duration: i <= 3 ? const Duration(milliseconds: 500) : const Duration(minutes: 1),
+                    );
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 450));
+
+    // All three start leaving together, so all three queued are promoted at once — each from the
+    // place it was standing at, not all from the front.
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 16));
+    final widths = [
+      for (var i = 4; i <= 6; i++)
+        tester.getRect(find.ancestor(of: find.text("Message $i"), matching: find.byType(MochiToast))).width,
+    ];
+    expect(widths[0], greaterThan(widths[1]), reason: "each from its own place, not piled on one");
+    expect(widths[1], greaterThan(widths[2]));
+
+    await tester.pumpAndSettle();
+    expect(find.text("Message 1"), findsNothing);
+    final settled = {
+      for (var i = 4; i <= 6; i++)
+        tester.getRect(find.ancestor(of: find.text("Message $i"), matching: find.byType(MochiToast))).width,
+    };
+    expect(settled, hasLength(1), reason: "all three came up into the stack");
+  });
+
   testWidgets("the close button sits against the right edge", (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text("raise"));

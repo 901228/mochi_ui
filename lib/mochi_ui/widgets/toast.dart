@@ -195,11 +195,15 @@ class MochiToasterState extends State<MochiToaster> {
   /// them: a toast nobody saw may as well not have been raised.
   void _fill({bool promoted = false}) {
     var taken = _toasts.where((request) => !request.leaving).length;
+    var reserved = _toasts.where((request) => request.held).length;
     while (_waiting.isNotEmpty && taken < widget.maxVisible) {
       _toasts.add(
         _waiting.removeAt(0)
           ..promoted = promoted
-          ..held = promoted,
+          ..held = promoted
+          // Each takes the next place back in the queue, so several leaving at once come up from
+          // where each of them was standing rather than all from the front.
+          ..fromDepth = promoted ? reserved++ : 0,
       );
       taken++;
     }
@@ -322,6 +326,11 @@ class _ToastRequest {
   /// front card of the deck was, at that card's size, until the other has gone.
   bool held = false;
 
+  /// Which place in the queue it was standing at when it was promoted, so it comes up from there
+  /// rather than from the front. Several toasts leaving at once promote several, each from its
+  /// own place.
+  int fromDepth = 0;
+
   /// Set by the entry once it is on screen.
   VoidCallback? dismiss;
 }
@@ -440,7 +449,8 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
 
   /// Where a promoted toast starts: exactly where it was standing as the front of the queue, in
   /// pixels rather than a fraction of its height, so the two line up to the pixel.
-  double get _promotedFrom => widget.request.promoted ? _towards * _DeckPlace.step : 0;
+  double get _promotedFrom =>
+      widget.request.promoted ? _towards * _DeckPlace.outAt(widget.request.fromDepth.toDouble()) : 0;
 
   /// It leaves towards the side of the screen instead, so it doesn't travel across the toasts
   /// below it on the way out. A stack down the middle has no side to leave by.
@@ -496,7 +506,9 @@ class _ToastState extends State<_Toast> with TickerProviderStateMixin {
                 child: Transform.scale(
                   // It grows out of the size it was standing at, and moves up out of the place it
                   // was standing in, over the same half of the exit that closes the gap for it.
-                  scale: widget.request.promoted ? lerpDouble(_DeckPlace.scaleAt(0), 1, t) : 1,
+                  scale: widget.request.promoted
+                      ? lerpDouble(_DeckPlace.scaleAt(widget.request.fromDepth.toDouble()), 1, t)
+                      : 1,
                   child: Transform.translate(
                     offset: Offset(0, _promotedFrom * (1 - t)),
                     child: FractionalTranslation(translation: travel, child: child),
@@ -631,7 +643,16 @@ class _DeckCard extends StatelessWidget {
             ),
           ),
         ),
-        child: child,
+        // Fades in on its first build and never again: only the end of a tween is read after
+        // that, so moving up a place leaves this alone. Without it a queue raised alongside the
+        // toasts in front of it would be there before they were.
+        child: TweenAnimationBuilder(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: motion.toastDuration,
+          curve: motion.transitionCurve,
+          builder: (context, shown, card) => Opacity(opacity: shown, child: card),
+          child: child,
+        ),
       ),
     );
   }
