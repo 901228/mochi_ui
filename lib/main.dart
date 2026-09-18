@@ -183,6 +183,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _RadioSample(),
           const SizedBox(height: 32),
+          const _ThemedText("stepper", .section),
+          const SizedBox(height: 12),
+          const _StepperSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -1964,6 +1968,71 @@ class _RadioSampleState extends State<_RadioSample> {
             MochiRadio(value: 2, label: Text("Can't pick this")),
           ],
         ),
+      ],
+    );
+  }
+}
+
+class _StepperSample extends StatefulWidget {
+  const _StepperSample();
+
+  @override
+  State<_StepperSample> createState() => _StepperSampleState();
+}
+
+class _StepperSampleState extends State<_StepperSample> {
+  int _inspection = 15;
+  int _average = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        Row(
+          spacing: g.space.md,
+          children: [
+            MochiStepper(
+              value: _inspection,
+              min: 0,
+              max: 60,
+              format: (value) => "${value}s",
+              semanticLabel: "Inspection",
+              onChanged: (value) => setState(() => _inspection = value),
+            ),
+            const _ThemedText("inspection, 0–60s (hold a button to repeat)", .muted),
+          ],
+        ),
+        Row(
+          spacing: g.space.md,
+          children: [
+            MochiStepper(
+              value: _average,
+              min: 3,
+              max: 1000,
+              semanticLabel: "Average of",
+              onChanged: (value) => setState(() => _average = value),
+            ),
+            _ThemedText("ao$_average", .muted),
+          ],
+        ),
+        // Lines up with fields and buttons of the same size.
+        for (final size in MochiSize.values)
+          Row(
+            spacing: g.space.xs,
+            children: [
+              MochiStepper(value: 3, size: size, onChanged: (_) {}),
+              SizedBox(
+                width: 120,
+                child: MochiTextField(size: size, hint: size.name),
+              ),
+              MochiButton(size: size, onPress: () {}, child: const Text("Save")),
+            ],
+          ),
+        const MochiStepper(value: 7, onChanged: null),
       ],
     );
   }
