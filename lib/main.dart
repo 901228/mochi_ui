@@ -171,6 +171,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TransitionSample(),
           const SizedBox(height: 32),
+          const _ThemedText("text field", .section),
+          const SizedBox(height: 12),
+          const _TextFieldSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -1687,4 +1691,95 @@ class _LookBar extends StatelessWidget {
         _choice(label, look.textScale == value, () => onChanged(look.copyWith(textScale: value))),
     ],
   );
+}
+
+class _TextFieldSample extends StatefulWidget {
+  const _TextFieldSample();
+
+  @override
+  State<_TextFieldSample> createState() => _TextFieldSampleState();
+}
+
+class _TextFieldSampleState extends State<_TextFieldSample> {
+  String _name = "";
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    Widget column(double width, Widget child) => SizedBox(width: width, child: child);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.lg,
+      children: [
+        Wrap(
+          spacing: g.space.lg,
+          runSpacing: g.space.lg,
+          crossAxisAlignment: WrapCrossAlignment.start,
+          children: [
+            column(
+              240,
+              MochiTextField(
+                label: const Text("Session name"),
+                hint: "e.g. 3x3 main",
+                description: const Text("Shown in the session list."),
+                onChanged: (value) => setState(() => _name = value),
+              ),
+            ),
+            column(
+              240,
+              MochiTextField(
+                label: const Text("Inspection"),
+                initialValue: "abc",
+                error: _name.isEmpty ? "Seconds must be a number." : null,
+                description: const Text("Seconds before the timer starts."),
+              ),
+            ),
+            column(
+              240,
+              const MochiTextField(
+                label: Text("Search"),
+                hint: "Scramble, comment…",
+                prefix: Icon(TablerIcons.search),
+                clearable: true,
+                initialValue: "R U R'",
+              ),
+            ),
+            column(
+              240,
+              const MochiTextField(label: Text("Comment"), hint: "Up to 40 characters", maxLength: 40),
+            ),
+            column(
+              240,
+              const MochiTextField(label: Text("Disabled"), initialValue: "Can't touch this", enabled: false),
+            ),
+            column(
+              240,
+              const MochiTextField(label: Text("Password"), obscureText: true, initialValue: "hunter2"),
+            ),
+          ],
+        ),
+        // Fields and buttons of one size share a height.
+        for (final size in MochiSize.values)
+          Row(
+            spacing: g.space.xs,
+            children: [
+              SizedBox(
+                width: 200,
+                child: MochiTextField(size: size, hint: "size ${size.name}"),
+              ),
+              MochiButton(size: size, onPress: () {}, child: const Text("Save")),
+            ],
+          ),
+        column(
+          500,
+          const MochiTextField.multiline(
+            label: Text("Scramble"),
+            hint: "Paste or type a scramble",
+            description: Text("Grows with its content."),
+          ),
+        ),
+      ],
+    );
+  }
 }
