@@ -17,6 +17,7 @@ class PreviewApp extends StatefulWidget {
 class _PreviewAppState extends State<PreviewApp> {
   MochiThemeMode _mode = MochiThemeMode.system;
   bool _touch = MochiTheme.defaultTouch;
+  bool _zh = false;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +25,14 @@ class _PreviewAppState extends State<PreviewApp> {
       title: "Mochi UI Preview",
       themeMode: _mode,
       touch: _touch,
+      strings: _zh ? MochiStrings.zhHant : MochiStrings.en,
       home: _Gallery(
         mode: _mode,
         onModeChanged: (mode) => setState(() => _mode = mode),
         touch: _touch,
         onTouchChanged: (touch) => setState(() => _touch = touch),
+        zh: _zh,
+        onZhChanged: (zh) => setState(() => _zh = zh),
       ),
     );
   }
@@ -57,12 +61,16 @@ class _Gallery extends StatelessWidget {
     required this.onModeChanged,
     required this.touch,
     required this.onTouchChanged,
+    required this.zh,
+    required this.onZhChanged,
   });
 
   final MochiThemeMode mode;
   final ValueChanged<MochiThemeMode> onModeChanged;
   final bool touch;
   final ValueChanged<bool> onTouchChanged;
+  final bool zh;
+  final ValueChanged<bool> onZhChanged;
 
   // Theme-dependent text lives in [_ThemedText] leaves so the gallery itself doesn't
   // rebuild (and rebuild every button) on each frame of a theme animation.
@@ -98,6 +106,16 @@ class _Gallery extends StatelessWidget {
                 onPress: () => onTouchChanged(!touch),
                 prefix: const Icon(TablerIcons.handFinger),
                 child: const Text("touch"),
+              ),
+              const SizedBox(width: 8),
+              MochiButton(
+                intent: MochiIntent.neutral,
+                appearance: MochiButtonAppearance.ghost,
+                selected: zh,
+                tooltip: "MochiStrings.zhHant: the words components say themselves",
+                onPress: () => onZhChanged(!zh),
+                prefix: const Icon(TablerIcons.language),
+                child: const Text("中文"),
               ),
               const SizedBox(width: 16),
               for (final m in MochiThemeMode.values)
