@@ -12,6 +12,7 @@ class MochiIcons {
     this.close = TablerIcons.x,
     this.check = TablerIcons.check,
     this.minus = TablerIcons.minus,
+    this.plus = TablerIcons.plus,
     this.chevronUp = TablerIcons.chevronUp,
     this.chevronDown = TablerIcons.chevronDown,
     this.chevronLeft = TablerIcons.chevronLeft,
@@ -29,6 +30,9 @@ class MochiIcons {
 
   /// A checkbox that is partly checked.
   final IconData minus;
+
+  /// A stepper's increment; its decrement is [minus].
+  final IconData plus;
   final IconData chevronUp;
   final IconData chevronDown;
   final IconData chevronLeft;
@@ -62,6 +66,7 @@ class MochiIcons {
           close == other.close &&
           check == other.check &&
           minus == other.minus &&
+          plus == other.plus &&
           chevronUp == other.chevronUp &&
           chevronDown == other.chevronDown &&
           chevronLeft == other.chevronLeft &&
@@ -78,6 +83,7 @@ class MochiIcons {
     close,
     check,
     minus,
+    plus,
     chevronUp,
     chevronDown,
     chevronLeft,

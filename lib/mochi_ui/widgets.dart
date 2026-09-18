@@ -22,6 +22,7 @@ export "widgets/scroll_area.dart";
 export "widgets/scroll_behavior.dart";
 export "widgets/sheet.dart";
 export "widgets/state_transition.dart";
+export "widgets/stepper.dart";
 export "widgets/switch.dart";
 export "widgets/tappable.dart";
 export "widgets/text_field.dart";
