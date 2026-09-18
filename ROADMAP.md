@@ -79,7 +79,7 @@
 - [x] Badge 的圓角改成可選（`shape: .pill / .rounded`）：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
 - [x] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`，跟 badge 的端點同心；螢幕閱讀器念 `MochiStrings.remove`（新增的字）
 - [x] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
-- [ ] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
+- [x] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
 - [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 和 Sidebar 也用它
 - [ ] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**）：
   - **圓角預設**：`MochiRadius.sharp()` / `.subtle()` / `.rounded()` / `.pill()`，`full` 不跟著縮（pill 就是 pill）
