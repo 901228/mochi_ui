@@ -175,6 +175,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TextFieldSample(),
           const SizedBox(height: 32),
+          const _ThemedText("checkbox", .section),
+          const SizedBox(height: 12),
+          const _CheckboxSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -1795,6 +1799,92 @@ class _TextFieldSampleState extends State<_TextFieldSample> {
             hint: "Paste or type a scramble",
             description: Text("Grows with its content."),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CheckboxSample extends StatefulWidget {
+  const _CheckboxSample();
+
+  @override
+  State<_CheckboxSample> createState() => _CheckboxSampleState();
+}
+
+class _CheckboxSampleState extends State<_CheckboxSample> {
+  final _events = {"3x3": true, "OH": false, "BLD": true};
+  bool _inspection = true;
+  bool _danger = false;
+
+  // All, none, or some: the parent of a list of checkboxes.
+  bool? get _all => _events.values.every((on) => on) ? true : (_events.values.any((on) => on) ? null : false);
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.xl,
+      runSpacing: g.space.lg,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: g.space.xs,
+          children: [
+            MochiCheckbox(
+              value: _all,
+              tristate: true,
+              label: const Text("All events"),
+              onChanged: (value) => setState(() {
+                // From "some", a press checks everything.
+                final next = _all != true;
+                for (final event in _events.keys) {
+                  _events[event] = next;
+                }
+              }),
+            ),
+            for (final event in _events.keys)
+              Padding(
+                padding: EdgeInsets.only(left: g.space.lg),
+                child: MochiCheckbox(
+                  value: _events[event]!,
+                  label: Text(event),
+                  onChanged: (value) => setState(() => _events[event] = value!),
+                ),
+              ),
+          ],
+        ),
+        SizedBox(
+          width: 280,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: g.space.sm,
+            children: [
+              MochiCheckbox(
+                value: _inspection,
+                label: const Text("Inspection"),
+                description: const Text("Count down 15 seconds before each solve starts."),
+                onChanged: (value) => setState(() => _inspection = value!),
+              ),
+              MochiCheckbox(
+                value: _danger,
+                intent: MochiIntent.danger,
+                label: const Text("Delete solves with the session"),
+                onChanged: (value) => setState(() => _danger = value!),
+              ),
+              const MochiCheckbox(value: true, label: Text("Disabled, checked"), onChanged: null),
+              const MochiCheckbox(value: false, label: Text("Disabled"), onChanged: null),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: g.space.sm,
+          children: [
+            MochiCheckbox(value: _inspection, onChanged: (value) => setState(() => _inspection = value!)),
+            const _ThemedText("no label", .muted),
+          ],
         ),
       ],
     );
