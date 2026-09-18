@@ -99,6 +99,7 @@
 - [ ] ⭐ SearchBar — TextField 加上搜尋圖示、清除鈕、debounce；接上 Autocomplete 就是搜尋建議
 - [ ] ⭐ Slider — 檢查時間、音量類設定
 - [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）
+- [ ] ⭐ Stepper 可直接輸入數字 — 點中間的數字就能打字（只收數字、觸控跳數字鍵盤），按 Enter 或離開那格才生效，超出範圍拉回 min / max，清空或打錯就還原；`format` 只在顯示時套用（編輯時是 `15` 不是 `15s`）；編輯時 ↑↓ 照樣加減、Esc 取消；預設開啟，`editable: false` 可關。ao 個數這種範圍大的值，打字比按住連發快
 
 ## 7. P5：導覽
 
