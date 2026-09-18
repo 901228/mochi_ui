@@ -65,7 +65,7 @@
 - [x] `showMochiModal`（1）— 桌面用 dialog、手機用 sheet（以 breakpoint 判斷，`form:` 可指定）。**不做 `Dialog.adaptive`**：dialog 和 sheet 是兩種外觀，會變的是呈現方式而不是元件，叫 dialog 等於說「這個 dialog 有時候不是 dialog」。`showMochiModal` 收的是內容描述（title / content / actions）而不是一棵 widget，因為 dialog 的按鈕橫排、sheet 的直排全寬，沒辦法共用同一棵樹
 - [x] ⭐ Toast / Toaster — `MochiToaster`（`MochiApp` 自動裝在 navigator 之上）+ `showMochiToast`：intent 上在邊框並自帶圖示、hover 會暫停倒數、超過上限的排隊、handle 可提前關掉
 - [x] ⭐ 現成的問句 — `showMochiConfirm` / `showMochiAlert` / `showMochiChoice`，都走 `showMochiModal`，所以名字裡沒有 dialog；`MochiModalAction` 是按下就把 modal pop 掉的按鈕
-- [ ] ⭐ `showMochiPrompt`（輸入一段文字，例如改名 session）— 卡在 TextField，等 P4 的 TextField 做完就補
+- [x] ⭐ `showMochiPrompt`（輸入一段文字，例如改名 session）：一打開就 focus、文字全選；`validate` 在按確定時才跑，不通過就留著並顯示錯誤，再打字就清掉錯誤；`maxLength` 顯示計數
 
 ## 5. P3.5：回頭對齊 Bulma / forui
 
