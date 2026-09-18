@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/motion.dart";
 import "../theme/responsive.dart";
+import "../theme/strings.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
@@ -139,7 +140,7 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
   MochiDialogRoute({
     required this.builder,
     this.barrierDismissible = true,
-    this.barrierLabel = "Dismiss",
+    this._barrierLabel,
     this.transition = MochiTransition.scaleFade,
     super.settings,
   });
@@ -150,8 +151,10 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
   @override
   final bool barrierDismissible;
 
+  /// Defaults to [MochiStrings.dismiss].
   @override
-  final String? barrierLabel;
+  String get barrierLabel => _barrierLabel ?? (_theme?.strings ?? MochiStrings.standard).dismiss;
+  final String? _barrierLabel;
 
   // Read from the navigator's context, the same way MochiPageRoute does: the navigator asks for
   // the durations and the barrier before the page is built.
@@ -203,7 +206,7 @@ Future<T?> showMochiDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   bool barrierDismissible = true,
-  String barrierLabel = "Dismiss",
+  String? barrierLabel,
   bool useRootNavigator = true,
   RouteSettings? settings,
 }) => Navigator.of(context, rootNavigator: useRootNavigator).push<T>(
@@ -240,7 +243,7 @@ Future<T?> showMochiModal<T>(
   List<Widget> actions = const [],
   MochiModalForm? form,
   bool barrierDismissible = true,
-  String barrierLabel = "Dismiss",
+  String? barrierLabel,
   bool useRootNavigator = true,
   RouteSettings? settings,
 }) {
@@ -289,12 +292,13 @@ Future<bool> showMochiConfirm(
   BuildContext context, {
   required String title,
   String? message,
-  String confirmLabel = "OK",
-  String cancelLabel = "Cancel",
+  String? confirmLabel,
+  String? cancelLabel,
   bool destructive = false,
   MochiModalForm? form,
   bool barrierDismissible = true,
 }) async {
+  final strings = _stringsOf(context);
   final answer = await showMochiModal<bool>(
     context,
     form: form,
@@ -302,8 +306,16 @@ Future<bool> showMochiConfirm(
     title: Text(title),
     body: message == null ? null : Text(message),
     actions: [
-      MochiModalAction(label: cancelLabel, appearance: MochiButtonAppearance.outlined, value: false),
-      MochiModalAction(label: confirmLabel, intent: destructive ? MochiIntent.danger : null, value: true),
+      MochiModalAction(
+        label: cancelLabel ?? strings.cancel,
+        appearance: MochiButtonAppearance.outlined,
+        value: false,
+      ),
+      MochiModalAction(
+        label: confirmLabel ?? strings.ok,
+        intent: destructive ? MochiIntent.danger : null,
+        value: true,
+      ),
     ],
   );
 
@@ -315,7 +327,7 @@ Future<void> showMochiAlert(
   BuildContext context, {
   required String title,
   String? message,
-  String dismissLabel = "OK",
+  String? dismissLabel,
   MochiIntent? intent,
   MochiModalForm? form,
 }) => showMochiModal<void>(
@@ -323,8 +335,13 @@ Future<void> showMochiAlert(
   form: form,
   title: Text(title),
   body: message == null ? null : Text(message),
-  actions: [MochiModalAction(label: dismissLabel, intent: intent)],
+  actions: [MochiModalAction(label: dismissLabel ?? _stringsOf(context).ok, intent: intent)],
 );
+
+// Helpers run once from an event handler rather than building, and may be called from outside a
+// MochiApp, so they read without depending and fall back to the defaults.
+MochiStrings _stringsOf(BuildContext context) =>
+    MochiTheme.maybeRead(context)?.strings ?? MochiStrings.standard;
 
 /// A button in a modal that pops the modal with [value] when pressed.
 ///
@@ -390,7 +407,8 @@ Future<T?> showMochiChoice<T>(
   required List<MochiChoice<T>> choices,
   String? message,
   T? selected,
-  String? cancelLabel = "Cancel",
+  String? cancelLabel,
+  bool cancelable = true,
   MochiModalForm? form,
   bool barrierDismissible = true,
 }) => showMochiModal<T>(
@@ -400,8 +418,11 @@ Future<T?> showMochiChoice<T>(
   title: Text(title),
   body: _ChoiceList(choices: choices, selected: selected, message: message),
   actions: [
-    if (cancelLabel != null)
-      MochiModalAction<T>(label: cancelLabel, appearance: MochiButtonAppearance.outlined),
+    if (cancelable)
+      MochiModalAction<T>(
+        label: cancelLabel ?? _stringsOf(context).cancel,
+        appearance: MochiButtonAppearance.outlined,
+      ),
   ],
 );
 

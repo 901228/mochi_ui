@@ -6,6 +6,7 @@ import "defaults.dart";
 import "geometry.dart";
 import "icons.dart";
 import "motion.dart";
+import "strings.dart";
 import "typography.dart";
 
 enum MochiThemeMode {
@@ -52,6 +53,7 @@ class MochiTheme {
     required this.typography,
     this.geometry = MochiGeometry.standard,
     this.icons = MochiIcons.standard,
+    this.strings = MochiStrings.standard,
     this.defaults = MochiDefaults.standard,
     MochiMotion? motion,
     this.touch = false,
@@ -64,6 +66,7 @@ class MochiTheme {
     required this.typography,
     required this.geometry,
     required this.icons,
+    required this.strings,
     required this.defaults,
     required this.motion,
     required this.touch,
@@ -74,6 +77,10 @@ class MochiTheme {
   final MochiTypography typography;
   final MochiGeometry geometry;
   final MochiIcons icons;
+
+  /// The words components say themselves. See [MochiStrings].
+  final MochiStrings strings;
+
   final MochiDefaults defaults;
   final MochiMotion motion;
 
@@ -90,6 +97,11 @@ class MochiTheme {
     .android || .iOS || .fuchsia => true,
     .linux || .macOS || .windows => false,
   };
+
+  /// The nearest theme without depending on it, or null outside one: for code that runs once
+  /// rather than builds, such as a `show…` helper or a route.
+  static MochiTheme? maybeRead(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<MochiThemeScope>()?.theme;
 
   Iterable<MochiThemeExtension<dynamic>> get extensions => _extensions.values;
 
@@ -108,6 +120,7 @@ class MochiTheme {
     MochiTypography? typography,
     MochiGeometry? geometry,
     MochiIcons? icons,
+    MochiStrings? strings,
     MochiDefaults? defaults,
     MochiMotion? motion,
     bool? touch,
@@ -117,6 +130,7 @@ class MochiTheme {
     typography: typography ?? this.typography,
     geometry: geometry ?? this.geometry,
     icons: icons ?? this.icons,
+    strings: strings ?? this.strings,
     defaults: defaults ?? this.defaults,
     motion: motion ?? this.motion,
     touch: touch ?? this.touch,
@@ -136,6 +150,7 @@ class MochiTheme {
           typography == other.typography &&
           geometry == other.geometry &&
           icons == other.icons &&
+          strings == other.strings &&
           defaults == other.defaults &&
           motion == other.motion &&
           touch == other.touch &&
@@ -147,18 +162,20 @@ class MochiTheme {
     typography,
     geometry,
     icons,
+    strings,
     defaults,
     motion,
     touch,
     Object.hashAllUnordered(_extensions.values),
   );
 
-  /// Interpolates colors and extensions; [typography], [geometry], [icons], [defaults], [motion] and [touch] switch to [b] immediately.
+  /// Interpolates colors and extensions; [typography], [geometry], [icons], [strings], [defaults], [motion] and [touch] switch to [b] immediately.
   static MochiTheme lerp(MochiTheme a, MochiTheme b, double t) => MochiTheme._raw(
     colors: MochiColors.lerp(a.colors, b.colors, t),
     typography: b.typography,
     geometry: b.geometry,
     icons: b.icons,
+    strings: b.strings,
     defaults: b.defaults,
     motion: b.motion,
     touch: b.touch,

@@ -120,7 +120,9 @@ class _ToastClose extends StatelessWidget {
       appearance: MochiButtonAppearance.ghost,
       size: MochiButtonSize.xs,
       onPress: onPress,
-      icon: Icon(theme.icons.close),
+      // A name for screen readers rather than a tooltip: the toaster sits above the navigator, out
+      // of reach of any Overlay a tooltip could float in.
+      icon: Icon(theme.icons.close, semanticLabel: theme.strings.close),
     );
   }
 }

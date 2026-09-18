@@ -306,7 +306,7 @@ void main() {
             picked = await showMochiChoice<String>(
               context,
               title: "Move to",
-              cancelLabel: null,
+              cancelable: false,
               choices: const [
                 MochiChoice(value: "3x3", label: "3x3"),
                 MochiChoice(value: "skewb", label: "Skewb", enabled: false),

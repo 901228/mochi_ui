@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "../theme/strings.dart";
 import "../theme/theme.dart";
 import "animated_theme.dart";
 import "scroll_behavior.dart";
@@ -14,6 +15,7 @@ class MochiApp extends StatelessWidget {
     this.lightTheme,
     this.darkTheme,
     this.touch,
+    this.strings,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
     this.maxQueuedToasts = 2,
@@ -28,6 +30,7 @@ class MochiApp extends StatelessWidget {
     this.lightTheme,
     this.darkTheme,
     this.touch,
+    this.strings,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
     this.maxQueuedToasts = 2,
@@ -46,6 +49,10 @@ class MochiApp extends StatelessWidget {
 
   /// Overrides [MochiTheme.touch] of both themes. Defaults to [MochiTheme.defaultTouch].
   final bool? touch;
+
+  /// Overrides [MochiTheme.strings] of both themes: the words components say themselves, such as
+  /// a confirmation's OK and Cancel. Pick the one for the app's locale.
+  final MochiStrings? strings;
 
   /// Which corner or edge toasts stack against. See [MochiToaster.alignment], which decides by
   /// screen size when this is null.
@@ -75,7 +82,7 @@ class MochiApp extends StatelessWidget {
     return AnimatedMochiTheme(
       duration: theme.motion.themeDuration,
       curve: theme.motion.themeCurve,
-      theme: theme.copyWith(touch: touch ?? MochiTheme.defaultTouch),
+      theme: theme.copyWith(touch: touch ?? MochiTheme.defaultTouch, strings: strings),
       child: Builder(
         builder: (context) => ColoredBox(
           color: context.colors.background,

@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "../theme/strings.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
@@ -110,7 +111,7 @@ class MochiHeaderAction extends StatelessWidget {
     super.key,
     required this.onPress,
     this.intent = MochiIntent.neutral,
-    this.tooltip = "Back",
+    this.tooltip,
     this.enabled = true,
   }) : icon = null,
        _icon = _Builtin.back;
@@ -120,7 +121,7 @@ class MochiHeaderAction extends StatelessWidget {
     super.key,
     required this.onPress,
     this.intent = MochiIntent.neutral,
-    this.tooltip = "Close",
+    this.tooltip,
     this.enabled = true,
   }) : icon = null,
        _icon = _Builtin.close;
@@ -128,6 +129,8 @@ class MochiHeaderAction extends StatelessWidget {
   final Widget? icon;
   final VoidCallback? onPress;
   final MochiIntent intent;
+
+  /// Defaults to [MochiStrings.back] / [MochiStrings.close] for the two built-in actions.
   final String? tooltip;
   final bool enabled;
 
@@ -135,14 +138,21 @@ class MochiHeaderAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icons = context.theme.icons;
+    final theme = context.theme;
+    final icons = theme.icons;
 
     return MochiButton.icon(
       intent: intent,
       appearance: MochiButtonAppearance.ghost,
       size: MochiButtonSize.sm,
       enabled: enabled,
-      tooltip: tooltip,
+      tooltip:
+          tooltip ??
+          switch (_icon) {
+            .back => theme.strings.back,
+            .close => theme.strings.close,
+            null => null,
+          },
       onPress: onPress,
       icon:
           icon ??

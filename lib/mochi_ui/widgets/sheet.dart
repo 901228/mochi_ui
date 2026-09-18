@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
 import "../theme/motion.dart";
+import "../theme/strings.dart";
 import "../theme/theme.dart";
 import "transitions.dart";
 
@@ -156,7 +157,7 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
     required this.builder,
     this.side = MochiSheetSide.bottom,
     this.barrierDismissible = true,
-    this.barrierLabel = "Dismiss",
+    this._barrierLabel,
     this.dragToDismiss = true,
     super.settings,
   });
@@ -170,8 +171,10 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
   @override
   final bool barrierDismissible;
 
+  /// Defaults to [MochiStrings.dismiss].
   @override
-  final String? barrierLabel;
+  String get barrierLabel => _barrierLabel ?? (_theme?.strings ?? MochiStrings.standard).dismiss;
+  final String? _barrierLabel;
 
   /// Driven directly while the sheet is being dragged, so the barrier fades with it.
   AnimationController? _controller;
@@ -342,7 +345,7 @@ Future<T?> showMochiSheet<T>(
   required WidgetBuilder builder,
   MochiSheetSide side = MochiSheetSide.bottom,
   bool barrierDismissible = true,
-  String barrierLabel = "Dismiss",
+  String? barrierLabel,
   bool dragToDismiss = true,
   bool useRootNavigator = true,
   RouteSettings? settings,
