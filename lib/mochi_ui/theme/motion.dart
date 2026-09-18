@@ -16,7 +16,7 @@ class MochiMotion {
     this.transitionReverseCurve = Curves.easeInCubic,
     this.toastDuration = const Duration(milliseconds: 420),
     this.toastReverseDuration = const Duration(milliseconds: 320),
-    this.pressScale = 1.06,
+    this.pressScale = 1.2,
     this.pressMaxGrowth = 3,
     SpringDescription? pressSpring,
     SpringDescription? releaseSpring,

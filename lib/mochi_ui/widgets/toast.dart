@@ -139,7 +139,14 @@ class MochiToastHandle {
 /// [MochiApp] installs one above the navigator, so a toast outlives the page that raised it and
 /// stays visible over a dialog.
 class MochiToaster extends StatefulWidget {
-  const MochiToaster({super.key, required this.child, this.alignment, this.maxVisible = 3, this.width});
+  const MochiToaster({
+    super.key,
+    required this.child,
+    this.alignment,
+    this.maxVisible = 3,
+    this.maxQueued = 2,
+    this.width,
+  });
 
   final Widget child;
 
@@ -149,6 +156,11 @@ class MochiToaster extends StatefulWidget {
 
   /// Older toasts beyond this many are taken away as new ones arrive.
   final int maxVisible;
+
+  /// How many of the toasts waiting their turn show their edge past the end of the stack. Past
+  /// two or three that pile reads as a mess rather than as a queue; zero hides it, so a burst
+  /// arrives with no warning that more are coming.
+  final int maxQueued;
 
   /// How wide the stack is. Defaults to `geometry.toastWidth`.
   final double? width;
@@ -281,6 +293,7 @@ class MochiToasterState extends State<MochiToaster> {
                           // front of the queue, so the rest hold their places behind it. They
                           // move up when it does, not when the toast it follows starts leaving.
                           reserved: _toasts.where((request) => request.held).length,
+                          places: widget.maxQueued,
                         ),
                         for (final request in _toasts.reversed)
                           _Toast(
@@ -542,7 +555,7 @@ Widget? _intentIcon(BuildContext context, MochiIntent intent) {
 /// Its own item in the column rather than something drawn under the newest toast: a toast leaving
 /// must not take the queue with it.
 class _Deck extends StatelessWidget {
-  const _Deck({required this.waiting, required this.towards, this.reserved = 0});
+  const _Deck({required this.waiting, required this.towards, required this.places, this.reserved = 0});
 
   /// The toasts still queued, front of the queue first.
   final List<_ToastRequest> waiting;
@@ -553,6 +566,9 @@ class _Deck extends StatelessWidget {
   /// Places at the front held by toasts that have left the queue but are still standing there,
   /// waiting for the one they follow to slide clear.
   final int reserved;
+
+  /// How many places the queue shows at all.
+  final int places;
 
   @override
   Widget build(BuildContext context) {
@@ -565,13 +581,13 @@ class _Deck extends StatelessWidget {
         // Only the band past the end of the stack, and clipped to it: the rest of each toast
         // reaches back behind the one in front, and must stay hidden even while that one is
         // sliding out of the way.
-        maxHeight: _DeckPlace.step * _DeckPlace.maxLayers,
+        maxHeight: _DeckPlace.step * places,
         child: Stack(
           clipBehavior: Clip.hardEdge,
           fit: StackFit.passthrough,
           children: [
             // Furthest back first, so each lies over the one behind it.
-            for (var depth = _DeckPlace.maxLayers - 1; depth >= reserved; depth--)
+            for (var depth = places - 1; depth >= reserved; depth--)
               if (depth - reserved < waiting.length)
                 // Keyed by the toast itself, so one moving up a place in the queue is that same
                 // widget at a new depth and can travel there, rather than the place being redrawn
@@ -592,10 +608,6 @@ class _Deck extends StatelessWidget {
 /// Where a toast stands while it waits its turn. Depth 0 is the front of the queue, which is also
 /// where a toast promoted out of it starts from, so both read these.
 abstract final class _DeckPlace {
-  /// However many are queued, at most this many show: past two it reads as a mess rather than as
-  /// a pile.
-  static const maxLayers = 2;
-
   /// How much more of its trailing edge each place further back shows.
   static const step = 6.0;
 

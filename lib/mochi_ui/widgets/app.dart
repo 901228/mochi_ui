@@ -16,6 +16,7 @@ class MochiApp extends StatelessWidget {
     this.touch,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
+    this.maxQueuedToasts = 2,
     this.toastWidth,
     required Widget this.home,
   }) : routerConfig = null;
@@ -29,6 +30,7 @@ class MochiApp extends StatelessWidget {
     this.touch,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
+    this.maxQueuedToasts = 2,
     this.toastWidth,
     required RouterConfig<Object> this.routerConfig,
   }) : home = null;
@@ -51,6 +53,10 @@ class MochiApp extends StatelessWidget {
 
   /// How many toasts are up at once; the rest wait their turn. See [MochiToaster.maxVisible].
   final int maxVisibleToasts;
+
+  /// How many of those waiting show their edge past the end of the stack. See
+  /// [MochiToaster.maxQueued].
+  final int maxQueuedToasts;
 
   /// Overrides `geometry.toastWidth` for the stack. See [MochiToaster.width].
   final double? toastWidth;
@@ -84,6 +90,7 @@ class MochiApp extends StatelessWidget {
                 child: MochiToaster(
                   alignment: toastAlignment,
                   maxVisible: maxVisibleToasts,
+                  maxQueued: maxQueuedToasts,
                   width: toastWidth,
                   child: child!,
                 ),

@@ -367,6 +367,36 @@ void main() {
     expect(settled, hasLength(1), reason: "all three came up into the stack");
   });
 
+  testWidgets("maxQueued: 0 hides the queue entirely", (tester) async {
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          toastAlignment: Alignment.bottomRight,
+          maxQueuedToasts: 0,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () {
+                  for (var i = 1; i <= 5; i++) {
+                    showMochiToast(context, title: Text("Message $i"), duration: const Duration(minutes: 1));
+                  }
+                },
+                child: const Text("raise"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text("raise"));
+    await tester.pumpAndSettle();
+    expect(find.text("Message 3"), findsOneWidget);
+    expect(find.text("Message 4"), findsNothing, reason: "queued, and nothing of it shown");
+  });
+
   testWidgets("the close button sits against the right edge", (tester) async {
     await tester.pumpWidget(app());
     await tester.tap(find.text("raise"));
