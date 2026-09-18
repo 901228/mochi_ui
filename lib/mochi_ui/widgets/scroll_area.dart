@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart";
 import "package:flutter/widgets.dart";
 
 /// Wraps a scrollable and fades its content out at whichever end can still be scrolled,
@@ -5,8 +6,17 @@ import "package:flutter/widgets.dart";
 ///
 /// Wrap the scrollable itself, or a subtree containing one; the scrollable keeps its own
 /// controller. Scrollbars come from the app's scroll behavior, so they are not part of this.
+///
+/// A mouse wheel over the area scrolls only the area, even once it has reached its end: see
+/// [containScroll].
 class MochiScrollArea extends StatefulWidget {
-  const MochiScrollArea({super.key, required this.child, this.axis = Axis.vertical, this.fadeExtent = 24});
+  const MochiScrollArea({
+    super.key,
+    required this.child,
+    this.axis = Axis.vertical,
+    this.fadeExtent = 24,
+    this.containScroll = true,
+  });
 
   /// The scrollable itself, or a subtree containing one.
   final Widget child;
@@ -15,6 +25,14 @@ class MochiScrollArea extends StatefulWidget {
 
   /// Length of the fade at each end.
   final double fadeExtent;
+
+  /// Keep the wheel to the area once it reaches an end, rather than letting the page behind it
+  /// take over and scroll away mid-gesture (CSS's `overscroll-behavior: contain`).
+  ///
+  /// Only while there is something to scroll, and only along [axis]: an area whose content fits
+  /// passes the wheel on, so the page can still be scrolled with the pointer over it. Touch and
+  /// trackpad drags don't need this; the inner scrollable keeps the whole gesture already.
+  final bool containScroll;
 
   @override
   State<MochiScrollArea> createState() => _MochiScrollAreaState();
@@ -39,6 +57,21 @@ class _MochiScrollAreaState extends State<MochiScrollArea> {
   }
 
   /// How much of the fade to show at the start and end, 0..1.
+  // A wheel event goes to the first scrollable along the hit path that registers for it. The one
+  // inside registers only while it can still move, so at its end this registers a handler that
+  // does nothing, ahead of whatever scrollable lies further out.
+  void _contain(PointerSignalEvent event) {
+    final metrics = _metrics;
+    if (event is! PointerScrollEvent || metrics == null) return;
+    if (metrics.maxScrollExtent <= metrics.minScrollExtent) return;
+    final delta = switch (widget.axis) {
+      Axis.vertical => event.scrollDelta.dy,
+      Axis.horizontal => event.scrollDelta.dx,
+    };
+    if (delta == 0) return;
+    GestureBinding.instance.pointerSignalResolver.register(event, (_) {});
+  }
+
   (double, double) _fades() {
     final metrics = _metrics;
     if (metrics == null) return (0, 0);
@@ -55,7 +88,7 @@ class _MochiScrollAreaState extends State<MochiScrollArea> {
       onNotification: (n) => _update(n.metrics),
       child: NotificationListener<ScrollNotification>(
         onNotification: (n) => _update(n.metrics),
-        child: widget.child,
+        child: widget.containScroll ? Listener(onPointerSignal: _contain, child: widget.child) : widget.child,
       ),
     );
 
