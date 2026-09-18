@@ -22,6 +22,7 @@ export "widgets/sheet.dart";
 export "widgets/state_transition.dart";
 export "widgets/switch.dart";
 export "widgets/tappable.dart";
+export "widgets/text_field.dart";
 export "widgets/tile.dart";
 export "widgets/tooltip.dart";
 export "widgets/toast.dart";

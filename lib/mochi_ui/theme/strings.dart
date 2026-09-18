@@ -23,6 +23,10 @@ class MochiStrings {
     required this.close,
     required this.dismiss,
     required this.remove,
+    required this.cut,
+    required this.copy,
+    required this.paste,
+    required this.selectAll,
   });
 
   /// Acknowledges an alert, or agrees to a confirmation.
@@ -43,6 +47,12 @@ class MochiStrings {
   /// Takes one item out of a set, such as the × on a badge.
   final String remove;
 
+  /// A text field's context menu.
+  final String cut;
+  final String copy;
+  final String paste;
+  final String selectAll;
+
   static const en = MochiStrings(
     ok: "OK",
     cancel: "Cancel",
@@ -50,6 +60,10 @@ class MochiStrings {
     close: "Close",
     dismiss: "Dismiss",
     remove: "Remove",
+    cut: "Cut",
+    copy: "Copy",
+    paste: "Paste",
+    selectAll: "Select all",
   );
 
   static const zhHant = MochiStrings(
@@ -59,6 +73,10 @@ class MochiStrings {
     close: "關閉",
     dismiss: "關閉",
     remove: "移除",
+    cut: "剪下",
+    copy: "複製",
+    paste: "貼上",
+    selectAll: "全選",
   );
 
   static const standard = en;
@@ -70,6 +88,10 @@ class MochiStrings {
     String? close,
     String? dismiss,
     String? remove,
+    String? cut,
+    String? copy,
+    String? paste,
+    String? selectAll,
   }) => MochiStrings(
     ok: ok ?? this.ok,
     cancel: cancel ?? this.cancel,
@@ -77,6 +99,10 @@ class MochiStrings {
     close: close ?? this.close,
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
+    cut: cut ?? this.cut,
+    copy: copy ?? this.copy,
+    paste: paste ?? this.paste,
+    selectAll: selectAll ?? this.selectAll,
   );
 
   @override
@@ -88,8 +114,12 @@ class MochiStrings {
           back == other.back &&
           close == other.close &&
           dismiss == other.dismiss &&
-          remove == other.remove;
+          remove == other.remove &&
+          cut == other.cut &&
+          copy == other.copy &&
+          paste == other.paste &&
+          selectAll == other.selectAll;
 
   @override
-  int get hashCode => Object.hash(ok, cancel, back, close, dismiss, remove);
+  int get hashCode => Object.hash(ok, cancel, back, close, dismiss, remove, cut, copy, paste, selectAll);
 }

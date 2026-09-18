@@ -210,7 +210,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
 
     Widget panel = widget.popoverBuilder(context);
     if (widget.surface) {
-      panel = _PopoverSurface(padding: widget.padding, child: panel);
+      panel = MochiPopoverSurface(padding: widget.padding, child: panel);
     }
     if (widget.constraints case final constraints?) {
       panel = ConstrainedBox(constraints: constraints, child: panel);
@@ -265,10 +265,13 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
   }
 }
 
-/// The panel's background: [MochiColors.overlay] rather than `surface`, so a popover reads as
+/// The panel a popover floats in: [MochiColors.overlay] rather than `surface`, so it reads as
 /// floating above a card instead of continuing it.
-class _PopoverSurface extends StatelessWidget {
-  const _PopoverSurface({required this.padding, required this.child});
+///
+/// Public for anything that floats like a popover without being one, such as a text field's
+/// context menu, which [EditableText] places itself.
+class MochiPopoverSurface extends StatelessWidget {
+  const MochiPopoverSurface({super.key, this.padding, required this.child});
 
   final EdgeInsetsGeometry? padding;
   final Widget child;
