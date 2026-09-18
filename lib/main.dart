@@ -18,6 +18,7 @@ class _PreviewAppState extends State<PreviewApp> {
   MochiThemeMode _mode = MochiThemeMode.system;
   bool _touch = MochiTheme.defaultTouch;
   bool _zh = false;
+  var _look = const _Look();
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,12 @@ class _PreviewAppState extends State<PreviewApp> {
       themeMode: _mode,
       touch: _touch,
       strings: _zh ? MochiStrings.zhHant : MochiStrings.en,
+      radius: _look.radius.value,
+      density: _look.density,
+      textScale: _look.textScale,
       home: _Gallery(
+        look: _look,
+        onLookChanged: (look) => setState(() => _look = look),
         mode: _mode,
         onModeChanged: (mode) => setState(() => _mode = mode),
         touch: _touch,
@@ -63,7 +69,12 @@ class _Gallery extends StatelessWidget {
     required this.onTouchChanged,
     required this.zh,
     required this.onZhChanged,
+    required this.look,
+    required this.onLookChanged,
   });
+
+  final _Look look;
+  final ValueChanged<_Look> onLookChanged;
 
   final MochiThemeMode mode;
   final ValueChanged<MochiThemeMode> onModeChanged;
@@ -141,6 +152,8 @@ class _Gallery extends StatelessWidget {
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          _LookBar(look: look, onChanged: onLookChanged),
           const SizedBox(height: 32),
           const _ThemedText("typography", .section),
           const SizedBox(height: 12),
@@ -1604,4 +1617,72 @@ class _StaticButtonState extends State<_StaticButton> {
       ),
     );
   }
+}
+
+enum _RadiusPreset {
+  sharp,
+  subtle,
+  standard,
+  rounded,
+  pill;
+
+  MochiRadius get value => switch (this) {
+    .sharp => MochiRadius.sharp,
+    .subtle => MochiRadius.subtle,
+    .standard => MochiRadius.standard,
+    .rounded => MochiRadius.rounded,
+    .pill => MochiRadius.pill,
+  };
+}
+
+/// The three app-wide appearance knobs: corners, density and text size.
+@immutable
+class _Look {
+  const _Look({this.radius = _RadiusPreset.standard, this.density = 1, this.textScale = 1});
+
+  final _RadiusPreset radius;
+  final double density;
+  final double textScale;
+
+  _Look copyWith({_RadiusPreset? radius, double? density, double? textScale}) => _Look(
+    radius: radius ?? this.radius,
+    density: density ?? this.density,
+    textScale: textScale ?? this.textScale,
+  );
+}
+
+class _LookBar extends StatelessWidget {
+  const _LookBar({required this.look, required this.onChanged});
+
+  final _Look look;
+  final ValueChanged<_Look> onChanged;
+
+  Widget _choice(String label, bool selected, VoidCallback onPress) => MochiButton(
+    intent: MochiIntent.neutral,
+    appearance: MochiButtonAppearance.ghost,
+    size: MochiSize.xs,
+    selected: selected,
+    onPress: onPress,
+    child: Text(label),
+  );
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: 4,
+    runSpacing: 4,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      const _ThemedText("radius", .muted),
+      for (final preset in _RadiusPreset.values)
+        _choice(preset.name, look.radius == preset, () => onChanged(look.copyWith(radius: preset))),
+      const SizedBox(width: 16),
+      const _ThemedText("density", .muted),
+      for (final (label, value) in [("compact", 0.85), ("default", 1.0), ("spacious", 1.15)])
+        _choice(label, look.density == value, () => onChanged(look.copyWith(density: value))),
+      const SizedBox(width: 16),
+      const _ThemedText("text", .muted),
+      for (final (label, value) in [("0.9×", 0.9), ("1×", 1.0), ("1.2×", 1.2)])
+        _choice(label, look.textScale == value, () => onChanged(look.copyWith(textScale: value))),
+    ],
+  );
 }
