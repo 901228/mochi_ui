@@ -3,12 +3,14 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/geometry.dart";
 import "../theme/theme.dart";
+import "collapsible.dart";
 import "state_transition.dart";
 import "tappable.dart";
 
 /// A surface for grouped content: [MochiColors.surface] with a border and an elevation shadow.
 ///
-/// Pass [onPress] to make the whole card tappable; it then reacts to hover, press and focus.
+/// Pass [onPress] to make the whole card tappable; it then reacts to hover, press and focus. Or
+/// use [MochiCard.collapsible] for a card whose body opens and closes under a title.
 class MochiCard extends StatelessWidget {
   const MochiCard({
     super.key,
@@ -20,7 +22,33 @@ class MochiCard extends StatelessWidget {
     this.onLongPress,
     this.onSecondaryPress,
     this.semanticLabel,
-  });
+  }) : title = null,
+       expanded = null,
+       initiallyExpanded = false,
+       onExpandedChanged = null;
+
+  /// A card that shows only [title] until it is opened. The whole title row is the toggle; see
+  /// [MochiCollapsible] for [expanded] (controlled) versus [initiallyExpanded].
+  const MochiCard.collapsible({
+    super.key,
+    required Widget this.title,
+    required this.child,
+    this.expanded,
+    this.initiallyExpanded = false,
+    this.onExpandedChanged,
+    this.padding,
+    this.elevation = MochiElevation.sm,
+    this.color,
+  }) : onPress = null,
+       onLongPress = null,
+       onSecondaryPress = null,
+       semanticLabel = null;
+
+  /// Set by [MochiCard.collapsible].
+  final Widget? title;
+  final bool? expanded;
+  final bool initiallyExpanded;
+  final ValueChanged<bool>? onExpandedChanged;
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -38,6 +66,23 @@ class MochiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (title case final title?) {
+      return _CardSurface(
+        elevation: elevation,
+        color: color,
+        // The padding moves inside, so the title row's hover fill reaches the card's edges.
+        padding: EdgeInsets.zero,
+        child: _CollapsibleBody(
+          padding: padding,
+          title: title,
+          expanded: expanded,
+          initiallyExpanded: initiallyExpanded,
+          onExpandedChanged: onExpandedChanged,
+          child: child,
+        ),
+      );
+    }
+
     if (!_interactive) {
       return _CardSurface(elevation: elevation, color: color, padding: padding, child: child);
     }
@@ -94,6 +139,42 @@ class _CardSurface extends StatelessWidget {
         // Clipped so content (rows, scrollbars) stays inside the rounded corners.
         child: ClipRSuperellipse(borderRadius: g.radius.md, child: child),
       ),
+    );
+  }
+}
+
+class _CollapsibleBody extends StatelessWidget {
+  const _CollapsibleBody({
+    required this.padding,
+    required this.title,
+    required this.expanded,
+    required this.initiallyExpanded,
+    required this.onExpandedChanged,
+    required this.child,
+  });
+
+  final EdgeInsetsGeometry? padding;
+  final Widget title;
+  final bool? expanded;
+  final bool initiallyExpanded;
+  final ValueChanged<bool>? onExpandedChanged;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final padding = (this.padding ?? EdgeInsets.all(g.space.md)).resolve(Directionality.of(context));
+
+    return MochiCollapsible(
+      title: title,
+      expanded: expanded,
+      initiallyExpanded: initiallyExpanded,
+      onExpandedChanged: onExpandedChanged,
+      headerPadding: padding,
+      // The title row already leaves the gap above the body.
+      bodyPadding: padding.copyWith(top: 0),
+      radius: g.radius.md,
+      child: child,
     );
   }
 }

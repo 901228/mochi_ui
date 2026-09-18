@@ -312,6 +312,36 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
           ],
         ),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: g.space.md,
+          children: [
+            const SizedBox(
+              width: 260,
+              child: MochiCard.collapsible(
+                title: Text("Session stats"),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    Text("Best  9.87"),
+                    Text("ao5  12.34"),
+                    Text("ao12  12.81"),
+                    Text("Solves  142"),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 260,
+              child: MochiCard.collapsible(
+                title: const Text("Scramble"),
+                initiallyExpanded: true,
+                child: const Text("R U R' U' F2 D L2 B' U2 R2 F' L D2"),
+              ),
+            ),
+          ],
+        ),
+        Row(
           spacing: g.space.md,
           children: [
             for (final size in MochiSize.values) MochiCloseButton(size: size, onPress: () {}),
