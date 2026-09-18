@@ -79,6 +79,21 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
   // The curve is set from the theme on every build.
   late final _progress = CurvedAnimation(parent: _controller, curve: Curves.linear);
 
+  // The body is on screen while it is open or still closing. The header's shape follows this
+  // rather than [_open], or it would turn round at the bottom the moment a close begins, while the
+  // body is still there beneath it.
+  bool get _bodyShown => _open || _controller.value > 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Rebuild once a close has finished, so the header's bottom corners round off then.
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed && mounted) setState(() {});
+    });
+  }
+
   @override
   void didUpdateWidget(MochiCollapsible old) {
     super.didUpdateWidget(old);
@@ -137,7 +152,7 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
               enabled: widget.enabled,
               turns: _progress,
               padding: widget.headerPadding,
-              radius: _open
+              radius: _bodyShown
                   ? BorderRadius.only(topLeft: widget.radius.topLeft, topRight: widget.radius.topRight)
                   : widget.radius,
               title: widget.title,

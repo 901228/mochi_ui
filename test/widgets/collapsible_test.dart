@@ -148,6 +148,40 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets("the header stays square at the bottom until the body has gone", (tester) async {
+      const radius = BorderRadius.all(Radius.circular(10));
+      await tester.pumpWidget(
+        app(
+          const MochiCollapsible(title: Text("Title"), initiallyExpanded: true, radius: radius, child: body),
+        ),
+      );
+      BorderRadiusGeometry corners() =>
+          ((tester
+                              .widget<DecoratedBox>(
+                                find
+                                    .descendant(
+                                      of: find.byType(MochiTappable),
+                                      matching: find.byType(DecoratedBox),
+                                    )
+                                    .first,
+                              )
+                              .decoration
+                          as ShapeDecoration)
+                      .shape
+                  as RoundedSuperellipseBorder)
+              .borderRadius;
+      const top = BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10));
+      expect(corners(), top);
+
+      await tester.tap(find.text("Title"));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(corners(), top, reason: "still closing");
+
+      await tester.pumpAndSettle();
+      expect(corners(), radius);
+    });
+
     testWidgets("disabled does nothing", (tester) async {
       await tester.pumpWidget(app(const MochiCollapsible(title: Text("Title"), enabled: false, child: body)));
       await tester.tap(find.text("Title"));
