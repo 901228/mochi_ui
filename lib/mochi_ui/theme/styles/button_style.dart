@@ -32,7 +32,23 @@ class MochiButtonMetrics {
   final BorderRadius Function(MochiRadius radius) radius;
   final TextStyle Function(MochiTypography typography) textStyle;
 
-  factory MochiButtonMetrics.of(MochiSize size, {required bool touch}) => switch ((size, touch)) {
+  /// [density] scales the height, padding and gap; see [MochiTheme.density].
+  factory MochiButtonMetrics.of(MochiSize size, {required bool touch, double density = 1}) =>
+      _base(size, touch).scaled(density);
+
+  /// Height, padding and gap times [factor]; the icon and the text keep their size.
+  MochiButtonMetrics scaled(double factor) => factor == 1
+      ? this
+      : MochiButtonMetrics(
+          height: height * factor,
+          horizontalPadding: horizontalPadding * factor,
+          gap: gap * factor,
+          iconSize: iconSize,
+          radius: radius,
+          textStyle: textStyle,
+        );
+
+  static MochiButtonMetrics _base(MochiSize size, bool touch) => switch ((size, touch)) {
     (.xs, false) => const MochiButtonMetrics(
       height: 28,
       horizontalPadding: 8,

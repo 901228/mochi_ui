@@ -51,7 +51,8 @@ class MochiTheme {
   MochiTheme({
     required this.colors,
     required this.typography,
-    this.geometry = MochiGeometry.standard,
+    this._geometry = MochiGeometry.standard,
+    this.density = 1,
     this.icons = MochiIcons.standard,
     this.strings = MochiStrings.standard,
     this.defaults = MochiDefaults.standard,
@@ -61,10 +62,11 @@ class MochiTheme {
   }) : motion = motion ?? MochiMotion.standard,
        _extensions = {for (final e in extensions) e.type: e};
 
-  const MochiTheme._raw({
+  MochiTheme._raw({
     required this.colors,
     required this.typography,
-    required this.geometry,
+    required this._geometry,
+    required this.density,
     required this.icons,
     required this.strings,
     required this.defaults,
@@ -75,7 +77,17 @@ class MochiTheme {
 
   final MochiColors colors;
   final MochiTypography typography;
-  final MochiGeometry geometry;
+
+  /// The geometry components read: the one given, with its spacing scaled by [density].
+  late final MochiGeometry geometry = _geometry.withDensity(density);
+  final MochiGeometry _geometry;
+
+  /// How tightly everything is packed: spacing, and the heights and paddings of controls, rows
+  /// and badges, times this. Text, icons, corners and lines keep their size. `1` is the default;
+  /// around `0.85` is compact and `1.15` spacious.
+  ///
+  /// On a touch theme this shrinks hit targets too, so keep it at `1` or above there.
+  final double density;
   final MochiIcons icons;
 
   /// The words components say themselves. See [MochiStrings].
@@ -114,11 +126,16 @@ class MochiTheme {
   T? maybeExtension<T extends MochiThemeExtension<T>>() => _extensions[T] as T?;
 
   /// Replaces the given fields. [extensions] are merged by type: entries replace existing
-  /// extensions of the same type, others are kept.
+  /// extensions of the same type, others are kept. [radius] replaces just the geometry's corners.
+  ///
+  /// [geometry] is taken before [density] is applied, as it was passed in: don't hand back
+  /// `theme.geometry`, which already has it, or the spacing is scaled twice.
   MochiTheme copyWith({
     MochiColors? colors,
     MochiTypography? typography,
     MochiGeometry? geometry,
+    MochiRadius? radius,
+    double? density,
     MochiIcons? icons,
     MochiStrings? strings,
     MochiDefaults? defaults,
@@ -128,7 +145,11 @@ class MochiTheme {
   }) => MochiTheme._raw(
     colors: colors ?? this.colors,
     typography: typography ?? this.typography,
-    geometry: geometry ?? this.geometry,
+    geometry: switch ((geometry ?? _geometry, radius)) {
+      (final geometry, null) => geometry,
+      (final geometry, final radius?) => geometry.copyWith(radius: radius),
+    },
+    density: density ?? this.density,
     icons: icons ?? this.icons,
     strings: strings ?? this.strings,
     defaults: defaults ?? this.defaults,
@@ -148,7 +169,8 @@ class MochiTheme {
       other is MochiTheme &&
           colors == other.colors &&
           typography == other.typography &&
-          geometry == other.geometry &&
+          _geometry == other._geometry &&
+          density == other.density &&
           icons == other.icons &&
           strings == other.strings &&
           defaults == other.defaults &&
@@ -160,7 +182,8 @@ class MochiTheme {
   int get hashCode => Object.hash(
     colors,
     typography,
-    geometry,
+    _geometry,
+    density,
     icons,
     strings,
     defaults,
@@ -169,11 +192,12 @@ class MochiTheme {
     Object.hashAllUnordered(_extensions.values),
   );
 
-  /// Interpolates colors and extensions; [typography], [geometry], [icons], [strings], [defaults], [motion] and [touch] switch to [b] immediately.
+  /// Interpolates colors and extensions; [typography], [geometry], [density], [icons], [strings], [defaults], [motion] and [touch] switch to [b] immediately.
   static MochiTheme lerp(MochiTheme a, MochiTheme b, double t) => MochiTheme._raw(
     colors: MochiColors.lerp(a.colors, b.colors, t),
     typography: b.typography,
-    geometry: b.geometry,
+    geometry: b._geometry,
+    density: b.density,
     icons: b.icons,
     strings: b.strings,
     defaults: b.defaults,

@@ -185,7 +185,9 @@ class _ButtonSurface extends StatelessWidget {
     final appearance =
         this.appearance ?? (iconOnly ? defaults.iconButtonAppearance : defaults.buttonAppearance);
     final s = style ?? MochiButtonStyle.of(intent ?? defaults.buttonIntent, appearance);
-    final target = metrics ?? MochiButtonMetrics.of(size ?? defaults.buttonSize, touch: theme.touch);
+    final target =
+        metrics ??
+        MochiButtonMetrics.of(size ?? defaults.buttonSize, touch: theme.touch, density: theme.density);
 
     // Sizes come from the theme, so switching scales would otherwise jump.
     return MochiValueTransition(

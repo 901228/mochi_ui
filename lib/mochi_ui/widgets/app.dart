@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "../theme/geometry.dart";
 import "../theme/strings.dart";
 import "../theme/theme.dart";
 import "animated_theme.dart";
@@ -16,6 +17,9 @@ class MochiApp extends StatelessWidget {
     this.darkTheme,
     this.touch,
     this.strings,
+    this.radius,
+    this.density,
+    this.textScale = 1,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
     this.maxQueuedToasts = 2,
@@ -31,6 +35,9 @@ class MochiApp extends StatelessWidget {
     this.darkTheme,
     this.touch,
     this.strings,
+    this.radius,
+    this.density,
+    this.textScale = 1,
     this.toastAlignment,
     this.maxVisibleToasts = 3,
     this.maxQueuedToasts = 2,
@@ -53,6 +60,17 @@ class MochiApp extends StatelessWidget {
   /// Overrides [MochiTheme.strings] of both themes: the words components say themselves, such as
   /// a confirmation's OK and Cancel. Pick the one for the app's locale.
   final MochiStrings? strings;
+
+  /// Overrides `geometry.radius` of both themes: the app's corners, from [MochiRadius.sharp]
+  /// through [MochiRadius.standard] to [MochiRadius.pill].
+  final MochiRadius? radius;
+
+  /// Overrides [MochiTheme.density] of both themes: how tightly spacing and controls are packed.
+  final double? density;
+
+  /// Multiplies the text size on top of the system's own setting, which is still respected: 1.2
+  /// here with the system at 1.5 gives 1.8. Scales all text below the app, not only Mochi's.
+  final double textScale;
 
   /// Which corner or edge toasts stack against. See [MochiToaster.alignment], which decides by
   /// screen size when this is null.
@@ -79,10 +97,15 @@ class MochiApp extends StatelessWidget {
       .light => lightTheme ?? MochiTheme.light,
       .dark => darkTheme ?? MochiTheme.dark,
     };
-    return AnimatedMochiTheme(
+    final app = AnimatedMochiTheme(
       duration: theme.motion.themeDuration,
       curve: theme.motion.themeCurve,
-      theme: theme.copyWith(touch: touch ?? MochiTheme.defaultTouch, strings: strings),
+      theme: theme.copyWith(
+        touch: touch ?? MochiTheme.defaultTouch,
+        strings: strings,
+        density: density,
+        radius: radius,
+      ),
       child: Builder(
         builder: (context) => ColoredBox(
           color: context.colors.background,
@@ -107,6 +130,13 @@ class MochiApp extends StatelessWidget {
         ),
       ),
     );
+
+    if (textScale == 1) return app;
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: media.copyWith(textScaler: _TimesTextScaler(media.textScaler, textScale)),
+      child: app,
+    );
   }
 
   @override
@@ -123,4 +153,25 @@ class MochiApp extends StatelessWidget {
       builder: _builder,
     );
   }
+}
+
+/// The system's text scaling, then [factor] on top.
+class _TimesTextScaler extends TextScaler {
+  const _TimesTextScaler(this.base, this.factor);
+
+  final TextScaler base;
+  final double factor;
+
+  @override
+  double scale(double fontSize) => base.scale(fontSize) * factor;
+
+  @override
+  // ignore: deprecated_member_use
+  double get textScaleFactor => base.textScaleFactor * factor;
+
+  @override
+  bool operator ==(Object other) => other is _TimesTextScaler && other.base == base && other.factor == factor;
+
+  @override
+  int get hashCode => Object.hash(base, factor);
 }

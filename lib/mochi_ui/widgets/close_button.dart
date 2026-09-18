@@ -86,7 +86,7 @@ class _CloseSurface extends StatelessWidget {
     final theme = context.theme;
     final color = this.color ?? IconTheme.of(context).color ?? theme.colors.foreground;
     final clear = color.withValues(alpha: 0);
-    final target = metrics ?? MochiCloseButtonMetrics.of(size, touch: theme.touch);
+    final target = metrics ?? MochiCloseButtonMetrics.of(size, touch: theme.touch, density: theme.density);
 
     return MochiValueTransition(
       value: target,
@@ -134,7 +134,15 @@ class MochiCloseButtonMetrics {
   final double diameter;
   final double iconSize;
 
-  factory MochiCloseButtonMetrics.of(MochiSize size, {required bool touch}) => switch ((size, touch)) {
+  /// [density] scales the circle; see [MochiTheme.density].
+  factory MochiCloseButtonMetrics.of(MochiSize size, {required bool touch, double density = 1}) {
+    final base = _base(size, touch);
+    return density == 1
+        ? base
+        : MochiCloseButtonMetrics(diameter: base.diameter * density, iconSize: base.iconSize);
+  }
+
+  static MochiCloseButtonMetrics _base(MochiSize size, bool touch) => switch ((size, touch)) {
     (.xs, false) => const MochiCloseButtonMetrics(diameter: 16, iconSize: 10),
     (.sm, false) => const MochiCloseButtonMetrics(diameter: 20, iconSize: 12),
     (.md, false) => const MochiCloseButtonMetrics(diameter: 28, iconSize: 14),

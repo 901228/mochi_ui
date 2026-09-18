@@ -18,7 +18,7 @@ class _RowMetrics {
   const _RowMetrics({required this.minHeight, required this.verticalPadding, required this.iconSize});
 
   factory _RowMetrics.of(MochiTheme theme) => _RowMetrics(
-    minHeight: theme.touch ? 52 : 40,
+    minHeight: (theme.touch ? 52 : 40) * theme.density,
     verticalPadding: theme.touch ? theme.geometry.space.sm : theme.geometry.space.xs,
     iconSize: theme.touch ? 20 : 18,
   );

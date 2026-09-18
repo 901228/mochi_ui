@@ -37,7 +37,7 @@ class _MenuMetrics {
   const _MenuMetrics({required this.minHeight, required this.padding, required this.iconSize});
 
   factory _MenuMetrics.of(MochiTheme theme) => _MenuMetrics(
-    minHeight: theme.touch ? 40 : 30,
+    minHeight: (theme.touch ? 40 : 30) * theme.density,
     padding: theme.touch ? theme.geometry.space.xs : theme.geometry.space.xs2,
     iconSize: theme.touch ? 18 : 16,
   );

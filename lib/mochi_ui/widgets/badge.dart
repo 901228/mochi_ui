@@ -64,7 +64,7 @@ class MochiBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
-    final target = metrics ?? MochiBadgeMetrics.of(size, touch: theme.touch);
+    final target = metrics ?? MochiBadgeMetrics.of(size, touch: theme.touch, density: theme.density);
 
     return MochiValueTransition(
       value: target,
@@ -280,7 +280,9 @@ class MochiBadgeMetrics {
   /// The × added by [MochiBadge.onDelete], two pixels in from the badge's edge all round.
   final MochiCloseButtonMetrics close;
 
-  factory MochiBadgeMetrics.of(MochiSize size, {required bool touch}) {
+  /// [density] scales the height, padding and gap (and with the height, the ×); see
+  /// [MochiTheme.density].
+  factory MochiBadgeMetrics.of(MochiSize size, {required bool touch, double density = 1}) {
     final extra = touch ? 4.0 : 0.0;
     final (height, padding, gap, icon, radius, text) = switch (size) {
       .xs => (16.0, 6.0, 2.0, 10.0, _xsRadius, _xs3),
@@ -288,12 +290,12 @@ class MochiBadgeMetrics {
       .md => (24.0, 10.0, 4.0, 14.0, _smRadius, _sm),
       .lg => (28.0, 12.0, 6.0, 16.0, _smRadius, _md),
     };
-    final closeDiameter = height + extra - 4;
+    final closeDiameter = (height + extra) * density - 4;
 
     return MochiBadgeMetrics(
-      height: height + extra,
-      horizontalPadding: padding,
-      gap: gap,
+      height: (height + extra) * density,
+      horizontalPadding: padding * density,
+      gap: gap * density,
       iconSize: icon + extra / 2,
       radius: radius,
       textStyle: text,

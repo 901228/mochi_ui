@@ -14,6 +14,33 @@ class MochiRadius {
     this.full = const BorderRadius.all(Radius.circular(9999)),
   });
 
+  /// Every step times [factor]; [full] stays fully round.
+  MochiRadius.scaled(double factor)
+    : this(
+        xs: BorderRadius.all(Radius.circular(6 * factor)),
+        sm: BorderRadius.all(Radius.circular(8 * factor)),
+        md: BorderRadius.all(Radius.circular(10 * factor)),
+        lg: BorderRadius.all(Radius.circular(14 * factor)),
+        xl: BorderRadius.all(Radius.circular(20 * factor)),
+      );
+
+  /// Every step fully round: buttons and badges become pills, a card a stadium.
+  const MochiRadius.allFull()
+    : this(
+        xs: const BorderRadius.all(Radius.circular(9999)),
+        sm: const BorderRadius.all(Radius.circular(9999)),
+        md: const BorderRadius.all(Radius.circular(9999)),
+        lg: const BorderRadius.all(Radius.circular(9999)),
+        xl: const BorderRadius.all(Radius.circular(9999)),
+      );
+
+  /// Presets for the whole app's corners, from square to round. Pass one to `MochiApp(radius:)`.
+  static final sharp = MochiRadius.scaled(0);
+  static final subtle = MochiRadius.scaled(0.5);
+  static const standard = MochiRadius();
+  static final rounded = MochiRadius.scaled(1.5);
+  static const pill = MochiRadius.allFull();
+
   final BorderRadius xs;
   final BorderRadius sm;
   final BorderRadius md;
@@ -79,6 +106,21 @@ class MochiSpace {
 
   @override
   int get hashCode => Object.hash(xs3, xs2, xs, sm, md, lg, xl, xl2, xl3);
+
+  /// Every step times [factor]. See [MochiTheme.density].
+  MochiSpace scaled(double factor) => factor == 1
+      ? this
+      : MochiSpace(
+          xs3: xs3 * factor,
+          xs2: xs2 * factor,
+          xs: xs * factor,
+          sm: sm * factor,
+          md: md * factor,
+          lg: lg * factor,
+          xl: xl * factor,
+          xl2: xl2 * factor,
+          xl3: xl3 * factor,
+        );
 }
 
 enum MochiElevation { sm, md, lg }
@@ -197,6 +239,31 @@ class MochiGeometry {
   final double toastWidth;
 
   static const standard = MochiGeometry();
+
+  MochiGeometry copyWith({
+    MochiRadius? radius,
+    MochiSpace? space,
+    MochiShadows? shadows,
+    double? borderWidth,
+    double? focusRingWidth,
+    double? focusRingGap,
+    EdgeInsets? pagePadding,
+    double? toastWidth,
+  }) => MochiGeometry(
+    radius: radius ?? this.radius,
+    space: space ?? this.space,
+    shadows: shadows ?? this.shadows,
+    borderWidth: borderWidth ?? this.borderWidth,
+    focusRingWidth: focusRingWidth ?? this.focusRingWidth,
+    focusRingGap: focusRingGap ?? this.focusRingGap,
+    pagePadding: pagePadding ?? this.pagePadding,
+    toastWidth: toastWidth ?? this.toastWidth,
+  );
+
+  /// The spacing and the page padding times [factor]; lines, corners and shadows stay put. See
+  /// [MochiTheme.density].
+  MochiGeometry withDensity(double factor) =>
+      factor == 1 ? this : copyWith(space: space.scaled(factor), pagePadding: pagePadding * factor);
 
   @override
   bool operator ==(Object other) =>
