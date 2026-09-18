@@ -200,9 +200,7 @@ void main() {
         app(const MochiCard.collapsible(title: Text("Stats"), initiallyExpanded: true, child: body)),
       );
       final card = tester.getRect(find.byType(MochiCard));
-      final header = tester.getRect(
-        find.descendant(of: find.byType(MochiCollapsible), matching: find.byType(DecoratedBox)).first,
-      );
+      final header = tester.getRect(find.byType(MochiTappable));
       final content = tester.getRect(find.text("Body"));
 
       expect(header.left - card.left, lessThanOrEqualTo(1), reason: "only the border in between");
@@ -213,6 +211,13 @@ void main() {
         greaterThanOrEqualTo(16),
         reason: "and the content keeps its padding",
       );
+
+      // The fill is an all-round shape that runs on past the row and is clipped there, so its
+      // bottom corners are square whatever the renderer does with mixed corners.
+      final fill = find.descendant(of: find.byType(MochiTappable), matching: find.byType(DecoratedBox)).first;
+      final shape = (tester.widget<DecoratedBox>(fill).decoration as ShapeDecoration).shape;
+      expect((shape as RoundedSuperellipseBorder).borderRadius, const MochiRadius().md);
+      expect(tester.getRect(fill).bottom, greaterThan(header.bottom));
       expect(content.left - card.left, greaterThan(16));
       expect(card.bottom - content.bottom, greaterThan(16));
     });

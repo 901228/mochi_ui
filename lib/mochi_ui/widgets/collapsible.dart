@@ -137,9 +137,8 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
               enabled: widget.enabled,
               turns: _progress,
               padding: widget.headerPadding,
-              radius: _open
-                  ? BorderRadius.only(topLeft: widget.radius.topLeft, topRight: widget.radius.topRight)
-                  : widget.radius,
+              radius: widget.radius,
+              open: _open,
               title: widget.title,
             ),
           ),
@@ -189,6 +188,7 @@ class _Header extends StatelessWidget {
     required this.turns,
     required this.padding,
     required this.radius,
+    required this.open,
     required this.title,
   });
 
@@ -197,6 +197,7 @@ class _Header extends StatelessWidget {
   final Animation<double> turns;
   final EdgeInsetsGeometry padding;
   final BorderRadius radius;
+  final bool open;
   final Widget title;
 
   @override
@@ -210,36 +211,47 @@ class _Header extends StatelessWidget {
       duration: theme.motion.stateDuration,
       builder: (context, blend) => MochiFocusRing(
         visible: blend.contains(WidgetState.focused),
-        radius: radius,
+        radius: open ? BorderRadius.only(topLeft: radius.topLeft, topRight: radius.topRight) : radius,
         // Whatever holds a collapsible usually clips it, so the ring stays inside.
         inset: true,
-        child: DecoratedBox(
-          decoration: ShapeDecoration(
-            color: blend.color((st) => MochiColors.stateLayer(clear, colors.foreground, st)),
-            shape: RoundedSuperellipseBorder(borderRadius: radius),
-          ),
-          child: Opacity(
-            opacity: enabled ? 1 : 0.4,
-            child: Padding(
-              padding: padding,
-              child: Row(
-                spacing: theme.geometry.space.sm,
-                children: [
-                  Expanded(
-                    child: DefaultTextStyle.merge(
-                      style: theme.typography.body.sm.withWeight(FontWeight.w600),
-                      child: title,
-                    ),
-                  ),
-                  AnimatedBuilder(
-                    animation: turns,
-                    builder: (context, icon) => Transform.rotate(angle: turns.value * math.pi, child: icon),
-                    child: Icon(theme.icons.chevronDown, size: 16, color: colors.mutedForeground),
-                  ),
-                ],
+        child: Stack(
+          children: [
+            // While open, the fill's bottom meets the body and has to be square. Rather than a shape
+            // with only its top corners rounded, which not every renderer draws square at the
+            // bottom, the same all-round shape runs on past the header and the Stack's own clip
+            // cuts it off there.
+            Positioned.fill(
+              bottom: open ? -math.max(radius.bottomLeft.y, radius.bottomRight.y) : 0,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: blend.color((st) => MochiColors.stateLayer(clear, colors.foreground, st)),
+                  shape: RoundedSuperellipseBorder(borderRadius: radius),
+                ),
               ),
             ),
-          ),
+            Opacity(
+              opacity: enabled ? 1 : 0.4,
+              child: Padding(
+                padding: padding,
+                child: Row(
+                  spacing: theme.geometry.space.sm,
+                  children: [
+                    Expanded(
+                      child: DefaultTextStyle.merge(
+                        style: theme.typography.body.sm.withWeight(FontWeight.w600),
+                        child: title,
+                      ),
+                    ),
+                    AnimatedBuilder(
+                      animation: turns,
+                      builder: (context, icon) => Transform.rotate(angle: turns.value * math.pi, child: icon),
+                      child: Icon(theme.icons.chevronDown, size: 16, color: colors.mutedForeground),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
