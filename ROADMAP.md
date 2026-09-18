@@ -92,7 +92,7 @@
 - [x] TextField.multiline（1）— `MochiTextField.multiline`：從 `minLines`（預設 3）開始隨內容長高。shadcn_flutter 的 text area 就是這個，不另外開元件
 - [x] ⭐ Checkbox — `MochiCheckbox`：`tristate`（部分選取顯示橫線，新增 `MochiIcons.minus`）、`label` / `description`（點文字也會切換）、intent、桌面 16 / 觸控 20
 - [x] ⭐ RadioGroup — `MochiRadioGroup` / `MochiRadio`，包 widgets 層的 `RadioGroup` + `RawRadio`（方向鍵換選項、整組只佔一個 Tab 位置、互斥群組語意都是現成的）。`appearance: .card` 就是 shadcn 的 radio card，橫排時平分寬度。含 shadcn 的 radio card：**不是新元件，是 `appearance`**（項目長得像一行 tile 還是一張 card）。照既有規則，外觀是軸不是元件；checkbox 之後要 card 版也走同一條路
-- [ ] ⭐ Stepper — 數字加減（`-` 值 `+`），長按連續加減、可設 min/max/step。cube timer 的檢查秒數、ao 個數會用到
+- [x] ⭐ Stepper — `MochiStepper`：整數、min / max / step、`format`（如 `15s`）、按住連發且越來越快、鍵盤方向鍵 / Home / End、整個只佔一個 Tab 位置、跟同尺寸按鈕等高、寬度以最寬的值為準不會跳。新增 `MochiIcons.plus`
 - [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單。要含 **multi select**（多選時用 badge 顯示已選項目）
 - [ ] ⭐ Autocomplete — 建議加，但排在 TextField + Select 之後：它等於兩者相加，而且 widgets 層已經有 `RawAutocomplete` 可以包，成本低
 - [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
