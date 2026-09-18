@@ -4,6 +4,7 @@ export "theme/geometry.dart";
 export "theme/icons.dart";
 export "theme/motion.dart";
 export "theme/responsive.dart";
+export "theme/size.dart";
 export "theme/strings.dart";
 export "theme/styles/button_style.dart";
 export "theme/theme.dart";

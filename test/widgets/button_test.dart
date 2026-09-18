@@ -10,7 +10,7 @@ void main() {
   );
 
   for (final touch in [false, true]) {
-    for (final size in MochiButtonSize.values) {
+    for (final size in MochiSize.values) {
       final expected = MochiButtonMetrics.of(size, touch: touch).height;
 
       testWidgets("${touch ? "touch" : "desktop"} ${size.name} is $expected tall", (tester) async {

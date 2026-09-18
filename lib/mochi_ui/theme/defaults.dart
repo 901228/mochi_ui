@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "size.dart";
 import "styles/button_style.dart";
 import "tone.dart";
 
@@ -18,7 +19,7 @@ class MochiDefaults {
     this.buttonIntent = MochiIntent.primary,
     this.buttonAppearance = MochiButtonAppearance.solid,
     this.iconButtonAppearance = MochiButtonAppearance.ghost,
-    this.buttonSize = MochiButtonSize.md,
+    this.buttonSize = MochiSize.md,
   });
 
   final MochiIntent buttonIntent;
@@ -26,7 +27,7 @@ class MochiDefaults {
 
   /// Used by [MochiButton.icon], which usually sits in toolbars rather than as a main action.
   final MochiButtonAppearance iconButtonAppearance;
-  final MochiButtonSize buttonSize;
+  final MochiSize buttonSize;
 
   static const standard = MochiDefaults();
 

@@ -28,7 +28,7 @@ void main() {
                 action: withAction
                     ? MochiButton(
                         appearance: MochiButtonAppearance.text,
-                        size: MochiButtonSize.xs,
+                        size: MochiSize.xs,
                         onPress: () => events.add("undo"),
                         child: const Text("Undo"),
                       )

@@ -313,7 +313,7 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
         Row(
           spacing: g.space.md,
           children: [
-            for (final size in MochiButtonSize.values) MochiCloseButton(size: size, onPress: () {}),
+            for (final size in MochiSize.values) MochiCloseButton(size: size, onPress: () {}),
             MochiCloseButton(tooltip: "With a tooltip", onPress: () {}),
             const MochiCloseButton(onPress: null),
             IconTheme.merge(
@@ -384,13 +384,13 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
           spacing: g.space.xs,
           children: [
             MochiButton(
-              size: MochiButtonSize.xs,
+              size: MochiSize.xs,
               appearance: MochiButtonAppearance.outlined,
               onPress: () => setState(() => _progress = (_progress - 0.2).clamp(0.0, 1.0)),
               child: const Text("-20%"),
             ),
             MochiButton(
-              size: MochiButtonSize.xs,
+              size: MochiSize.xs,
               appearance: MochiButtonAppearance.outlined,
               onPress: () => setState(() => _progress = (_progress + 0.2).clamp(0.0, 1.0)),
               child: const Text("+20%"),
@@ -415,7 +415,7 @@ class _TransitionSample extends StatelessWidget {
         for (final transition in MochiTransition.values)
           MochiButton(
             appearance: MochiButtonAppearance.outlined,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             onPress: () => Navigator.of(context).push(
               MochiPageRoute<void>(
                 transition: transition,
@@ -464,7 +464,7 @@ class _PopoverSample extends StatelessWidget {
             ),
             builder: (context, anchor, _) => MochiButton(
               appearance: MochiButtonAppearance.outlined,
-              size: MochiButtonSize.sm,
+              size: MochiSize.sm,
               focusNode: anchor.focusNode,
               onPress: anchor.toggle,
               child: Text(side.name),
@@ -476,7 +476,7 @@ class _PopoverSample extends StatelessWidget {
             popoverBuilder: (context) => SizedBox(width: 220, child: Text("Aligned ${align.name}")),
             builder: (context, anchor, _) => MochiButton(
               appearance: MochiButtonAppearance.soft,
-              size: MochiButtonSize.sm,
+              size: MochiSize.sm,
               focusNode: anchor.focusNode,
               onPress: anchor.toggle,
               child: Text("align ${align.name}"),
@@ -574,7 +574,7 @@ class _MenuSampleState extends State<_MenuSample> {
           menuBuilder: _items,
           builder: (context, anchor, _) => MochiButton(
             appearance: MochiButtonAppearance.outlined,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             focusNode: anchor.focusNode,
             onPress: anchor.toggle,
             suffix: const Icon(TablerIcons.chevronDown),
@@ -585,7 +585,7 @@ class _MenuSampleState extends State<_MenuSample> {
           menuBuilder: _items,
           builder: (context, anchor, _) => MochiButton.icon(
             appearance: MochiButtonAppearance.ghost,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             focusNode: anchor.focusNode,
             onPress: anchor.toggle,
             icon: const Icon(TablerIcons.dotsVertical),
@@ -692,19 +692,19 @@ class _DialogSampleState extends State<_DialogSample> {
       children: [
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () => _confirm(context),
           child: const Text("confirm"),
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () => _long(context),
           child: const Text("long body"),
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () async {
             final yes = await showMochiConfirm(
               context,
@@ -720,7 +720,7 @@ class _DialogSampleState extends State<_DialogSample> {
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () async {
             final picked = await showMochiChoice<String>(
               context,
@@ -743,7 +743,7 @@ class _DialogSampleState extends State<_DialogSample> {
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () async {
             await showMochiAlert(context, title: "Import finished", message: "42 records added.");
             if (!context.mounted) return;
@@ -753,7 +753,7 @@ class _DialogSampleState extends State<_DialogSample> {
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           tooltip: "Dialog on a wide window, bottom sheet once it is phone-sized",
           onPress: () => _modal(context),
           child: const Text("adaptive modal"),
@@ -778,7 +778,7 @@ class _SheetSample extends StatelessWidget {
         for (final side in MochiSheetSide.values)
           MochiButton(
             appearance: MochiButtonAppearance.outlined,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             onPress: () => showMochiSheet<void>(
               context,
               side: side,
@@ -826,7 +826,7 @@ class _ToastSample extends StatelessWidget {
         ])
           MochiButton(
             appearance: MochiButtonAppearance.outlined,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             onPress: () => showMochiToast(
               context,
               intent: intent,
@@ -841,7 +841,7 @@ class _ToastSample extends StatelessWidget {
           ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           tooltip: "Hover it and it waits for you",
           onPress: () {
             late final MochiToastHandle handle;
@@ -853,7 +853,7 @@ class _ToastSample extends StatelessWidget {
               description: const Text("It is gone from this session."),
               action: MochiButton(
                 appearance: MochiButtonAppearance.text,
-                size: MochiButtonSize.xs,
+                size: MochiSize.xs,
                 onPress: () => handle.dismiss(),
                 child: const Text("Undo"),
               ),
@@ -863,7 +863,7 @@ class _ToastSample extends StatelessWidget {
         ),
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
-          size: MochiButtonSize.sm,
+          size: MochiSize.sm,
           onPress: () {
             for (var i = 1; i <= 6; i++) {
               showMochiToast(context, title: Text("Message $i"), duration: const Duration(seconds: 3));
@@ -897,7 +897,7 @@ class _SizingPage extends StatelessWidget {
         suffixes: [
           MochiButton(
             appearance: MochiButtonAppearance.ghost,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             selected: theme.touch,
             onPress: () => onTouchChanged(!theme.touch),
             prefix: const Icon(TablerIcons.handFinger),
@@ -907,7 +907,7 @@ class _SizingPage extends StatelessWidget {
           // fade, and neither has the rest of the gallery rebuilding alongside it.
           MochiButton(
             appearance: MochiButtonAppearance.ghost,
-            size: MochiButtonSize.sm,
+            size: MochiSize.sm,
             onPress: () => onModeChanged(switch (theme.colors.brightness) {
               .light => MochiThemeMode.dark,
               .dark => MochiThemeMode.light,
@@ -934,7 +934,7 @@ class _SizingPage extends StatelessWidget {
               spacing: g.space.md,
               runSpacing: g.space.md,
               children: [
-                for (final size in MochiButtonSize.values)
+                for (final size in MochiSize.values)
                   _Measured(
                     label: size.name,
                     child: MochiButton(size: size, onPress: () {}, child: Text(size.name)),
@@ -1077,7 +1077,7 @@ class _ScaffoldSample extends StatelessWidget {
             ),
             footer: Padding(
               padding: EdgeInsets.all(g.space.sm),
-              child: MochiButton(size: MochiButtonSize.sm, onPress: () {}, child: const Text("Add solve")),
+              child: MochiButton(size: MochiSize.sm, onPress: () {}, child: const Text("Add solve")),
             ),
             child: const Align(alignment: .topLeft, child: Text("content")),
           ),
@@ -1278,7 +1278,7 @@ class _SizeSample extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 10,
       children: [
-        for (final size in MochiButtonSize.values)
+        for (final size in MochiSize.values)
           Row(
             spacing: 12,
             children: [

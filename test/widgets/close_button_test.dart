@@ -19,7 +19,7 @@ void main() {
   });
 
   testWidgets("sizes follow size and touch", (tester) async {
-    await tester.pumpWidget(app(MochiCloseButton(onPress: () {}, size: MochiButtonSize.xs)));
+    await tester.pumpWidget(app(MochiCloseButton(onPress: () {}, size: MochiSize.xs)));
     expect(tester.getSize(find.byType(MochiCloseButton)), const Size(16, 16));
 
     await tester.pumpWidget(app(MochiCloseButton(onPress: () {})));
@@ -66,7 +66,7 @@ void main() {
 
   test("metrics have value equality", () {
     expect(
-      MochiCloseButtonMetrics.of(MochiButtonSize.md, touch: false),
+      MochiCloseButtonMetrics.of(MochiSize.md, touch: false),
       const MochiCloseButtonMetrics(diameter: 28, iconSize: 14),
     );
   });

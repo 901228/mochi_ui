@@ -4,12 +4,11 @@ import "package:flutter/widgets.dart";
 
 import "../colors.dart";
 import "../geometry.dart";
+import "../size.dart";
 import "../tone.dart";
 import "../typography.dart";
 
 enum MochiButtonAppearance { solid, soft, outlined, ghost, text, inverted }
-
-enum MochiButtonSize { xs, sm, md, lg }
 
 /// Size-dependent layout of a button. Heights follow forui: desktop 28/32/36/40, touch 32/40/44/48.
 @immutable
@@ -33,7 +32,7 @@ class MochiButtonMetrics {
   final BorderRadius Function(MochiRadius radius) radius;
   final TextStyle Function(MochiTypography typography) textStyle;
 
-  factory MochiButtonMetrics.of(MochiButtonSize size, {required bool touch}) => switch ((size, touch)) {
+  factory MochiButtonMetrics.of(MochiSize size, {required bool touch}) => switch ((size, touch)) {
     (.xs, false) => const MochiButtonMetrics(
       height: 28,
       horizontalPadding: 8,

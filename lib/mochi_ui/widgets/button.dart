@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
 import "../theme/styles/button_style.dart";
+import "../theme/size.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
@@ -81,7 +82,7 @@ class MochiButton extends StatelessWidget {
   final MochiButtonAppearance? appearance;
 
   /// Defaults to [MochiDefaults.buttonSize].
-  final MochiButtonSize? size;
+  final MochiSize? size;
 
   /// Overrides the colors derived from [intent] and [appearance].
   final MochiButtonStyle? style;
@@ -168,7 +169,7 @@ class _ButtonSurface extends StatelessWidget {
   final MochiIntent? intent;
   final MochiButtonAppearance? appearance;
   final MochiButtonStyle? style;
-  final MochiButtonSize? size;
+  final MochiSize? size;
   final MochiButtonMetrics? metrics;
   final bool iconOnly;
   final Set<WidgetState> states;

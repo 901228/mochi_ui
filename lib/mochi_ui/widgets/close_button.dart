@@ -3,7 +3,7 @@ import "dart:ui" show lerpDouble;
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
-import "../theme/styles/button_style.dart";
+import "../theme/size.dart";
 import "../theme/theme.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
@@ -24,7 +24,7 @@ class MochiCloseButton extends StatelessWidget {
   const MochiCloseButton({
     super.key,
     required this.onPress,
-    this.size = MochiButtonSize.md,
+    this.size = MochiSize.md,
     this.metrics,
     this.color,
     this.enabled = true,
@@ -37,7 +37,7 @@ class MochiCloseButton extends StatelessWidget {
   final VoidCallback? onPress;
 
   /// `xs` fits inside a badge; `md` (the default) sits beside the text of a toast or a header.
-  final MochiButtonSize size;
+  final MochiSize size;
 
   /// Overrides the metrics [size] would pick.
   final MochiCloseButtonMetrics? metrics;
@@ -76,7 +76,7 @@ class MochiCloseButton extends StatelessWidget {
 class _CloseSurface extends StatelessWidget {
   const _CloseSurface({required this.size, required this.metrics, required this.color, required this.states});
 
-  final MochiButtonSize size;
+  final MochiSize size;
   final MochiCloseButtonMetrics? metrics;
   final Color? color;
   final Set<WidgetState> states;
@@ -134,7 +134,7 @@ class MochiCloseButtonMetrics {
   final double diameter;
   final double iconSize;
 
-  factory MochiCloseButtonMetrics.of(MochiButtonSize size, {required bool touch}) => switch ((size, touch)) {
+  factory MochiCloseButtonMetrics.of(MochiSize size, {required bool touch}) => switch ((size, touch)) {
     (.xs, false) => const MochiCloseButtonMetrics(diameter: 16, iconSize: 10),
     (.sm, false) => const MochiCloseButtonMetrics(diameter: 20, iconSize: 12),
     (.md, false) => const MochiCloseButtonMetrics(diameter: 28, iconSize: 14),

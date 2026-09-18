@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/strings.dart";
 import "../theme/styles/button_style.dart";
+import "../theme/size.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
@@ -144,7 +145,7 @@ class MochiHeaderAction extends StatelessWidget {
     return MochiButton.icon(
       intent: intent,
       appearance: MochiButtonAppearance.ghost,
-      size: MochiButtonSize.sm,
+      size: MochiSize.sm,
       enabled: enabled,
       tooltip:
           tooltip ??
