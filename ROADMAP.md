@@ -88,8 +88,8 @@
 
 ## 6. P4：輸入
 
-- [ ] TextField（4）— 基於 `EditableText`：hint、control、inputFormatters、keyboardType、maxLength
-- [ ] TextField.multiline（1）— scramble 輸入。shadcn_flutter 的 text area 就是這個，不另外開元件
+- [x] TextField（4）— `MochiTextField`：基於 `EditableText` + `TextSelectionGestureDetectorBuilder`。label / hint / description / error、prefix / suffix、`clearable`、`maxLength`（含計數）、`size` 跟同尺寸按鈕等高。右鍵選單用 `MochiMenu`，文字走 `MochiStrings`（剪下 / 複製 / 貼上 / 全選）；web 上瀏覽器會用自己的右鍵選單
+- [x] TextField.multiline（1）— `MochiTextField.multiline`：從 `minLines`（預設 3）開始隨內容長高。shadcn_flutter 的 text area 就是這個，不另外開元件
 - [ ] ⭐ Checkbox
 - [ ] ⭐ RadioGroup — 含 shadcn 的 radio card：**不是新元件，是 `appearance`**（項目長得像一行 tile 還是一張 card）。照既有規則，外觀是軸不是元件；checkbox 之後要 card 版也走同一條路
 - [ ] ⭐ Stepper — 數字加減（`-` 值 `+`），長按連續加減、可設 min/max/step。cube timer 的檢查秒數、ao 個數會用到
