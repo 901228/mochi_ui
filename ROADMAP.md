@@ -69,20 +69,30 @@
 
 ## 5. P3.5：回頭對齊 Bulma / forui
 
-- [ ] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
-- [ ] Badge 加 `size`
-- [ ] Badge 的圓角改成可選：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
-- [ ] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉
+依這個順序做：
+
+- [ ] ⭐ `MochiStrings` — 元件自己會說的字。**排第一，因為之後每個會說話的元件都會用到，越晚做要回頭改的地方越多。** 現在已經漏了 9 個寫死的英文預設值：`showMochiConfirm` 的 `"OK"` / `"Cancel"`、`MochiHeaderAction` 的 `"Back"` / `"Close"`、三個 route 的 `barrierLabel = "Dismiss"`。規則照 `MochiIcons` 抄：**元件只會說 `MochiStrings` 裡的話，app 傳進來的字是 app 自己的事**。
+  - **不做 `LocalizationsDelegate`**：delegate + 每個 locale 一個 class + `Localizations.of` 那套機器是給對外發行的套件用的，這裡一個 `MochiApp(strings:)` 就結束了，順便跟其他 token 一樣有 value equality 和 `copyWith`
+  - 例外：Calendar 的月份名 / 星期名 / 日期格式不進 `MochiStrings`，那時候直接用 `intl` 的 `DateFormat(locale)`。等 P6 再說
 - [ ] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 獨立出來一個元件：badge 的叉、toast 的關閉、之後 dialog / sheet 的關閉都是同一顆，toast 裡目前是私有的 `_ToastClose`
+- [ ] Badge 加 `size`（走 `MochiBadgeMetrics`）
+- [ ] Badge 的圓角改成可選：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
+- [ ] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`
 - [ ] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
-- [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 也用它
+- [ ] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
+- [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 和 Sidebar 也用它
+- [ ] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**）：
+  - **圓角預設**：`MochiRadius.sharp()` / `.subtle()` / `.rounded()` / `.pill()`，`full` 不跟著縮（pill 就是 pill）
+  - **`densityScale`**：乘在 `MochiSpace` 和各 metrics 的高度上。**不要加 density enum** — `touch` 已經是一個密度軸了（它管的是最小點擊區 48px），再加一個 enum 會讓每個 `XxxMetrics.of` 變成 touch × density 的矩陣；一個乘數就夠，而且乘數天生可以餵給 `MochiValueTransition`
+  - **`textScale`**：`MochiTypography.scale(factor)` 已經寫好了，只差開到 `MochiApp`。注意跟 `MediaQuery.textScaler`（系統設定）的關係：系統的要尊重，這個是 app 自己的額外倍率
 
 ## 6. P4：輸入
 
 - [ ] TextField（4）— 基於 `EditableText`：hint、control、inputFormatters、keyboardType、maxLength
-- [ ] TextField.multiline（1）— scramble 輸入
+- [ ] TextField.multiline（1）— scramble 輸入。shadcn_flutter 的 text area 就是這個，不另外開元件
 - [ ] ⭐ Checkbox
-- [ ] ⭐ RadioGroup
+- [ ] ⭐ RadioGroup — 含 shadcn 的 radio card：**不是新元件，是 `appearance`**（項目長得像一行 tile 還是一張 card）。照既有規則，外觀是軸不是元件；checkbox 之後要 card 版也走同一條路
+- [ ] ⭐ Stepper — 數字加減（`-` 值 `+`），長按連續加減、可設 min/max/step。cube timer 的檢查秒數、ao 個數會用到
 - [ ] ⭐ Select — 設定頁「Alert type」目前是 disabled tile，看起來需要下拉選單。要含 **multi select**（多選時用 badge 顯示已選項目）
 - [ ] ⭐ Autocomplete — 建議加，但排在 TextField + Select 之後：它等於兩者相加，而且 widgets 層已經有 `RawAutocomplete` 可以包，成本低
 - [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
@@ -93,10 +103,12 @@
 ## 7. P5：導覽
 
 - [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
-- [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）
+- [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）— 含 **expandable**，但注意是兩種不同的「展開」，兩個都要：group 的收合（共用 P3.5 的 `MochiCollapsible`），以及整條 sidebar 收成只剩圖示的 rail（寬度過渡走 `MochiValueTransition`，收起時項目文字換成 tooltip）
 - [ ] BottomNavigationBar（1）
 - [ ] Breadcrumb（1）
 - [ ] ⭐ Pagination — Bulma 有，長列表用得到
+- [ ] ⭐ Menubar — 桌面的橫排選單列。成本很低：`MochiPopover` + `MochiMenu` + `MochiSubmenu` 都有了，只差「已經開著的時候 hover 到隔壁會直接換過去」這個行為
+- [ ] ⭐ Tree — 縮排、展開收合、縮排線、鍵盤（方向鍵進出層級）。widgets 層沒有現成的，整棵要自己寫，比 menubar 貴不少
 
 ## 8. P6：內容與日期
 
@@ -106,4 +118,16 @@
 - [ ] ⭐ DatePicker — Calendar 裝進 popover / sheet
 - [ ] ⭐ TimePicker — 時 / 分（/ 秒）滾輪或輸入
 - [ ] ⭐ DateTimePicker — 上面兩個合起來
+- [ ] ⭐ Skeleton — 載入中的佔位方塊（`MochiSkeleton` + `.text(lines:)`），脈動或 shimmer。很便宜，但要有非同步內容才划算，cube timer 是本地資料，所以不急
+- [ ] ⭐ Sortable — 拖曳排序。widgets 層有 `ReorderableList` / `SliverReorderableList` 可以包，成本不高
+- [ ] ⭐ RefreshIndicator — 下拉重新整理。**不併進 toast**：toast 是時間驅動、浮在 navigator 之上、跟捲動無關；refresh 是手勢驅動、綁在某一個 scrollable 上、進度由手指決定，塞進 toaster 只會讓它多一個不相干的狀態機。做法是包一個 scrollable，用 `OverscrollNotification` 驅動現成的 `MochiCircularProgress`（determinate → indeterminate）
 - [ ] ⭐ Resizable — 可拖曳分隔線的分割面板。**優先度最低**，cube timer 沒有這種版面
+
+## 9. 決定不做的（免得再繞回來）
+
+- **Chart** — 圖表是一整個領域（scale、tick、legend、hit test、動畫、a11y），做一半比沒有更糟。也不建議 `fl_chart`：它 import `package:flutter/material.dart`，會把這個專案唯一的硬規則破掉。cube timer 統計頁真正要的是「一條 solve time 折線 + ao5 / ao12 疊上去」，那是一個 `CustomPainter`，約 150 行、顏色直接讀 `context.colors`，**寫在 app 裡**。等出現第二種圖表再回來談
+- **Steps（精靈步驟）/ Timeline** — 是內容排版，不是互動原語。要用的時候在 app 裡用 Divider + Tile 拼出來就好
+- **`Dialog.adaptive`** — 見 P3 的 `showMochiModal`
+- **Radio card 當成獨立元件** — 見 P4 的 RadioGroup
+- **各元件的 style 類別** — 見 P0 的結論（有 size 軸的給 metrics，顏色不開 style）
+- **Animated icon — 暫緩，不是「換一組圖示」那麼簡單。** `MochiIcons` 存的是 `IconData`、元件寫的是 `Icon(theme.icons.close)`，而會動的圖示是一個帶 controller 的 widget，型別就對不上。更關鍵的是狀態：它需要知道「從哪個狀態到哪個狀態」（chevron 展開轉 90°、menu→close 變形），那是元件要把進度交給圖示，不是換 icon set 能解決的。真的要做的時候，第一步是把元件裡的 `Icon(theme.icons.x)` 換成 `theme.buildIcon(context, ...)` 這層間接（目前只有 6 個呼叫點，隨時可以補）
