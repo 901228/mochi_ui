@@ -1717,7 +1717,8 @@ class _TextFieldSample extends StatefulWidget {
 }
 
 class _TextFieldSampleState extends State<_TextFieldSample> {
-  String _name = "";
+  // Starts invalid, so the error state shows until a number is typed.
+  String _inspection = "abc";
 
   @override
   Widget build(BuildContext context) {
@@ -1739,7 +1740,6 @@ class _TextFieldSampleState extends State<_TextFieldSample> {
                 label: const Text("Session name"),
                 hint: "e.g. 3x3 main",
                 description: const Text("Shown in the session list."),
-                onChanged: (value) => setState(() => _name = value),
               ),
             ),
             column(
@@ -1747,7 +1747,8 @@ class _TextFieldSampleState extends State<_TextFieldSample> {
               MochiTextField(
                 label: const Text("Inspection"),
                 initialValue: "abc",
-                error: _name.isEmpty ? "Seconds must be a number." : null,
+                error: int.tryParse(_inspection.trim()) == null ? "Seconds must be a number." : null,
+                onChanged: (value) => setState(() => _inspection = value),
                 description: const Text("Seconds before the timer starts."),
               ),
             ),
