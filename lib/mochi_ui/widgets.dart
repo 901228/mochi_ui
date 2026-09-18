@@ -20,6 +20,7 @@ export "widgets/responsive.dart";
 export "widgets/scaffold.dart";
 export "widgets/scroll_area.dart";
 export "widgets/scroll_behavior.dart";
+export "widgets/select.dart";
 export "widgets/sheet.dart";
 export "widgets/state_transition.dart";
 export "widgets/stepper.dart";

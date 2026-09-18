@@ -60,6 +60,7 @@ class MochiPopover extends StatefulWidget {
     this.align = MochiPopoverAlign.center,
     this.gap,
     this.constraints,
+    this.matchAnchorWidth = false,
     this.padding,
     this.surface = true,
     this.consumeOutsideTaps = false,
@@ -88,6 +89,9 @@ class MochiPopover extends StatefulWidget {
 
   /// Applied to the panel on top of the room available on screen.
   final BoxConstraints? constraints;
+
+  /// Whether the panel is at least as wide as the anchor, as a select's list is under its field.
+  final bool matchAnchorWidth;
 
   /// Inside the panel's surface. Defaults to `geometry.space.xs`.
   final EdgeInsetsGeometry? padding;
@@ -214,6 +218,12 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
     }
     if (widget.constraints case final constraints?) {
       panel = ConstrainedBox(constraints: constraints, child: panel);
+    }
+    if (widget.matchAnchorWidth) {
+      panel = ConstrainedBox(
+        constraints: BoxConstraints(minWidth: info.anchorRect.width),
+        child: panel,
+      );
     }
 
     return CustomSingleChildLayout(

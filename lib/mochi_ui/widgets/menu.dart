@@ -120,6 +120,7 @@ class MochiMenuItem extends StatelessWidget {
     this.closeOnPress = true,
     this.onHoverChange,
     this.focusNode,
+    this.autofocus = false,
     this.semanticLabel,
   });
 
@@ -147,6 +148,9 @@ class MochiMenuItem extends StatelessWidget {
   /// Set by [MochiSubmenu] so focus comes back to the row when its submenu closes.
   final FocusNode? focusNode;
 
+  /// Takes focus when the menu opens, as a select's chosen row does when opened from the keyboard.
+  final bool autofocus;
+
   final String? semanticLabel;
 
   /// Pointing at a row puts away whatever submenu is open, including this row's own: a submenu
@@ -164,6 +168,7 @@ class MochiMenuItem extends StatelessWidget {
       enabled: enabled && onPress != null,
       selected: selected,
       focusNode: focusNode,
+      autofocus: autofocus,
       onHoverChange: (hovered) => _handleHover(context, hovered),
       semanticLabel: semanticLabel,
       // Rows keep their place in the list; they tint instead of growing.
@@ -433,6 +438,7 @@ class MochiPopoverMenu extends StatelessWidget {
     this.gap,
     this.minWidth = 160,
     this.constraints,
+    this.matchAnchorWidth = false,
     this.closeOnAnchorPress = false,
     this.onOpen,
     this.onClose,
@@ -453,6 +459,9 @@ class MochiPopoverMenu extends StatelessWidget {
   final double minWidth;
   final BoxConstraints? constraints;
 
+  /// See [MochiPopover.matchAnchorWidth].
+  final bool matchAnchorWidth;
+
   /// See [MochiPopover.closeOnAnchorPress].
   final bool closeOnAnchorPress;
 
@@ -467,6 +476,7 @@ class MochiPopoverMenu extends StatelessWidget {
       align: align,
       gap: gap,
       constraints: constraints,
+      matchAnchorWidth: matchAnchorWidth,
       closeOnAnchorPress: closeOnAnchorPress,
       // Rows carry their own padding, so the panel only insets them from its corners.
       padding: EdgeInsets.all(context.theme.geometry.space.xs2),
