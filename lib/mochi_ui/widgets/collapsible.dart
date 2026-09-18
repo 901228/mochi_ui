@@ -5,6 +5,7 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/theme.dart";
 import "../theme/typography.dart";
+import "divider.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
@@ -31,6 +32,7 @@ class MochiCollapsible extends StatefulWidget {
     this.headerPadding = EdgeInsets.zero,
     this.bodyPadding = EdgeInsets.zero,
     this.radius = BorderRadius.zero,
+    this.divider = false,
   });
 
   /// The header's label. Styled as a heading; the chevron is added after it.
@@ -59,6 +61,12 @@ class MochiCollapsible extends StatefulWidget {
   /// The corners of whatever the collapsible fills, so the header's hover fill and focus ring
   /// follow them: all four while closed, the top two while open.
   final BorderRadius radius;
+
+  /// A rule between the header and the open body, which opens and closes with it.
+  ///
+  /// Wants a full [bodyPadding] on top. Without one, whatever holds the collapsible has to leave
+  /// the gap below the header, and the header's hover fill runs right up to the content.
+  final bool divider;
 
   @override
   State<MochiCollapsible> createState() => _MochiCollapsibleState();
@@ -159,7 +167,14 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
           // A closing body keeps its content but can no longer be reached with Tab.
           child: ExcludeFocus(
             excluding: !_open,
-            child: Padding(padding: widget.bodyPadding, child: widget.child),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.divider) const MochiDivider(),
+                Padding(padding: widget.bodyPadding, child: widget.child),
+              ],
+            ),
           ),
         ),
       ],

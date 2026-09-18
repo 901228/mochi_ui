@@ -11,7 +11,15 @@ import "tappable.dart";
 import "tooltip.dart";
 import "value_transition.dart";
 
-/// A round × that closes or removes whatever it sits in: a toast, a badge, a panel.
+enum MochiCloseButtonShape {
+  /// Corners like an icon button's, so it sits among other controls: a toast, a dialog, a sheet.
+  rounded,
+
+  /// A circle, Bulma's `delete`: small enough to sit inside something round, like a badge.
+  circle,
+}
+
+/// An × that closes or removes whatever it sits in: a toast, a badge, a panel.
 ///
 /// Takes its colour from where it is (the ambient [IconTheme]) rather than from an intent, so the
 /// same button reads right on a danger badge, inside a toast, or on the page. It stays quiet at
@@ -25,6 +33,7 @@ class MochiCloseButton extends StatelessWidget {
     super.key,
     required this.onPress,
     this.size = MochiSize.md,
+    this.shape = MochiCloseButtonShape.rounded,
     this.metrics,
     this.color,
     this.enabled = true,
@@ -38,6 +47,8 @@ class MochiCloseButton extends StatelessWidget {
 
   /// `xs` fits inside a badge; `md` (the default) sits beside the text of a toast or a header.
   final MochiSize size;
+
+  final MochiCloseButtonShape shape;
 
   /// Overrides the metrics [size] would pick.
   final MochiCloseButtonMetrics? metrics;
@@ -66,7 +77,7 @@ class MochiCloseButton extends StatelessWidget {
       autofocus: autofocus,
       semanticLabel: semanticLabel ?? context.theme.strings.close,
       builder: (context, states, _) =>
-          _CloseSurface(size: size, metrics: metrics, color: color, states: states),
+          _CloseSurface(size: size, shape: shape, metrics: metrics, color: color, states: states),
     );
 
     return tooltip == null ? button : MochiTooltip(message: tooltip, child: button);
@@ -74,9 +85,16 @@ class MochiCloseButton extends StatelessWidget {
 }
 
 class _CloseSurface extends StatelessWidget {
-  const _CloseSurface({required this.size, required this.metrics, required this.color, required this.states});
+  const _CloseSurface({
+    required this.size,
+    required this.shape,
+    required this.metrics,
+    required this.color,
+    required this.states,
+  });
 
   final MochiSize size;
+  final MochiCloseButtonShape shape;
   final MochiCloseButtonMetrics? metrics;
   final Color? color;
   final Set<WidgetState> states;
@@ -86,6 +104,13 @@ class _CloseSurface extends StatelessWidget {
     final theme = context.theme;
     final color = this.color ?? IconTheme.of(context).color ?? theme.colors.foreground;
     final clear = color.withValues(alpha: 0);
+    final r = theme.geometry.radius;
+    // The same corners as an icon button of the same size.
+    final radius = switch ((shape, size)) {
+      (.circle, _) => r.full,
+      (.rounded, .xs) => r.xs,
+      (.rounded, _) => r.sm,
+    };
     final target = metrics ?? MochiCloseButtonMetrics.of(size, touch: theme.touch, density: theme.density);
 
     return MochiValueTransition(
@@ -100,13 +125,13 @@ class _CloseSurface extends StatelessWidget {
           opacity: blend.number((st) => st.contains(WidgetState.disabled) ? 0.4 : 1),
           child: MochiFocusRing(
             visible: blend.contains(WidgetState.focused),
-            radius: theme.geometry.radius.full,
+            radius: radius,
             child: Container(
               width: m.diameter,
               height: m.diameter,
               decoration: ShapeDecoration(
                 color: blend.color((st) => MochiColors.stateLayer(clear, color, st)),
-                shape: RoundedSuperellipseBorder(borderRadius: theme.geometry.radius.full),
+                shape: RoundedSuperellipseBorder(borderRadius: radius),
               ),
               child: Icon(
                 theme.icons.close,

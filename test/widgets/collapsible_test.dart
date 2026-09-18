@@ -206,6 +206,13 @@ void main() {
       final content = tester.getRect(find.text("Body"));
 
       expect(header.left - card.left, lessThanOrEqualTo(1), reason: "only the border in between");
+      final rule = tester.getRect(find.byType(MochiDivider));
+      expect(rule.top, header.bottom, reason: "the title row's hover fill stops at the rule");
+      expect(
+        content.top - rule.bottom,
+        greaterThanOrEqualTo(16),
+        reason: "and the content keeps its padding",
+      );
       expect(content.left - card.left, greaterThan(16));
       expect(card.bottom - content.bottom, greaterThan(16));
     });

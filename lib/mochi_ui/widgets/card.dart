@@ -171,8 +171,10 @@ class _CollapsibleBody extends StatelessWidget {
       initiallyExpanded: initiallyExpanded,
       onExpandedChanged: onExpandedChanged,
       headerPadding: padding,
-      // The title row already leaves the gap above the body.
-      bodyPadding: padding.copyWith(top: 0),
+      // A rule under the title row, rather than the row's own bottom padding standing in for the
+      // gap: that padding is inside the row, so the row's hover fill would run into the content.
+      bodyPadding: padding,
+      divider: true,
       radius: g.radius.md,
       child: child,
     );

@@ -70,4 +70,30 @@ void main() {
       const MochiCloseButtonMetrics(diameter: 28, iconSize: 14),
     );
   });
+
+  testWidgets("rounded by default, like an icon button; circle on request", (tester) async {
+    BorderRadiusGeometry corners() =>
+        ((tester
+                            .widget<Container>(
+                              find.descendant(
+                                of: find.byType(MochiCloseButton),
+                                matching: find.byType(Container),
+                              ),
+                            )
+                            .decoration!
+                        as ShapeDecoration)
+                    .shape
+                as RoundedSuperellipseBorder)
+            .borderRadius;
+    const radius = MochiRadius();
+
+    await tester.pumpWidget(app(MochiCloseButton(onPress: () {})));
+    expect(corners(), radius.sm);
+
+    await tester.pumpWidget(app(MochiCloseButton(size: MochiSize.xs, onPress: () {})));
+    expect(corners(), radius.xs);
+
+    await tester.pumpWidget(app(MochiCloseButton(shape: MochiCloseButtonShape.circle, onPress: () {})));
+    expect(corners(), radius.full);
+  });
 }

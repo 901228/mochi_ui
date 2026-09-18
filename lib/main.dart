@@ -358,6 +358,8 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
           spacing: g.space.md,
           children: [
             for (final size in MochiSize.values) MochiCloseButton(size: size, onPress: () {}),
+            for (final size in MochiSize.values)
+              MochiCloseButton(size: size, shape: MochiCloseButtonShape.circle, onPress: () {}),
             MochiCloseButton(tooltip: "With a tooltip", onPress: () {}),
             const MochiCloseButton(onPress: null),
             IconTheme.merge(

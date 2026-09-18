@@ -133,6 +133,7 @@ class MochiBadge extends StatelessWidget {
                 ?suffix,
                 if (onDelete != null)
                   MochiCloseButton(
+                    shape: MochiCloseButtonShape.circle,
                     metrics: m.close,
                     onPress: onDelete,
                     semanticLabel: deleteLabel ?? theme.strings.remove,
