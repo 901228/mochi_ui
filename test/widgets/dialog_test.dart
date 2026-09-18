@@ -344,5 +344,81 @@ void main() {
       expect(done, isTrue);
       expect(find.text("Import finished"), findsNothing);
     });
+
+    group("showMochiPrompt", () {
+      // Pumps a host whose button asks, opens it, and hands back a way to read the answer.
+      Future<String? Function()> open(
+        WidgetTester tester, {
+        String? initialValue,
+        String? Function(String)? validate,
+      }) async {
+        String? answer = "untouched";
+        await tester.pumpWidget(
+          host(
+            onPress: (context) async {
+              answer = await showMochiPrompt(
+                context,
+                title: "Rename session",
+                initialValue: initialValue,
+                validate: validate,
+              );
+            },
+          ),
+        );
+        await tester.tap(find.text("open"));
+        await tester.pumpAndSettle();
+        return () => answer;
+      }
+
+      testWidgets("returns what was typed", (tester) async {
+        final answer = await open(tester, initialValue: "3x3");
+
+        await tester.enterText(find.byType(EditableText), "3x3 OH");
+        await tester.tap(find.text("OK"));
+        await tester.pumpAndSettle();
+        expect(answer(), "3x3 OH");
+        expect(find.text("Rename session"), findsNothing);
+      });
+
+      testWidgets("null when cancelled", (tester) async {
+        final answer = await open(tester);
+
+        await tester.tap(find.text("Cancel"));
+        await tester.pumpAndSettle();
+        expect(answer(), isNull);
+      });
+
+      testWidgets("starts focused with its text selected, and Enter confirms", (tester) async {
+        final answer = await open(tester, initialValue: "3x3");
+
+        final editable = tester.widget<EditableText>(find.byType(EditableText));
+        expect(editable.focusNode.hasFocus, isTrue);
+        expect(editable.controller.selection, const TextSelection(baseOffset: 0, extentOffset: 3));
+
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+        expect(answer(), "3x3");
+      });
+
+      testWidgets("an invalid answer keeps it open and says why, until the text changes", (tester) async {
+        final answer = await open(
+          tester,
+          validate: (value) => value.trim().isEmpty ? "Can't be empty." : null,
+        );
+
+        await tester.tap(find.text("OK"));
+        await tester.pumpAndSettle();
+        expect(find.text("Can't be empty."), findsOneWidget);
+        expect(find.text("Rename session"), findsOneWidget);
+
+        await tester.enterText(find.byType(EditableText), "OH");
+        await tester.pump();
+        expect(find.text("Can't be empty."), findsNothing);
+
+        await tester.tap(find.text("OK"));
+        await tester.pumpAndSettle();
+        expect(answer(), "OH");
+      });
+    });
   });
 }

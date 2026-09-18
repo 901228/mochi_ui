@@ -1,3 +1,4 @@
+import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
@@ -8,7 +9,9 @@ import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
+import "focus_ring.dart";
 import "sheet.dart";
+import "text_field.dart";
 import "tile.dart";
 import "transitions.dart";
 
@@ -320,6 +323,157 @@ Future<bool> showMochiConfirm(
   );
 
   return answer ?? false;
+}
+
+/// Asks for a line of text — a new name, a comment — and returns it, or null if the question was
+/// dismissed.
+///
+/// [validate] returns an error to show under the field, or null to accept; it runs when the user
+/// confirms, not on every keystroke, and the modal stays open until it passes. The field starts
+/// focused with its text selected, so a rename can be typed straight over.
+///
+/// ```dart
+/// final name = await showMochiPrompt(
+///   context,
+///   title: "Rename session",
+///   initialValue: session.name,
+///   validate: (value) => value.trim().isEmpty ? "A name can't be empty." : null,
+/// );
+/// ```
+Future<String?> showMochiPrompt(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String? initialValue,
+  String? hint,
+  String? confirmLabel,
+  String? cancelLabel,
+  String? Function(String value)? validate,
+  int? maxLength,
+  MochiModalForm? form,
+  bool barrierDismissible = true,
+}) {
+  final strings = _stringsOf(context);
+  final prompt = _Prompt(initialValue ?? "", validate);
+
+  return showMochiModal<String>(
+    context,
+    form: form,
+    barrierDismissible: barrierDismissible,
+    title: Text(title),
+    body: _PromptField(prompt: prompt, message: message, hint: hint, maxLength: maxLength),
+    actions: [
+      MochiModalAction<String>(
+        label: cancelLabel ?? strings.cancel,
+        appearance: MochiButtonAppearance.outlined,
+      ),
+      _PromptConfirm(prompt: prompt, label: confirmLabel ?? strings.ok),
+    ],
+  );
+}
+
+/// What the field and the confirm button of a prompt share. The field's state owns the
+/// controller, so it lives exactly as long as the route does — through the exit animation, which
+/// is still drawing the field after the returned future has completed.
+class _Prompt {
+  _Prompt(this.initialText, this.validate);
+
+  final String initialText;
+  final String? Function(String value)? validate;
+  _PromptFieldState? _field;
+
+  /// Pops [context]'s modal with the text, unless [validate] objects.
+  void confirm(BuildContext context) {
+    final field = _field;
+    if (field == null) return;
+    final text = field.controller.text;
+    final problem = validate?.call(text);
+    field.error.value = problem;
+    if (problem == null) Navigator.of(context).pop(text);
+  }
+}
+
+class _PromptField extends StatefulWidget {
+  const _PromptField({
+    required this.prompt,
+    required this.message,
+    required this.hint,
+    required this.maxLength,
+  });
+
+  final _Prompt prompt;
+  final String? message;
+  final String? hint;
+  final int? maxLength;
+
+  @override
+  State<_PromptField> createState() => _PromptFieldState();
+}
+
+class _PromptFieldState extends State<_PromptField> {
+  // Selected, so a rename can be typed straight over.
+  late final controller = TextEditingController(text: widget.prompt.initialText)
+    ..selection = TextSelection(baseOffset: 0, extentOffset: widget.prompt.initialText.length);
+  final error = ValueNotifier<String?>(null);
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.prompt._field = this;
+  }
+
+  @override
+  void dispose() {
+    if (widget.prompt._field == this) widget.prompt._field = null;
+    controller.dispose();
+    error.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    // The modal's body scrolls, and a scroll view clips: leave the field's focus ring room.
+    return Padding(
+      padding: EdgeInsets.all(MochiFocusRing.outsetOf(context)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: g.space.sm,
+        children: [
+          if (widget.message case final message?) Text(message),
+          ValueListenableBuilder(
+            valueListenable: error,
+            builder: (context, problem, _) => MochiTextField(
+              controller: controller,
+              hint: widget.hint,
+              error: problem,
+              maxLength: widget.maxLength,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              // A fresh keystroke clears the complaint about the old text.
+              onChanged: (_) => error.value = null,
+              onSubmitted: (_) => widget.prompt.confirm(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PromptConfirm extends StatelessWidget {
+  const _PromptConfirm({required this.prompt, required this.label});
+
+  final _Prompt prompt;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) =>
+      MochiButton(onPress: () => prompt.confirm(context), child: Text(label));
 }
 
 /// Says something that only needs acknowledging.
