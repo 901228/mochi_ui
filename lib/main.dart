@@ -179,6 +179,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _CheckboxSample(),
           const SizedBox(height: 32),
+          const _ThemedText("radio", .section),
+          const SizedBox(height: 12),
+          const _RadioSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -1884,6 +1888,80 @@ class _CheckboxSampleState extends State<_CheckboxSample> {
           children: [
             MochiCheckbox(value: _inspection, onChanged: (value) => setState(() => _inspection = value!)),
             const _ThemedText("no label", .muted),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+enum _Alert { beep, voice, vibrate, none }
+
+class _RadioSample extends StatefulWidget {
+  const _RadioSample();
+
+  @override
+  State<_RadioSample> createState() => _RadioSampleState();
+}
+
+class _RadioSampleState extends State<_RadioSample> {
+  _Alert _alert = _Alert.beep;
+  String _layout = "list";
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.xl,
+      runSpacing: g.space.lg,
+      children: [
+        MochiRadioGroup<_Alert>(
+          value: _alert,
+          onChanged: (value) => setState(() => _alert = value!),
+          children: const [
+            MochiRadio(value: _Alert.beep, label: Text("Beep")),
+            MochiRadio(value: _Alert.voice, label: Text("Voice"), description: Text("Reads the time aloud.")),
+            MochiRadio(value: _Alert.vibrate, label: Text("Vibrate")),
+            MochiRadio(value: _Alert.none, label: Text("None")),
+          ],
+        ),
+        SizedBox(
+          width: 520,
+          child: MochiRadioGroup<String>(
+            value: _layout,
+            appearance: MochiRadioAppearance.card,
+            axis: Axis.horizontal,
+            onChanged: (value) => setState(() => _layout = value!),
+            children: const [
+              MochiRadio(
+                value: "list",
+                icon: Icon(TablerIcons.list),
+                label: Text("List"),
+                description: Text("One solve per row."),
+              ),
+              MochiRadio(
+                value: "grid",
+                icon: Icon(TablerIcons.layoutGrid),
+                label: Text("Grid"),
+                description: Text("Times only, packed tight."),
+              ),
+              MochiRadio(
+                value: "chart",
+                icon: Icon(TablerIcons.chartLine),
+                label: Text("Chart"),
+                description: Text("Times over the session."),
+                enabled: false,
+              ),
+            ],
+          ),
+        ),
+        const MochiRadioGroup<int>(
+          value: 1,
+          onChanged: null,
+          children: [
+            MochiRadio(value: 1, label: Text("Disabled group")),
+            MochiRadio(value: 2, label: Text("Can't pick this")),
           ],
         ),
       ],
