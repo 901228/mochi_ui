@@ -187,6 +187,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _StepperSample(),
           const SizedBox(height: 32),
+          const _ThemedText("select", .section),
+          const SizedBox(height: 12),
+          const _SelectSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2033,6 +2037,104 @@ class _StepperSampleState extends State<_StepperSample> {
             ],
           ),
         const MochiStepper(value: 7, onChanged: null),
+      ],
+    );
+  }
+}
+
+class _SelectSample extends StatefulWidget {
+  const _SelectSample();
+
+  @override
+  State<_SelectSample> createState() => _SelectSampleState();
+}
+
+class _SelectSampleState extends State<_SelectSample> {
+  String? _alert = "beep";
+  String? _puzzle;
+  Set<String> _events = {"333", "444"};
+
+  static const _alerts = [
+    MochiSelectOption(value: "beep", label: "Beep", prefix: Icon(TablerIcons.bell)),
+    MochiSelectOption(value: "voice", label: "Voice", prefix: Icon(TablerIcons.microphone)),
+    MochiSelectOption(value: "vibrate", label: "Vibrate", prefix: Icon(TablerIcons.deviceMobileVibration)),
+    MochiSelectOption(value: "off", label: "Nothing", prefix: Icon(TablerIcons.bellOff)),
+  ];
+
+  static const _puzzles = [
+    MochiSelectOption(value: "222", label: "2×2"),
+    MochiSelectOption(value: "333", label: "3×3"),
+    MochiSelectOption(value: "444", label: "4×4"),
+    MochiSelectOption(value: "555", label: "5×5"),
+    MochiSelectOption(value: "666", label: "6×6"),
+    MochiSelectOption(value: "777", label: "7×7"),
+    MochiSelectOption(value: "pyra", label: "Pyraminx"),
+    MochiSelectOption(value: "mega", label: "Megaminx"),
+    MochiSelectOption(value: "sq1", label: "Square-1"),
+    MochiSelectOption(value: "clock", label: "Clock", enabled: false),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiSelect<String>(
+            label: const Text("Alert type"),
+            description: const Text("What happens when inspection runs out."),
+            value: _alert,
+            options: _alerts,
+            onChanged: (value) => setState(() => _alert = value),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiSelect<String>(
+            label: const Text("Puzzle"),
+            hint: "Choose a puzzle",
+            error: _puzzle == null ? "Pick one to start a session." : null,
+            value: _puzzle,
+            options: _puzzles,
+            onChanged: (value) => setState(() => _puzzle = value),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiMultiSelect<String>(
+            label: const Text("Events"),
+            hint: "None",
+            values: _events,
+            options: _puzzles,
+            onChanged: (values) => setState(() => _events = values),
+          ),
+        ),
+        // Unbounded: as wide as the longest option, beside a label.
+        Row(
+          spacing: g.space.md,
+          children: [
+            const _ThemedText("in a row", .muted),
+            MochiSelect<String>(
+              value: _alert,
+              size: MochiSize.sm,
+              options: _alerts,
+              onChanged: (value) => setState(() => _alert = value),
+            ),
+            MochiSelect<String>(value: "333", options: _puzzles, onChanged: null),
+          ],
+        ),
+        for (final size in MochiSize.values)
+          Row(
+            spacing: g.space.xs,
+            children: [
+              MochiSelect<String>(value: "beep", size: size, options: _alerts, onChanged: (_) {}),
+              MochiButton(size: size, onPress: () {}, child: const Text("Save")),
+            ],
+          ),
       ],
     );
   }
