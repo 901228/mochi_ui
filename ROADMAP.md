@@ -52,7 +52,7 @@
 - [x] Tile / TileGroup（1 / 8 + 3 / 1）— `MochiTile` / `MochiTileGroup`：forui 的 FTile 只是 FItem 加觸控 padding，這裡合併成一個
 - [x] Header（5）+ HeaderAction — `MochiHeader` / `MochiHeaderAction`（含 `.back()` / `.close()`）；不分 nested，返回鍵放 prefixes 就好
 - [x] Scaffold（3）— `MochiScaffold`：header / content / footer
-- [x] ScrollArea — `MochiScrollArea`：可捲動的那一端會淡出
+- [x] ScrollArea — `MochiScrollArea`：可捲動的那一端會淡出；滑鼠滾輪捲到底不會帶動外層（`containScroll`，內容沒超出時不攔）
 
 ## 4. P3：浮層
 
