@@ -88,7 +88,17 @@ class _MochiScrollAreaState extends State<MochiScrollArea> {
       onNotification: (n) => _update(n.metrics),
       child: NotificationListener<ScrollNotification>(
         onNotification: (n) => _update(n.metrics),
-        child: widget.containScroll ? Listener(onPointerSignal: _contain, child: widget.child) : widget.child,
+        child: widget.containScroll
+            ? Listener(
+                // Translucent: on desktop the scrollbar inside wraps the list in a MouseRegion
+                // that isn't opaque, and that reports "not hit" to its parent even when the list
+                // was. Deferring to the child would leave this out of the hit path, and the wheel
+                // would never reach it.
+                behavior: HitTestBehavior.translucent,
+                onPointerSignal: _contain,
+                child: widget.child,
+              )
+            : widget.child,
       ),
     );
 

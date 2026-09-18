@@ -80,6 +80,16 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    testWidgets("stays with the area on desktop too, with its scrollbar", (tester) async {
+      await tester.pumpWidget(page());
+      await tester.pumpAndSettle();
+
+      await wheel(tester, 5000);
+      expect(inner.offset, inner.position.maxScrollExtent);
+      await wheel(tester, 200);
+      expect(outer.offset, 0, reason: "the page behind doesn't take over");
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
     testWidgets("stays with the area once it reaches its end", (tester) async {
       await tester.pumpWidget(page());
       await tester.pumpAndSettle();
