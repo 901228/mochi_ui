@@ -264,6 +264,7 @@ class _ComponentsSample extends StatefulWidget {
 class _ComponentsSampleState extends State<_ComponentsSample> {
   bool _on = true;
   double _progress = 0.35;
+  final _tags = ["3x3", "OH", "BLD", "FMC"];
 
   @override
   Widget build(BuildContext context) {
@@ -319,6 +320,70 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
             IconTheme.merge(
               data: IconThemeData(color: context.colors.of(MochiIntent.danger).onSoft),
               child: MochiCloseButton(onPress: () {}),
+            ),
+          ],
+        ),
+        // Badge sizes, each as a pill and as a rounded tag.
+        Row(
+          spacing: g.space.xs,
+          children: [
+            for (final size in MochiSize.values)
+              MochiBadge(size: size, intent: MochiIntent.primary, child: Text(size.name)),
+            const SizedBox(width: 8),
+            for (final size in MochiSize.values)
+              MochiBadge(
+                size: size,
+                shape: MochiBadgeShape.rounded,
+                appearance: MochiBadgeAppearance.outlined,
+                child: Text(size.name),
+              ),
+          ],
+        ),
+        // Deletable tags, and tags joined into one.
+        Row(
+          spacing: g.space.xs,
+          children: [
+            for (final tag in _tags)
+              MochiBadge(
+                shape: MochiBadgeShape.rounded,
+                onDelete: () => setState(() => _tags.remove(tag)),
+                child: Text(tag),
+              ),
+            if (_tags.length < 4)
+              MochiButton(
+                size: MochiSize.xs,
+                appearance: MochiButtonAppearance.text,
+                onPress: () => setState(
+                  () => _tags
+                    ..clear()
+                    ..addAll(["3x3", "OH", "BLD", "FMC"]),
+                ),
+                child: const Text("reset"),
+              ),
+            const SizedBox(width: 16),
+            const MochiBadgeGroup(
+              children: [
+                MochiBadge(appearance: .solid, child: Text("ao5")),
+                MochiBadge(intent: MochiIntent.success, child: Text("12.34")),
+              ],
+            ),
+            const MochiBadgeGroup(
+              children: [
+                MochiBadge(appearance: .outlined, shape: MochiBadgeShape.rounded, child: Text("session")),
+                MochiBadge(appearance: .outlined, shape: MochiBadgeShape.rounded, child: Text("3x3")),
+                MochiBadge(
+                  intent: MochiIntent.danger,
+                  appearance: .outlined,
+                  shape: MochiBadgeShape.rounded,
+                  child: Text("DNF"),
+                ),
+              ],
+            ),
+            MochiBadgeGroup(
+              children: [
+                const MochiBadge(appearance: .solid, intent: MochiIntent.info, child: Text("tag")),
+                MochiBadge(intent: MochiIntent.info, onDelete: () {}, child: const Text("removable")),
+              ],
             ),
           ],
         ),

@@ -22,6 +22,7 @@ class MochiStrings {
     required this.back,
     required this.close,
     required this.dismiss,
+    required this.remove,
   });
 
   /// Acknowledges an alert, or agrees to a confirmation.
@@ -39,26 +40,44 @@ class MochiStrings {
   /// The screen reader's name for the barrier behind a modal, which dismisses it when tapped.
   final String dismiss;
 
+  /// Takes one item out of a set, such as the × on a badge.
+  final String remove;
+
   static const en = MochiStrings(
     ok: "OK",
     cancel: "Cancel",
     back: "Back",
     close: "Close",
     dismiss: "Dismiss",
+    remove: "Remove",
   );
 
-  static const zhHant = MochiStrings(ok: "確定", cancel: "取消", back: "返回", close: "關閉", dismiss: "關閉");
+  static const zhHant = MochiStrings(
+    ok: "確定",
+    cancel: "取消",
+    back: "返回",
+    close: "關閉",
+    dismiss: "關閉",
+    remove: "移除",
+  );
 
   static const standard = en;
 
-  MochiStrings copyWith({String? ok, String? cancel, String? back, String? close, String? dismiss}) =>
-      MochiStrings(
-        ok: ok ?? this.ok,
-        cancel: cancel ?? this.cancel,
-        back: back ?? this.back,
-        close: close ?? this.close,
-        dismiss: dismiss ?? this.dismiss,
-      );
+  MochiStrings copyWith({
+    String? ok,
+    String? cancel,
+    String? back,
+    String? close,
+    String? dismiss,
+    String? remove,
+  }) => MochiStrings(
+    ok: ok ?? this.ok,
+    cancel: cancel ?? this.cancel,
+    back: back ?? this.back,
+    close: close ?? this.close,
+    dismiss: dismiss ?? this.dismiss,
+    remove: remove ?? this.remove,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -68,8 +87,9 @@ class MochiStrings {
           cancel == other.cancel &&
           back == other.back &&
           close == other.close &&
-          dismiss == other.dismiss;
+          dismiss == other.dismiss &&
+          remove == other.remove;
 
   @override
-  int get hashCode => Object.hash(ok, cancel, back, close, dismiss);
+  int get hashCode => Object.hash(ok, cancel, back, close, dismiss, remove);
 }
