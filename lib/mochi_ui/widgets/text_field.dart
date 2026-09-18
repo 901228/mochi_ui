@@ -362,7 +362,12 @@ class _MochiTextFieldState extends State<MochiTextField>
               heightFactor: 1,
               alignment: AlignmentDirectional.centerStart,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: m.horizontalPadding, vertical: verticalPadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: m.horizontalPadding,
+                  // A single line is centred by the minimum height alone, so the × appearing
+                  // beside it can't push the box taller.
+                  vertical: widget.maxLines == 1 ? 0 : verticalPadding,
+                ),
                 child: IconTheme.merge(
                   data: IconThemeData(color: colors.mutedForeground, size: m.iconSize),
                   child: Row(
@@ -374,7 +379,12 @@ class _MochiTextFieldState extends State<MochiTextField>
                       ?widget.prefix,
                       Expanded(child: field),
                       if (widget.clearable && text.isNotEmpty && widget.enabled && !widget.readOnly)
-                        MochiCloseButton(size: MochiSize.xs, onPress: _clear),
+                        MochiCloseButton(
+                          // Grows with the field, a little inside its height, so it stays an easy
+                          // target rather than a speck beside the text.
+                          metrics: MochiCloseButtonMetrics(diameter: m.height - 8, iconSize: m.iconSize),
+                          onPress: _clear,
+                        ),
                       ?widget.suffix,
                     ],
                   ),
@@ -464,12 +474,23 @@ class _TextContextMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = MochiTheme.maybeRead(context)?.strings ?? MochiStrings.standard;
+    final offered = {for (final item in editable.contextMenuButtonItems) item.type: item};
+    // The four edits always appear, in the same order, greyed out when they don't apply (nothing
+    // selected to cut or copy): a menu whose rows come and go with the selection is harder to
+    // learn than one that says what isn't possible right now. Anything else the platform offers
+    // follows them.
     final items = [
+      for (final (type, label) in [
+        (ContextMenuButtonType.cut, strings.cut),
+        (ContextMenuButtonType.copy, strings.copy),
+        (ContextMenuButtonType.paste, strings.paste),
+        (ContextMenuButtonType.selectAll, strings.selectAll),
+      ])
+        MochiMenuItem(title: Text(label), closeOnPress: false, onPress: offered[type]?.onPressed),
       for (final item in editable.contextMenuButtonItems)
-        if (_label(item, strings) case final label?)
-          MochiMenuItem(title: Text(label), closeOnPress: false, onPress: item.onPressed),
+        if (item.type == ContextMenuButtonType.custom && item.label != null)
+          MochiMenuItem(title: Text(item.label!), closeOnPress: false, onPress: item.onPressed),
     ];
-    if (items.isEmpty) return const SizedBox.shrink();
 
     // In the same tap region group as the field, so pressing an item doesn't count as a tap
     // outside it and take its focus away first. A tap anywhere else puts the menu away.
@@ -483,16 +504,6 @@ class _TextContextMenu extends StatelessWidget {
       ),
     );
   }
-
-  static String? _label(ContextMenuButtonItem item, MochiStrings strings) => switch (item.type) {
-    ContextMenuButtonType.cut => strings.cut,
-    ContextMenuButtonType.copy => strings.copy,
-    ContextMenuButtonType.paste => strings.paste,
-    ContextMenuButtonType.selectAll => strings.selectAll,
-    // Only the four above have words of ours; anything else the platform offers comes with its
-    // own label, or isn't shown.
-    _ => item.label,
-  };
 }
 
 final _selectionControls = _MochiSelectionControls();

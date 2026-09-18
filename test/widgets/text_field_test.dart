@@ -103,6 +103,12 @@ void main() {
     expect(find.byType(MochiCloseButton), findsNothing);
   });
 
+  testWidgets("the clear button grows with the field", (tester) async {
+    await tester.pumpWidget(app(const MochiTextField(clearable: true, initialValue: "x")));
+    final field = tester.getSize(find.byType(MochiTextField)).height;
+    expect(tester.getSize(find.byType(MochiCloseButton)).height, field - 8);
+  });
+
   testWidgets("maxLength stops input and counts", (tester) async {
     await tester.pumpWidget(app(const MochiTextField(maxLength: 5)));
     expect(find.text("0/5"), findsOneWidget);
@@ -178,6 +184,20 @@ void main() {
 
       expect(find.byType(MochiPopoverSurface), findsOneWidget);
       expect(find.text("全選"), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+    testWidgets("cut and copy stay listed, greyed out, when nothing is selected", (tester) async {
+      await tester.pumpWidget(app(const MochiTextField(initialValue: "3x3 main")));
+      await rightClick(tester);
+
+      MochiMenuItem item(String label) => tester.widget<MochiMenuItem>(
+        find.ancestor(of: find.text(label), matching: find.byType(MochiMenuItem)),
+      );
+      expect(item("Cut").onPress, isNull);
+      expect(item("Copy").onPress, isNull);
+      // Paste follows the clipboard, which is empty here, so it is greyed out too.
+      expect(item("Paste").onPress, isNull);
+      expect(item("Select all").onPress, isNotNull);
     }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
     testWidgets("choosing an item runs it and puts the menu away", (tester) async {
