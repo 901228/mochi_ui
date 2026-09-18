@@ -80,7 +80,7 @@
 - [x] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`，跟 badge 的端點同心；螢幕閱讀器念 `MochiStrings.remove`（新增的字）
 - [x] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
 - [x] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
-- [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 和 Sidebar 也用它
+- [x] Card 加 collapsible — `MochiCard.collapsible(title:)`，底層是 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration` / `sizeCurve`，chevron 跟著轉）。可受控（`expanded:`）或不受控（`initiallyExpanded:`），`maintainState` 保留收起時的狀態，收起的內容 Tab 不到。之後 Accordion 和 Sidebar 也用它
 - [ ] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**）：
   - **圓角預設**：`MochiRadius.sharp()` / `.subtle()` / `.rounded()` / `.pill()`，`full` 不跟著縮（pill 就是 pill）
   - **`densityScale`**：乘在 `MochiSpace` 和各 metrics 的高度上。**不要加 density enum** — `touch` 已經是一個密度軸了（它管的是最小點擊區 48px），再加一個 enum 會讓每個 `XxxMetrics.of` 變成 touch × density 的矩陣；一個乘數就夠，而且乘數天生可以餵給 `MochiValueTransition`
