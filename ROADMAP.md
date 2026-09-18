@@ -75,10 +75,10 @@
   - **不做 `LocalizationsDelegate`**：delegate + 每個 locale 一個 class + `Localizations.of` 那套機器是給對外發行的套件用的，這裡一個 `MochiApp(strings:)` 就結束了，順便跟其他 token 一樣有 value equality 和 `copyWith`
   - 例外：Calendar 的月份名 / 星期名 / 日期格式不進 `MochiStrings`，那時候直接用 `intl` 的 `DateFormat(locale)`。等 P6 再說
 - [x] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 圓形 ×，顏色取自所在位置的 `IconTheme`（放在 danger badge 裡就是 danger 色），平常淡、hover 才填底；`size` xs–lg 走 `MochiCloseButtonMetrics`（xs 給 badge 用）。toast 已改用它，之後 dialog / sheet 的關閉也用同一顆
-- [ ] Badge 加 `size`（走 `MochiBadgeMetrics`）
-- [ ] Badge 的圓角改成可選：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
-- [ ] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`
-- [ ] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
+- [x] Badge 加 `size`（走 `MochiBadgeMetrics`）：桌面高 16 / 20 / 24 / 28，touch 各加 4，預設 `sm`（等於原本的大小）。順便把 `MochiButtonSize` 改名成共用的 `MochiSize`，button、close button、badge、progress 都用同一個
+- [x] Badge 的圓角改成可選（`shape: .pill / .rounded`）：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
+- [x] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`，跟 badge 的端點同心；螢幕閱讀器念 `MochiStrings.remove`（新增的字）
+- [x] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
 - [ ] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
 - [ ] Card 加 collapsible — 抽一個 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration`），card 用它，之後 Accordion 和 Sidebar 也用它
 - [ ] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**）：
