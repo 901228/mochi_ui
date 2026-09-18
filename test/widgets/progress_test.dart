@@ -7,6 +7,8 @@ void main() {
     data: MediaQueryData(disableAnimations: disableAnimations),
     child: MochiApp(
       themeMode: MochiThemeMode.light,
+      // Tests run as Android, which would otherwise pick the touch sizes.
+      touch: false,
       home: Center(child: SizedBox(width: 200, child: child)),
     ),
   );
@@ -85,6 +87,48 @@ void main() {
       final still = bar();
       await tester.pump(const Duration(milliseconds: 200));
       expect(bar(), still);
+    });
+  });
+
+  group("size", () {
+    for (final (size, diameter, thickness) in [
+      (MochiSize.xs, 12.0, 3.0),
+      (MochiSize.sm, 16.0, 4.0),
+      (MochiSize.md, 20.0, 6.0),
+      (MochiSize.lg, 28.0, 10.0),
+    ]) {
+      testWidgets("${size.name}: a ${diameter.toInt()}px ring, a ${thickness.toInt()}px bar", (tester) async {
+        await tester.pumpWidget(
+          app(
+            Column(
+              children: [
+                MochiCircularProgress(size: size, value: 0.5),
+                MochiLinearProgress(size: size, value: 0.5),
+              ],
+            ),
+          ),
+        );
+
+        expect(tester.getSize(find.byType(MochiCircularProgress)), Size.square(diameter));
+        expect(tester.getSize(find.byType(MochiLinearProgress)).height, thickness);
+      });
+    }
+
+    testWidgets("defaults to md, the sizes they had before there was a choice", (tester) async {
+      await tester.pumpWidget(
+        app(const Column(children: [MochiCircularProgress(value: 0.5), MochiLinearProgress(value: 0.5)])),
+      );
+      expect(tester.getSize(find.byType(MochiCircularProgress)), const Size.square(20));
+      expect(tester.getSize(find.byType(MochiLinearProgress)).height, 6);
+    });
+
+    test("touch runs larger, and the ring's line is a sixth of it", () {
+      final desktop = MochiProgressMetrics.of(MochiSize.md, touch: false);
+      final touch = MochiProgressMetrics.of(MochiSize.md, touch: true);
+      expect(touch.diameter, 22);
+      expect(touch.thickness, 8);
+      expect(desktop.strokeWidth, desktop.diameter / 6);
+      expect(desktop, MochiProgressMetrics.of(MochiSize.md, touch: false));
     });
   });
 }

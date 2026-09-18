@@ -3,19 +3,27 @@ import "dart:math" as math;
 import "package:flutter/widgets.dart";
 
 import "../theme/motion.dart";
+import "../theme/size.dart";
+import "../theme/styles/progress_metrics.dart";
 import "../theme/theme.dart";
+import "value_transition.dart";
 
 /// A ring spinner. Without [value] it spins indefinitely; with one it shows that fraction.
 ///
 /// The color defaults to the surrounding [DefaultTextStyle], so a spinner inside a button or a
 /// tile picks up that component's foreground.
 class MochiCircularProgress extends StatefulWidget {
-  const MochiCircularProgress({super.key, this.value, this.size, this.strokeWidth, this.color});
+  const MochiCircularProgress({super.key, this.value, this.size = MochiSize.md, this.metrics, this.color});
 
   /// 0..1, or null for indeterminate.
   final double? value;
-  final double? size;
-  final double? strokeWidth;
+
+  /// `sm` matches the icon in a default button, for a spinner in its prefix.
+  final MochiSize size;
+
+  /// Overrides the metrics [size] would pick.
+  final MochiProgressMetrics? metrics;
+
   final Color? color;
 
   @override
@@ -61,21 +69,25 @@ class _MochiCircularProgressState extends State<MochiCircularProgress> with Sing
   Widget build(BuildContext context) {
     final theme = context.theme;
     _controller.duration = theme.motion.indeterminateDuration;
-    final size = widget.size ?? (theme.touch ? 22 : 20);
+    final target = widget.metrics ?? MochiProgressMetrics.of(widget.size, touch: theme.touch);
     final color = widget.color ?? DefaultTextStyle.of(context).style.color ?? theme.colors.foreground;
     final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
-    return SizedBox.square(
-      dimension: size,
-      child: CustomPaint(
-        painter: _RingPainter(
-          // A stopped controller keeps a fixed arc, which is what reduced motion should show.
-          spin: reduceMotion ? const AlwaysStoppedAnimation(0.0) : _controller,
-          value: widget.value,
-          color: color,
-          // A thin arc leaves roughly one pixel of antialiasing on a 1x display, and the stepping
-          // shimmers as it rotates; a sixth of the diameter still reads as a ring.
-          strokeWidth: widget.strokeWidth ?? size / 6,
+    return MochiValueTransition(
+      value: target,
+      lerp: MochiProgressMetrics.lerp,
+      duration: theme.motion.sizeDuration,
+      curve: theme.motion.sizeCurve,
+      builder: (context, m, _) => SizedBox.square(
+        dimension: m.diameter,
+        child: CustomPaint(
+          painter: _RingPainter(
+            // A stopped controller keeps a fixed arc, which is what reduced motion should show.
+            spin: reduceMotion ? const AlwaysStoppedAnimation(0.0) : _controller,
+            value: widget.value,
+            color: color,
+            strokeWidth: m.strokeWidth,
+          ),
         ),
       ),
     );

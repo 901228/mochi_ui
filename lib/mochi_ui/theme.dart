@@ -7,6 +7,7 @@ export "theme/responsive.dart";
 export "theme/size.dart";
 export "theme/strings.dart";
 export "theme/styles/button_style.dart";
+export "theme/styles/progress_metrics.dart";
 export "theme/theme.dart";
 export "theme/tone.dart";
 export "theme/typography.dart";

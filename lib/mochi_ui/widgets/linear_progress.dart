@@ -1,19 +1,31 @@
 import "package:flutter/widgets.dart";
 
 import "../theme/motion.dart";
+import "../theme/size.dart";
+import "../theme/styles/progress_metrics.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
+import "value_transition.dart";
 
 /// A progress bar. Without [value] an indeterminate bar slides across the track.
 ///
 /// Fills the width it is given, so it needs a bounded parent.
 class MochiLinearProgress extends StatefulWidget {
-  const MochiLinearProgress({super.key, this.value, this.intent = MochiIntent.primary, this.thickness});
+  const MochiLinearProgress({
+    super.key,
+    this.value,
+    this.intent = MochiIntent.primary,
+    this.size = MochiSize.md,
+    this.metrics,
+  });
 
   /// 0..1, or null for indeterminate.
   final double? value;
   final MochiIntent intent;
-  final double? thickness;
+  final MochiSize size;
+
+  /// Overrides the metrics [size] would pick.
+  final MochiProgressMetrics? metrics;
 
   @override
   State<MochiLinearProgress> createState() => _MochiLinearProgressState();
@@ -59,9 +71,20 @@ class _MochiLinearProgressState extends State<MochiLinearProgress> with SingleTi
     final theme = context.theme;
     _controller.duration = theme.motion.indeterminateDuration;
     final tone = theme.colors.of(widget.intent);
-    final thickness = widget.thickness ?? (theme.touch ? 8 : 6);
-    final radius = BorderRadius.all(Radius.circular(thickness));
+    final target = widget.metrics ?? MochiProgressMetrics.of(widget.size, touch: theme.touch);
     final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+    return MochiValueTransition(
+      value: target,
+      lerp: MochiProgressMetrics.lerp,
+      duration: theme.motion.sizeDuration,
+      curve: theme.motion.sizeCurve,
+      builder: (context, m, _) => _track(theme, tone, m.thickness, reduceMotion),
+    );
+  }
+
+  Widget _track(MochiTheme theme, MochiTone tone, double thickness, bool reduceMotion) {
+    final radius = BorderRadius.all(Radius.circular(thickness));
     final value = widget.value;
 
     // Expands to the available width: under loose constraints the track would otherwise shrink
