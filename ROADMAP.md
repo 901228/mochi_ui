@@ -71,7 +71,7 @@
 
 依這個順序做：
 
-- [ ] ⭐ `MochiStrings` — 元件自己會說的字。**排第一，因為之後每個會說話的元件都會用到，越晚做要回頭改的地方越多。** 現在已經漏了 9 個寫死的英文預設值：`showMochiConfirm` 的 `"OK"` / `"Cancel"`、`MochiHeaderAction` 的 `"Back"` / `"Close"`、三個 route 的 `barrierLabel = "Dismiss"`。規則照 `MochiIcons` 抄：**元件只會說 `MochiStrings` 裡的話，app 傳進來的字是 app 自己的事**。
+- [x] ⭐ `MochiStrings` — 元件自己會說的字（`MochiApp(strings:)`，內建 `en` / `zhHant`）。**排第一，因為之後每個會說話的元件都會用到，越晚做要回頭改的地方越多。** 現在已經漏了 9 個寫死的英文預設值：`showMochiConfirm` 的 `"OK"` / `"Cancel"`、`MochiHeaderAction` 的 `"Back"` / `"Close"`、三個 route 的 `barrierLabel = "Dismiss"`。規則照 `MochiIcons` 抄：**元件只會說 `MochiStrings` 裡的話，app 傳進來的字是 app 自己的事**。
   - **不做 `LocalizationsDelegate`**：delegate + 每個 locale 一個 class + `Localizations.of` 那套機器是給對外發行的套件用的，這裡一個 `MochiApp(strings:)` 就結束了，順便跟其他 token 一樣有 value equality 和 `copyWith`
   - 例外：Calendar 的月份名 / 星期名 / 日期格式不進 `MochiStrings`，那時候直接用 `intl` 的 `DateFormat(locale)`。等 P6 再說
 - [ ] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 獨立出來一個元件：badge 的叉、toast 的關閉、之後 dialog / sheet 的關閉都是同一顆，toast 裡目前是私有的 `_ToastClose`
