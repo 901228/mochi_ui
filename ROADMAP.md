@@ -81,10 +81,10 @@
 - [x] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
 - [x] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
 - [x] Card 加 collapsible — `MochiCard.collapsible(title:)`，底層是 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration` / `sizeCurve`，chevron 跟著轉）。可受控（`expanded:`）或不受控（`initiallyExpanded:`），`maintainState` 保留收起時的狀態，收起的內容 Tab 不到。之後 Accordion 和 Sidebar 也用它
-- [ ] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**）：
-  - **圓角預設**：`MochiRadius.sharp()` / `.subtle()` / `.rounded()` / `.pill()`，`full` 不跟著縮（pill 就是 pill）
-  - **`densityScale`**：乘在 `MochiSpace` 和各 metrics 的高度上。**不要加 density enum** — `touch` 已經是一個密度軸了（它管的是最小點擊區 48px），再加一個 enum 會讓每個 `XxxMetrics.of` 變成 touch × density 的矩陣；一個乘數就夠，而且乘數天生可以餵給 `MochiValueTransition`
-  - **`textScale`**：`MochiTypography.scale(factor)` 已經寫好了，只差開到 `MochiApp`。注意跟 `MediaQuery.textScaler`（系統設定）的關係：系統的要尊重，這個是 app 自己的額外倍率
+- [x] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**），都開在 `MochiApp(radius:, density:, textScale:)`，gallery 標題下有一排可以切：
+  - **圓角預設**：`MochiRadius.sharp` / `.subtle` / `.standard` / `.rounded` / `.pill`（`MochiRadius.scaled(factor)` 可自訂），`full` 不跟著縮（pill 就是 pill）
+  - **`density`**（`MochiTheme.density`）：乘在 `MochiSpace`、page padding 和各 metrics 的高度 / padding 上，字、圖示、圓角、線不動；progress 和 switch 也不動（那是控制項本身的大小，不是鬆緊）。**不要加 density enum** — `touch` 已經是一個密度軸了（它管的是最小點擊區 48px），再加一個 enum 會讓每個 `XxxMetrics.of` 變成 touch × density 的矩陣；一個乘數就夠，而且乘數天生可以餵給 `MochiValueTransition`
+  - **`textScale`**：最後沒有用 `MochiTypography.scale`，而是在 `MochiApp` 裡把 `MediaQuery.textScaler` 乘上去：跟系統設定相乘（系統 1.5 × app 1.2 = 1.8），而且 app 自己的文字也一起變，不只 mochi 的字型
 
 ## 6. P4：輸入
 
