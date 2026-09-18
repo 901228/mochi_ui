@@ -18,7 +18,7 @@
 - [x] Geometry tokens `MochiGeometry`：圓角 xs–xl/full（superellipse）、間距 xs3–xl3、border 寬度、陰影 sm/md/lg、頁面 padding
 - [x] 共用 focus ring `MochiFocusRing`（顏色 `colors.focusRing`，寬度 / 間隙在 geometry）
 - [x] Motion tokens `MochiMotion`：state / theme 動畫時間、按壓彈簧
-- [x] 按壓動畫：iOS 風格按下放大（`MochiPressScale`，彈簧回彈、上限 6% / 每邊 3px、尊重系統的「減少動態效果」設定 `MediaQuery.disableAnimations`）
+- [x] 按壓動畫：iOS 風格按下放大（`MochiPressScale`，彈簧回彈、上限 12% / 每邊 8px，兩個都是上限、取較小者、尊重系統的「減少動態效果」設定 `MediaQuery.disableAnimations`）
 - [x] 圓角改用 superellipse（`RoundedSuperellipseBorder`）
 - [x] Flutter 改跟 master：stable 3.47 的 Linux Impeller 沒開 MSAA，描邊和路徑都有鋸齒（flutter#191171，修正只在 master）
 - [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
