@@ -870,6 +870,22 @@ class _DialogSampleState extends State<_DialogSample> {
         MochiButton(
           appearance: MochiButtonAppearance.outlined,
           size: MochiSize.sm,
+          onPress: () async {
+            final name = await showMochiPrompt(
+              context,
+              title: "Rename session",
+              initialValue: "3x3 main",
+              maxLength: 24,
+              validate: (value) => value.trim().isEmpty ? "A name can't be empty." : null,
+            );
+            if (!context.mounted) return;
+            setState(() => _answer = name == null ? "kept the old name" : "renamed to $name");
+          },
+          child: const Text("prompt helper"),
+        ),
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          size: MochiSize.sm,
           tooltip: "Dialog on a wide window, bottom sheet once it is phone-sized",
           onPress: () => _modal(context),
           child: const Text("adaptive modal"),
