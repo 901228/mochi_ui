@@ -3,6 +3,7 @@ export "widgets/app.dart";
 export "widgets/badge.dart";
 export "widgets/button.dart";
 export "widgets/card.dart";
+export "widgets/checkbox.dart";
 export "widgets/circular_progress.dart";
 export "widgets/close_button.dart";
 export "widgets/collapsible.dart";

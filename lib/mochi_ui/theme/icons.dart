@@ -11,6 +11,7 @@ class MochiIcons {
     this.back = TablerIcons.arrowLeft,
     this.close = TablerIcons.x,
     this.check = TablerIcons.check,
+    this.minus = TablerIcons.minus,
     this.chevronUp = TablerIcons.chevronUp,
     this.chevronDown = TablerIcons.chevronDown,
     this.chevronLeft = TablerIcons.chevronLeft,
@@ -25,6 +26,9 @@ class MochiIcons {
   final IconData back;
   final IconData close;
   final IconData check;
+
+  /// A checkbox that is partly checked.
+  final IconData minus;
   final IconData chevronUp;
   final IconData chevronDown;
   final IconData chevronLeft;
@@ -57,6 +61,7 @@ class MochiIcons {
           back == other.back &&
           close == other.close &&
           check == other.check &&
+          minus == other.minus &&
           chevronUp == other.chevronUp &&
           chevronDown == other.chevronDown &&
           chevronLeft == other.chevronLeft &&
@@ -72,6 +77,7 @@ class MochiIcons {
     back,
     close,
     check,
+    minus,
     chevronUp,
     chevronDown,
     chevronLeft,
