@@ -5,12 +5,11 @@ import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
 import "../theme/icons.dart";
+import "close_button.dart";
 import "../theme/responsive.dart";
-import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
-import "button.dart";
 
 /// A brief message over the page: what just happened, and sometimes how to undo it.
 ///
@@ -99,30 +98,10 @@ class MochiToast extends StatelessWidget {
               ),
             ),
             ?action,
-            if (onClose case final onClose?) _ToastClose(onPress: onClose),
+            if (onClose case final onClose?) MochiCloseButton(onPress: onClose),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ToastClose extends StatelessWidget {
-  const _ToastClose({required this.onPress});
-
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-
-    return MochiButton.icon(
-      appearance: MochiButtonAppearance.ghost,
-      size: MochiButtonSize.xs,
-      onPress: onPress,
-      // A name for screen readers rather than a tooltip: the toaster sits above the navigator, out
-      // of reach of any Overlay a tooltip could float in.
-      icon: Icon(theme.icons.close, semanticLabel: theme.strings.close),
     );
   }
 }

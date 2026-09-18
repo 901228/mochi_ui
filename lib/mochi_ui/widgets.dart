@@ -4,6 +4,7 @@ export "widgets/badge.dart";
 export "widgets/button.dart";
 export "widgets/card.dart";
 export "widgets/circular_progress.dart";
+export "widgets/close_button.dart";
 export "widgets/dialog.dart";
 export "widgets/divider.dart";
 export "widgets/focus_ring.dart";

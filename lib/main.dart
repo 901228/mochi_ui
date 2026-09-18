@@ -313,6 +313,18 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
         Row(
           spacing: g.space.md,
           children: [
+            for (final size in MochiButtonSize.values) MochiCloseButton(size: size, onPress: () {}),
+            MochiCloseButton(tooltip: "With a tooltip", onPress: () {}),
+            const MochiCloseButton(onPress: null),
+            IconTheme.merge(
+              data: IconThemeData(color: context.colors.of(MochiIntent.danger).onSoft),
+              child: MochiCloseButton(onPress: () {}),
+            ),
+          ],
+        ),
+        Row(
+          spacing: g.space.md,
+          children: [
             MochiSwitch(value: _on, onChanged: (v) => setState(() => _on = v)),
             MochiSwitch(value: !_on, intent: MochiIntent.success, onChanged: (v) => setState(() => _on = !v)),
             const MochiSwitch(value: true, onChanged: null),

@@ -59,7 +59,7 @@ void main() {
     await tester.tap(find.text("raise"));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(MochiButton).last);
+    await tester.tap(find.byType(MochiCloseButton));
     await tester.pumpAndSettle();
     expect(find.text("Record deleted"), findsNothing);
   });
@@ -403,7 +403,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final toast = tester.getRect(find.byType(MochiToast));
-    final close = tester.getRect(find.byType(MochiButton).last);
+    final close = tester.getRect(find.byType(MochiCloseButton));
     expect(toast.right - close.right, lessThan(24), reason: "against the edge, not trailing the text");
   });
 
