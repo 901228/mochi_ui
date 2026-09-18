@@ -74,7 +74,7 @@
 - [x] ⭐ `MochiStrings` — 元件自己會說的字（`MochiApp(strings:)`，內建 `en` / `zhHant`）。**排第一，因為之後每個會說話的元件都會用到，越晚做要回頭改的地方越多。** 現在已經漏了 9 個寫死的英文預設值：`showMochiConfirm` 的 `"OK"` / `"Cancel"`、`MochiHeaderAction` 的 `"Back"` / `"Close"`、三個 route 的 `barrierLabel = "Dismiss"`。規則照 `MochiIcons` 抄：**元件只會說 `MochiStrings` 裡的話，app 傳進來的字是 app 自己的事**。
   - **不做 `LocalizationsDelegate`**：delegate + 每個 locale 一個 class + `Localizations.of` 那套機器是給對外發行的套件用的，這裡一個 `MochiApp(strings:)` 就結束了，順便跟其他 token 一樣有 value equality 和 `copyWith`
   - 例外：Calendar 的月份名 / 星期名 / 日期格式不進 `MochiStrings`，那時候直接用 `intl` 的 `DateFormat(locale)`。等 P6 再說
-- [ ] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 獨立出來一個元件：badge 的叉、toast 的關閉、之後 dialog / sheet 的關閉都是同一顆，toast 裡目前是私有的 `_ToastClose`
+- [x] ⭐ `MochiCloseButton`（Bulma 的 `delete`）— 圓形 ×，顏色取自所在位置的 `IconTheme`（放在 danger badge 裡就是 danger 色），平常淡、hover 才填底；`size` xs–lg 走 `MochiCloseButtonMetrics`（xs 給 badge 用）。toast 已改用它，之後 dialog / sheet 的關閉也用同一顆
 - [ ] Badge 加 `size`（走 `MochiBadgeMetrics`）
 - [ ] Badge 的圓角改成可選：現在一律 pill，加一個比較方的（接近 card 的感覺），Bulma 的 tag 本身就是圓角矩形而不是膠囊
 - [ ] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`
