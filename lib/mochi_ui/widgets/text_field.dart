@@ -7,8 +7,8 @@ import "../theme/strings.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
-import "../theme/typography.dart";
 import "close_button.dart";
+import "field_frame.dart";
 import "focus_ring.dart";
 import "menu.dart";
 import "popover.dart";
@@ -406,46 +406,13 @@ class _MochiTextFieldState extends State<MochiTextField>
       ),
     );
 
-    final error = widget.error;
-    final description = widget.description;
-    final below = error != null || description != null || maxLength != null;
-    final small = theme.typography.body.xs;
-
-    return Opacity(
-      opacity: widget.enabled ? 1 : 0.4,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: g.space.xs2,
-        children: [
-          if (widget.label case final label?)
-            DefaultTextStyle.merge(
-              style: theme.typography.body.sm.withWeight(FontWeight.w600).copyWith(color: colors.foreground),
-              child: label,
-            ),
-          interactive,
-          if (below)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: g.space.xs,
-              children: [
-                Expanded(
-                  child: error != null
-                      ? Text(error, style: small.copyWith(color: danger.onSoft))
-                      : DefaultTextStyle.merge(
-                          style: small.copyWith(color: colors.mutedForeground),
-                          child: description ?? const SizedBox.shrink(),
-                        ),
-                ),
-                if (maxLength != null)
-                  Text(
-                    "${text.characters.length}/$maxLength",
-                    style: small.copyWith(color: colors.mutedForeground),
-                  ),
-              ],
-            ),
-        ],
-      ),
+    return MochiFieldFrame(
+      label: widget.label,
+      description: widget.description,
+      error: widget.error,
+      enabled: widget.enabled,
+      counter: maxLength == null ? null : Text("${text.characters.length}/$maxLength"),
+      child: interactive,
     );
   }
 

@@ -7,8 +7,8 @@ import "../theme/size.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
-import "../theme/typography.dart";
 import "badge.dart";
+import "field_frame.dart";
 import "focus_ring.dart";
 import "menu.dart";
 import "popover.dart";
@@ -372,13 +372,6 @@ class _SelectField extends StatelessWidget {
   }
 
   Widget _build(BuildContext context, MochiTheme theme, MochiButtonMetrics m) {
-    final colors = theme.colors;
-    final g = theme.geometry;
-    final danger = colors.of(MochiIntent.danger);
-    final small = theme.typography.body.xs;
-    final error = this.error;
-    final description = this.description;
-
     final select = MochiPopoverMenu(
       side: MochiPopoverSide.bottom,
       align: MochiPopoverAlign.start,
@@ -428,37 +421,15 @@ class _SelectField extends StatelessWidget {
       },
     );
 
-    return Opacity(
-      opacity: enabled ? 1 : 0.4,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final column = Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: g.space.xs2,
-            children: [
-              if (label case final label?)
-                DefaultTextStyle.merge(
-                  style: theme.typography.body.sm
-                      .withWeight(FontWeight.w600)
-                      .copyWith(color: colors.foreground),
-                  child: label,
-                ),
-              select,
-              if (error != null)
-                Text(error, style: small.copyWith(color: danger.onSoft))
-              else if (description != null)
-                DefaultTextStyle.merge(
-                  style: small.copyWith(color: colors.mutedForeground),
-                  child: description,
-                ),
-            ],
-          );
-          if (constraints.hasBoundedWidth) return column;
+    Widget frame(Widget box) =>
+        MochiFieldFrame(label: label, description: description, error: error, enabled: enabled, child: box);
 
-          return SizedBox(width: _naturalWidth(context, theme, m), child: column);
-        },
-      ),
+    // Outside the frame, whose column stretches its children: under an unbounded width that
+    // stretch would hand the builder an infinite width to measure against.
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.hasBoundedWidth
+          ? frame(select)
+          : SizedBox(width: _naturalWidth(context, theme, m), child: frame(select)),
     );
   }
 

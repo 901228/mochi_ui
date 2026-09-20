@@ -1,5 +1,6 @@
 export "widgets/animated_theme.dart";
 export "widgets/app.dart";
+export "widgets/autocomplete.dart";
 export "widgets/badge.dart";
 export "widgets/button.dart";
 export "widgets/card.dart";
@@ -9,6 +10,7 @@ export "widgets/close_button.dart";
 export "widgets/collapsible.dart";
 export "widgets/dialog.dart";
 export "widgets/divider.dart";
+export "widgets/field_frame.dart";
 export "widgets/focus_ring.dart";
 export "widgets/header.dart";
 export "widgets/linear_progress.dart";
