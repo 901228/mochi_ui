@@ -203,6 +203,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SearchSample(),
           const SizedBox(height: 32),
+          const _ThemedText("slider", .section),
+          const SizedBox(height: 12),
+          const _SliderSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2322,6 +2326,72 @@ class _SearchSampleState extends State<_SearchSample> {
           ),
         ),
         const SizedBox(width: 320, child: MochiSearchBar(enabled: false)),
+      ],
+    );
+  }
+}
+
+class _SliderSample extends StatefulWidget {
+  const _SliderSample();
+
+  @override
+  State<_SliderSample> createState() => _SliderSampleState();
+}
+
+class _SliderSampleState extends State<_SliderSample> {
+  double _volume = 0.6;
+  double _inspection = 15;
+  double _weight = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiSlider(
+            value: _volume,
+            label: const Text("Alert volume"),
+            valueLabel: (value) => "${(value * 100).round()}%",
+            onChanged: (value) => setState(() => _volume = value),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiSlider(
+            value: _inspection,
+            min: 0,
+            max: 60,
+            divisions: 12,
+            label: const Text("Inspection"),
+            valueLabel: (value) => "${value.round()}s",
+            description: const Text("Snaps to five seconds."),
+            onChanged: (value) => setState(() => _inspection = value),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiSlider(
+            value: _weight,
+            min: 1,
+            max: 5,
+            divisions: 4,
+            intent: MochiIntent.warning,
+            valueLabel: (value) => "weight ${value.round()}",
+            onChanged: (value) => setState(() => _weight = value),
+          ),
+        ),
+        // Every size, and one disabled.
+        for (final size in MochiSize.values)
+          SizedBox(
+            width: 220,
+            child: MochiSlider(value: 0.4, size: size, onChanged: (_) {}),
+          ),
+        const SizedBox(width: 220, child: MochiSlider(value: 0.3, onChanged: null)),
       ],
     );
   }
