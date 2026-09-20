@@ -49,38 +49,47 @@ class MochiFieldFrame extends StatelessWidget {
 
     return Opacity(
       opacity: enabled ? 1 : 0.4,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: theme.geometry.space.xs2,
-        children: [
-          if (label case final label?)
-            DefaultTextStyle.merge(
-              style: theme.typography.body.sm.withWeight(FontWeight.w600).copyWith(color: colors.foreground),
-              child: label,
-            ),
-          child,
-          if (below)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: theme.geometry.space.xs,
-              children: [
-                Expanded(
-                  child: error != null
-                      ? Text(error, style: small.copyWith(color: colors.of(MochiIntent.danger).onSoft))
-                      : DefaultTextStyle.merge(
-                          style: small.copyWith(color: colors.mutedForeground),
-                          child: description ?? const SizedBox.shrink(),
-                        ),
-                ),
-                if (counter case final counter?)
-                  DefaultTextStyle.merge(
-                    style: small.copyWith(color: colors.mutedForeground),
-                    child: counter,
+      // A field fills the width it is given, but one with a width of its own (a row of code
+      // boxes, a select in a row) has none to fill: stretching there would hand its children a
+      // tight infinite width.
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: constraints.hasBoundedWidth
+              ? CrossAxisAlignment.stretch
+              : CrossAxisAlignment.start,
+          spacing: theme.geometry.space.xs2,
+          children: [
+            if (label case final label?)
+              DefaultTextStyle.merge(
+                style: theme.typography.body.sm
+                    .withWeight(FontWeight.w600)
+                    .copyWith(color: colors.foreground),
+                child: label,
+              ),
+            child,
+            if (below)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: theme.geometry.space.xs,
+                children: [
+                  Expanded(
+                    child: error != null
+                        ? Text(error, style: small.copyWith(color: colors.of(MochiIntent.danger).onSoft))
+                        : DefaultTextStyle.merge(
+                            style: small.copyWith(color: colors.mutedForeground),
+                            child: description ?? const SizedBox.shrink(),
+                          ),
                   ),
-              ],
-            ),
-        ],
+                  if (counter case final counter?)
+                    DefaultTextStyle.merge(
+                      style: small.copyWith(color: colors.mutedForeground),
+                      child: counter,
+                    ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -95,7 +95,7 @@
 - [x] ⭐ Stepper — `MochiStepper`：整數、min / max / step、`format`（如 `15s`）、按住連發且越來越快、鍵盤方向鍵 / Home / End、整個只佔一個 Tab 位置、跟同尺寸按鈕等高、寬度以最寬的值為準不會跳。新增 `MochiIcons.plus`
 - [x] ⭐ Select — `MochiSelect` / `MochiMultiSelect` + `MochiSelectOption`：外觀跟同尺寸的 TextField 一樣（label / description / error、跟按鈕等高），清單是 `MochiPopoverMenu`、至少跟欄位一樣寬、已選項打勾。多選時清單不會關、已選項目用 badge 顯示（按 × 直接移除，不會打開清單）、badge 多了欄位會長高。鍵盤 Enter / Space / 方向鍵開啟並停在已選的那一行（滑鼠點開則不搶 focus）。寬度沒限制時以最長選項為準，換選項不會跳。`MochiPopover` 新增 `matchAnchorWidth`、`MochiMenuItem` 新增 `autofocus`
 - [x] ⭐ Autocomplete — `MochiAutocomplete`：包 widgets 層的 `RawAutocomplete`，欄位是 `MochiTextField`、清單是 `MochiMenu` 放在 `MochiPopoverSurface` 上、寬度跟輸入框一樣。`optionsBuilder` 可回傳 Future（非同步建議），↑↓ 移動且會自動捲到看得見、Enter 選取、Esc 收起、失焦收起；打什麼都算數，`onChanged` 每次打字都回報、`onSelected` 只在選到選項時。沒有 `maxLength`（計數會卡在輸入框和清單中間），要限制長度用 `inputFormatters`
-- [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
+- [x] ⭐ OTP field — `MochiOtpField`：底下只有一個看不見的 `EditableText`，畫出來的是一排格子，所以貼上整組碼會自動分配、backspace 往回刪、平台的 one-time-code 自動填入也能用。正在填的那格有游標會閃、`obscure` 顯示圓點、`digitsOnly` 可關、填滿時 `onCompleted`；格子跟同尺寸按鈕等高且是正方形
 - [ ] ⭐ SearchBar — TextField 加上搜尋圖示、清除鈕、debounce；接上 Autocomplete 就是搜尋建議
 - [ ] ⭐ Slider — 檢查時間、音量類設定
 - [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）

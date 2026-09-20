@@ -195,6 +195,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AutocompleteSample(),
           const SizedBox(height: 32),
+          const _ThemedText("otp field", .section),
+          const SizedBox(height: 12),
+          const _OtpSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2209,6 +2213,52 @@ class _AutocompleteSampleState extends State<_AutocompleteSample> {
             optionsBuilder: (value) => _sessions,
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _OtpSample extends StatefulWidget {
+  const _OtpSample();
+
+  @override
+  State<_OtpSample> createState() => _OtpSampleState();
+}
+
+class _OtpSampleState extends State<_OtpSample> {
+  String? _code;
+  bool _wrong = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        MochiOtpField(
+          label: const Text("Code from the email"),
+          description: Text(_code == null ? "Six digits." : "Sent $_code."),
+          error: _wrong ? "That code is wrong." : null,
+          onChanged: (_) => setState(() => _wrong = false),
+          // 000000 is the wrong one, to see the error state.
+          onCompleted: (code) => setState(() {
+            _wrong = code == "000000";
+            _code = _wrong ? null : code;
+          }),
+        ),
+        const MochiOtpField(label: Text("PIN"), length: 4, obscure: true),
+        const MochiOtpField(label: Text("Letters too"), length: 5, digitsOnly: false),
+        for (final size in MochiSize.values)
+          Row(
+            spacing: g.space.xs,
+            children: [
+              MochiOtpField(length: 3, size: size),
+              MochiButton(size: size, onPress: () {}, child: const Text("Verify")),
+            ],
+          ),
+        const MochiOtpField(length: 4, enabled: false, initialValue: "12"),
       ],
     );
   }

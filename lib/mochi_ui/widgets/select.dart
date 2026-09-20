@@ -424,8 +424,8 @@ class _SelectField extends StatelessWidget {
     Widget frame(Widget box) =>
         MochiFieldFrame(label: label, description: description, error: error, enabled: enabled, child: box);
 
-    // Outside the frame, whose column stretches its children: under an unbounded width that
-    // stretch would hand the builder an infinite width to measure against.
+    // Outside the frame: what is measured here is the room the field has, not what the frame
+    // hands down.
     return LayoutBuilder(
       builder: (context, constraints) => constraints.hasBoundedWidth
           ? frame(select)
