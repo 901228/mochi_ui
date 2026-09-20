@@ -94,7 +94,7 @@
 - [x] ⭐ RadioGroup — `MochiRadioGroup` / `MochiRadio`，包 widgets 層的 `RadioGroup` + `RawRadio`（方向鍵換選項、整組只佔一個 Tab 位置、互斥群組語意都是現成的）。`appearance: .card` 就是 shadcn 的 radio card，橫排時平分寬度。含 shadcn 的 radio card：**不是新元件，是 `appearance`**（項目長得像一行 tile 還是一張 card）。照既有規則，外觀是軸不是元件；checkbox 之後要 card 版也走同一條路
 - [x] ⭐ Stepper — `MochiStepper`：整數、min / max / step、`format`（如 `15s`）、按住連發且越來越快、鍵盤方向鍵 / Home / End、整個只佔一個 Tab 位置、跟同尺寸按鈕等高、寬度以最寬的值為準不會跳。新增 `MochiIcons.plus`
 - [x] ⭐ Select — `MochiSelect` / `MochiMultiSelect` + `MochiSelectOption`：外觀跟同尺寸的 TextField 一樣（label / description / error、跟按鈕等高），清單是 `MochiPopoverMenu`、至少跟欄位一樣寬、已選項打勾。多選時清單不會關、已選項目用 badge 顯示（按 × 直接移除，不會打開清單）、badge 多了欄位會長高。鍵盤 Enter / Space / 方向鍵開啟並停在已選的那一行（滑鼠點開則不搶 focus）。寬度沒限制時以最長選項為準，換選項不會跳。`MochiPopover` 新增 `matchAnchorWidth`、`MochiMenuItem` 新增 `autofocus`
-- [ ] ⭐ Autocomplete — 建議加，但排在 TextField + Select 之後：它等於兩者相加，而且 widgets 層已經有 `RawAutocomplete` 可以包，成本低
+- [x] ⭐ Autocomplete — `MochiAutocomplete`：包 widgets 層的 `RawAutocomplete`，欄位是 `MochiTextField`、清單是 `MochiMenu` 放在 `MochiPopoverSurface` 上、寬度跟輸入框一樣。`optionsBuilder` 可回傳 Future（非同步建議），↑↓ 移動且會自動捲到看得見、Enter 選取、Esc 收起、失焦收起；打什麼都算數，`onChanged` 每次打字都回報、`onSelected` 只在選到選項時。沒有 `maxLength`（計數會卡在輸入框和清單中間），要限制長度用 `inputFormatters`
 - [ ] ⭐ OTP field — 一格一個字元，貼上會自動分配，自動跳下一格
 - [ ] ⭐ SearchBar — TextField 加上搜尋圖示、清除鈕、debounce；接上 Autocomplete 就是搜尋建議
 - [ ] ⭐ Slider — 檢查時間、音量類設定
