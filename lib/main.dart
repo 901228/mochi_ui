@@ -207,6 +207,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SliderSample(),
           const SizedBox(height: 32),
+          const _ThemedText("segmented control", .section),
+          const SizedBox(height: 12),
+          const _SegmentedSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2392,6 +2396,108 @@ class _SliderSampleState extends State<_SliderSample> {
             child: MochiSlider(value: 0.4, size: size, onChanged: (_) {}),
           ),
         const SizedBox(width: 220, child: MochiSlider(value: 0.3, onChanged: null)),
+      ],
+    );
+  }
+}
+
+class _SegmentedSample extends StatefulWidget {
+  const _SegmentedSample();
+
+  @override
+  State<_SegmentedSample> createState() => _SegmentedSampleState();
+}
+
+class _SegmentedSampleState extends State<_SegmentedSample> {
+  String _average = "ao5";
+  String _tab = "times";
+  String _view = "list";
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiSegmentedControl<String>(
+            value: _average,
+            onChanged: (value) => setState(() => _average = value),
+            children: const [
+              MochiSegment(value: "ao5", label: Text("ao5")),
+              MochiSegment(value: "ao12", label: Text("ao12")),
+              MochiSegment(value: "chart", label: Text("Chart")),
+            ],
+          ),
+        ),
+        // Tabs over their own content, which the app switches itself.
+        SizedBox(
+          width: 320,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MochiSegmentedControl<String>(
+                value: _tab,
+                appearance: MochiSegmentedAppearance.underline,
+                onChanged: (value) => setState(() => _tab = value),
+                children: const [
+                  MochiSegment(value: "times", label: Text("Times")),
+                  MochiSegment(value: "stats", label: Text("Stats")),
+                  MochiSegment(value: "scramble", label: Text("Scramble"), enabled: false),
+                ],
+              ),
+              const MochiDivider(),
+              Padding(
+                padding: EdgeInsets.all(g.space.sm),
+                child: _ThemedText(_tab == "times" ? "8.12  9.04  10.56" : "mean 9.24, best 8.12", .muted),
+              ),
+            ],
+          ),
+        ),
+        // Icons only, and sized to their content.
+        MochiSegmentedControl<String>(
+          value: _view,
+          expanded: false,
+          size: MochiSize.sm,
+          intent: MochiIntent.primary,
+          onChanged: (value) => setState(() => _view = value),
+          children: const [
+            MochiSegment(value: "list", icon: Icon(TablerIcons.list), semanticLabel: "List"),
+            MochiSegment(value: "grid", icon: Icon(TablerIcons.layoutGrid), semanticLabel: "Grid"),
+            MochiSegment(value: "board", icon: Icon(TablerIcons.layoutBoard), semanticLabel: "Board"),
+          ],
+        ),
+        for (final size in MochiSize.values)
+          Row(
+            spacing: g.space.xs,
+            children: [
+              MochiSegmentedControl<String>(
+                value: "a",
+                size: size,
+                expanded: false,
+                onChanged: (_) {},
+                children: const [
+                  MochiSegment(value: "a", label: Text("One")),
+                  MochiSegment(value: "b", label: Text("Two")),
+                ],
+              ),
+              MochiButton(size: size, onPress: () {}, child: const Text("Save")),
+            ],
+          ),
+        const SizedBox(
+          width: 220,
+          child: MochiSegmentedControl<String>(
+            value: "a",
+            onChanged: null,
+            children: [
+              MochiSegment(value: "a", label: Text("One")),
+              MochiSegment(value: "b", label: Text("Two")),
+            ],
+          ),
+        ),
       ],
     );
   }

@@ -25,6 +25,7 @@ export "widgets/scroll_area.dart";
 export "widgets/scroll_behavior.dart";
 export "widgets/search_bar.dart";
 export "widgets/select.dart";
+export "widgets/segmented_control.dart";
 export "widgets/sheet.dart";
 export "widgets/slider.dart";
 export "widgets/state_transition.dart";
