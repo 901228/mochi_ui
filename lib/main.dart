@@ -191,6 +191,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SelectSample(),
           const SizedBox(height: 32),
+          const _ThemedText("autocomplete", .section),
+          const SizedBox(height: 12),
+          const _AutocompleteSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2135,6 +2139,76 @@ class _SelectSampleState extends State<_SelectSample> {
               MochiButton(size: size, onPress: () {}, child: const Text("Save")),
             ],
           ),
+      ],
+    );
+  }
+}
+
+class _AutocompleteSample extends StatefulWidget {
+  const _AutocompleteSample();
+
+  @override
+  State<_AutocompleteSample> createState() => _AutocompleteSampleState();
+}
+
+class _AutocompleteSampleState extends State<_AutocompleteSample> {
+  static const _sessions = [
+    "3x3 main",
+    "3x3 OH",
+    "3x3 BLD",
+    "3x3 feet",
+    "2x2 main",
+    "4x4 main",
+    "Megaminx",
+    "Pyraminx",
+    "Square-1",
+    "Skewb",
+  ];
+
+  String? _moved;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiAutocomplete<String>(
+            label: const Text("Move to session"),
+            description: Text(_moved == null ? "Type to search, or write a new name." : "Moved to $_moved."),
+            hint: "Session",
+            prefix: const Icon(TablerIcons.search),
+            clearable: true,
+            optionsBuilder: (value) => value.text.isEmpty
+                ? const <String>[]
+                : _sessions.where((s) => s.toLowerCase().contains(value.text.toLowerCase())),
+            onSelected: (session) => setState(() => _moved = session),
+          ),
+        ),
+        // Every session, so the list runs past its height and scrolls.
+        SizedBox(
+          width: 320,
+          child: MochiAutocomplete<String>(
+            label: const Text("All of them"),
+            hint: "Anything",
+            maxListHeight: 160,
+            optionsBuilder: (value) =>
+                _sessions.where((s) => s.toLowerCase().contains(value.text.toLowerCase())),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiAutocomplete<String>(
+            label: const Text("Disabled"),
+            hint: "Session",
+            enabled: false,
+            optionsBuilder: (value) => _sessions,
+          ),
+        ),
       ],
     );
   }
