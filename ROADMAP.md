@@ -99,7 +99,7 @@
 - [x] ⭐ SearchBar — `MochiSearchBar`：`MochiTextField` 加放大鏡、× 和 debounce（預設 300ms，`Duration.zero` 就是每次打字都搜）。`onChanged` 每次打字、`onSearch` 是真的要搜的那次（停下來、送出、清空都會立刻搜），同一個字串不會搜兩次；`loading` 時 × 換成轉圈。hint 走 `MochiStrings.search`（新增），圖示走 `MochiIcons.search`（新增）。要搜尋建議就用 `MochiAutocomplete` 加放大鏡 prefix，不另外做
 - [x] ⭐ Slider — `MochiSlider`：拖曳、點軌道直接跳過去、方向鍵 / Home / End（右左跟著畫面走，RTL 會鏡像）、`divisions` 吸附、`step` 可調。`valueLabel` 把目前的值放在 label 那行的尾端，intent / size 可選，thumb 按住會變大（跟按鈕一樣是長大不是縮小）；一次只佔一個 Tab 位置，語意是 slider 並附上加減後的值
 - [x] ⭐ SegmentedControl / Tabs — `MochiSegmentedControl` + `MochiSegment`：**tabs 不是新元件，是 `appearance`**（`segmented` 是控制項、`underline` 是頁籤）。每格平分寬度（`expanded: false` 就以最寬的那格為準），指示器會滑過去、整組只佔一個 Tab 位置、方向鍵換選項且會跳過 disabled 的那格。下面要換什麼內容由 app 自己 `switch`，這個元件只負責選
-- [ ] ⭐ Stepper 可直接輸入數字 — 點中間的數字就能打字（只收數字、觸控跳數字鍵盤），按 Enter 或離開那格才生效，超出範圍拉回 min / max，清空或打錯就還原；`format` 只在顯示時套用（編輯時是 `15` 不是 `15s`）；編輯時 ↑↓ 照樣加減、Esc 取消；預設開啟，`editable: false` 可關。ao 個數這種範圍大的值，打字比按住連發快
+- [x] ⭐ Stepper 可直接輸入數字 — `MochiStepper(editable:)`（預設開）：點中間的數字就變成輸入框（只收數字、觸控跳數字鍵盤、一打開就全選），Enter 或離開那格才生效，超出範圍拉回 min / max，清空或打錯就還原；`format` 只在顯示時套用（編輯時是 `15` 不是 `15s`）；編輯時 ↑↓ 照樣加減、Esc 取消
 
 ## 7. P5：導覽
 

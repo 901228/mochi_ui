@@ -2027,7 +2027,7 @@ class _StepperSampleState extends State<_StepperSample> {
               semanticLabel: "Inspection",
               onChanged: (value) => setState(() => _inspection = value),
             ),
-            const _ThemedText("inspection, 0–60s (hold a button to repeat)", .muted),
+            const _ThemedText("inspection, 0–60s (hold to repeat, or press the number to type)", .muted),
           ],
         ),
         Row(
@@ -2056,6 +2056,19 @@ class _StepperSampleState extends State<_StepperSample> {
               MochiButton(size: size, onPress: () {}, child: const Text("Save")),
             ],
           ),
+        Row(
+          spacing: g.space.md,
+          children: [
+            MochiStepper(
+              value: _average,
+              min: 3,
+              max: 1000,
+              editable: false,
+              onChanged: (value) => setState(() => _average = value),
+            ),
+            const _ThemedText("editable: false — buttons and keyboard only", .muted),
+          ],
+        ),
         const MochiStepper(value: 7, onChanged: null),
       ],
     );

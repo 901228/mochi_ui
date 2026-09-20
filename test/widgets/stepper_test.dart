@@ -11,7 +11,14 @@ void main() {
   );
 
   // A stepper that keeps its own value, and records every change.
-  Widget live(List<int> seen, {int start = 5, int? min, int? max, int step = 1}) {
+  Widget live(
+    List<int> seen, {
+    int start = 5,
+    int? min,
+    int? max,
+    int step = 1,
+    String Function(int value)? format,
+  }) {
     var value = start;
     return StatefulBuilder(
       builder: (context, setState) => app(
@@ -20,6 +27,7 @@ void main() {
           min: min,
           max: max,
           step: step,
+          format: format,
           onChanged: (next) => setState(() {
             seen.add(next);
             value = next;
@@ -163,5 +171,153 @@ void main() {
     expect(node.increasedValue, "6");
     expect(node.decreasedValue, "4");
     handle.dispose();
+  });
+
+  group("typing the value", () {
+    Future<void> openField(WidgetTester tester) async {
+      await tester.tap(find.text("5"));
+      await tester.pump();
+    }
+
+    testWidgets("pressing the number opens a field with the plain value, selected", (tester) async {
+      await tester.pumpWidget(live([], format: (value) => "${value}s"));
+      expect(find.text("5s"), findsOneWidget);
+
+      await tester.tap(find.text("5s"));
+      await tester.pump();
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.controller.text, "5", reason: "the format is for reading, not for typing");
+      expect(editable.controller.selection.textInside("5"), "5");
+      expect(editable.focusNode.hasFocus, isTrue);
+    });
+
+    testWidgets("Enter takes what was typed and gives the stepper back the keyboard", (tester) async {
+      final seen = <int>[];
+      await tester.pumpWidget(live(seen));
+      await openField(tester);
+
+      tester.testTextInput.enterText("42");
+      await tester.pump();
+      expect(seen, isEmpty, reason: "not until it is finished");
+
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(seen, [42]);
+      expect(find.byType(EditableText), findsNothing);
+
+      // The arrows work again straight away.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(seen, [42, 43]);
+    });
+
+    testWidgets("leaving the field takes what was typed", (tester) async {
+      final seen = <int>[];
+      await tester.pumpWidget(live(seen));
+      await openField(tester);
+
+      tester.testTextInput.enterText("9");
+      await tester.pump();
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      expect(seen, [9]);
+      expect(find.byType(EditableText), findsNothing);
+    });
+
+    testWidgets("out of range is pulled back, nonsense is put back", (tester) async {
+      final seen = <int>[];
+      await tester.pumpWidget(live(seen, min: 0, max: 10));
+
+      await openField(tester);
+      tester.testTextInput.enterText("99");
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(seen, [10]);
+
+      await tester.tap(find.text("10"));
+      await tester.pump();
+      tester.testTextInput.enterText("");
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(seen, [10], reason: "nothing typed, nothing changed");
+      expect(find.text("10"), findsOneWidget);
+    });
+
+    testWidgets("Escape drops what was typed", (tester) async {
+      final seen = <int>[];
+      await tester.pumpWidget(live(seen));
+      await openField(tester);
+
+      tester.testTextInput.enterText("42");
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(seen, isEmpty);
+      expect(find.text("5"), findsOneWidget);
+    });
+
+    testWidgets("the arrows still step while typing", (tester) async {
+      final seen = <int>[];
+      await tester.pumpWidget(live(seen, step: 5));
+      await openField(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(seen, [10]);
+      expect(tester.widget<EditableText>(find.byType(EditableText)).controller.text, "10");
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(seen, [10, 5]);
+    });
+
+    testWidgets("editable: false leaves the number alone, and so does a disabled stepper", (tester) async {
+      await tester.pumpWidget(app(const MochiStepper(value: 5, editable: false, onChanged: null)));
+      await tester.tap(find.text("5"));
+      await tester.pump();
+      expect(find.byType(EditableText), findsNothing);
+
+      await tester.pumpWidget(app(const MochiStepper(value: 5, onChanged: null)));
+      await tester.tap(find.text("5"));
+      await tester.pump();
+      expect(find.byType(EditableText), findsNothing);
+    });
+
+    testWidgets("opening one field puts another one away, taking what it held", (tester) async {
+      final seen = <int>[];
+      var first = 5;
+      var second = 8;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) => app(
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MochiStepper(
+                  value: first,
+                  onChanged: (value) => setState(() {
+                    seen.add(value);
+                    first = value;
+                  }),
+                ),
+                MochiStepper(value: second, onChanged: (value) => setState(() => second = value)),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text("5"));
+      await tester.pump();
+      tester.testTextInput.enterText("12");
+      await tester.pump();
+
+      await tester.tap(find.text("8"));
+      await tester.pump();
+      await tester.pump();
+      expect(seen, [12], reason: "the field it left took what was in it");
+      expect(find.byType(EditableText), findsOneWidget, reason: "only the one just pressed");
+      expect(tester.widget<EditableText>(find.byType(EditableText)).controller.text, "8");
+    });
   });
 }
