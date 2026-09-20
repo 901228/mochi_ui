@@ -23,6 +23,7 @@ class MochiStrings {
     required this.close,
     required this.dismiss,
     required this.remove,
+    required this.search,
     required this.cut,
     required this.copy,
     required this.paste,
@@ -47,6 +48,9 @@ class MochiStrings {
   /// Takes one item out of a set, such as the × on a badge.
   final String remove;
 
+  /// A search field's own hint, when it is given none.
+  final String search;
+
   /// A text field's context menu.
   final String cut;
   final String copy;
@@ -60,6 +64,7 @@ class MochiStrings {
     close: "Close",
     dismiss: "Dismiss",
     remove: "Remove",
+    search: "Search",
     cut: "Cut",
     copy: "Copy",
     paste: "Paste",
@@ -73,6 +78,7 @@ class MochiStrings {
     close: "關閉",
     dismiss: "關閉",
     remove: "移除",
+    search: "搜尋",
     cut: "剪下",
     copy: "複製",
     paste: "貼上",
@@ -88,6 +94,7 @@ class MochiStrings {
     String? close,
     String? dismiss,
     String? remove,
+    String? search,
     String? cut,
     String? copy,
     String? paste,
@@ -99,6 +106,7 @@ class MochiStrings {
     close: close ?? this.close,
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
+    search: search ?? this.search,
     cut: cut ?? this.cut,
     copy: copy ?? this.copy,
     paste: paste ?? this.paste,
@@ -115,11 +123,13 @@ class MochiStrings {
           close == other.close &&
           dismiss == other.dismiss &&
           remove == other.remove &&
+          search == other.search &&
           cut == other.cut &&
           copy == other.copy &&
           paste == other.paste &&
           selectAll == other.selectAll;
 
   @override
-  int get hashCode => Object.hash(ok, cancel, back, close, dismiss, remove, cut, copy, paste, selectAll);
+  int get hashCode =>
+      Object.hash(ok, cancel, back, close, dismiss, remove, search, cut, copy, paste, selectAll);
 }

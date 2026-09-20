@@ -199,6 +199,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _OtpSample(),
           const SizedBox(height: 32),
+          const _ThemedText("search bar", .section),
+          const SizedBox(height: 12),
+          const _SearchSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2259,6 +2263,65 @@ class _OtpSampleState extends State<_OtpSample> {
             ],
           ),
         const MochiOtpField(length: 4, enabled: false, initialValue: "12"),
+      ],
+    );
+  }
+}
+
+class _SearchSample extends StatefulWidget {
+  const _SearchSample();
+
+  @override
+  State<_SearchSample> createState() => _SearchSampleState();
+}
+
+class _SearchSampleState extends State<_SearchSample> {
+  static const _solves = ["8.12", "9.04", "10.56", "11.73", "12.05", "13.41"];
+
+  String _query = "";
+  String _searched = "";
+  bool _loading = false;
+
+  void _search(String query) async {
+    setState(() {
+      _loading = true;
+      _searched = query;
+    });
+    // Stands in for a query that takes a moment.
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final results = _loading ? const <String>[] : _solves.where((s) => s.contains(_searched)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiSearchBar(
+            description: Text(_query.isEmpty ? "Waits 300ms before searching." : "Typing: $_query"),
+            loading: _loading,
+            onChanged: (query) => setState(() => _query = query),
+            onSearch: _search,
+          ),
+        ),
+        _ThemedText(_loading ? "searching…" : "${results.length} solves: ${results.join(", ")}", .muted),
+        // Every keystroke, for a list already in memory.
+        SizedBox(
+          width: 320,
+          child: MochiSearchBar(
+            hint: "Filter as I type",
+            debounce: Duration.zero,
+            size: MochiSize.sm,
+            onSearch: (query) => setState(() => _searched = query),
+          ),
+        ),
+        const SizedBox(width: 320, child: MochiSearchBar(enabled: false)),
       ],
     );
   }

@@ -18,6 +18,7 @@ class MochiIcons {
     this.chevronLeft = TablerIcons.chevronLeft,
     this.chevronRight = TablerIcons.chevronRight,
     this.more = TablerIcons.dots,
+    this.search = TablerIcons.search,
     this.info = TablerIcons.infoCircle,
     this.success = TablerIcons.circleCheck,
     this.warning = TablerIcons.alertTriangle,
@@ -38,6 +39,9 @@ class MochiIcons {
   final IconData chevronLeft;
   final IconData chevronRight;
   final IconData more;
+
+  /// A search field's leading icon.
+  final IconData search;
 
   /// One per [MochiIntent] that has something to say. A toast raised with an intent and no icon
   /// of its own takes the matching one from here.
@@ -72,6 +76,7 @@ class MochiIcons {
           chevronLeft == other.chevronLeft &&
           chevronRight == other.chevronRight &&
           more == other.more &&
+          search == other.search &&
           info == other.info &&
           success == other.success &&
           warning == other.warning &&
@@ -89,6 +94,7 @@ class MochiIcons {
     chevronLeft,
     chevronRight,
     more,
+    search,
     info,
     success,
     warning,

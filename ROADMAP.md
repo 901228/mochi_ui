@@ -96,7 +96,7 @@
 - [x] ⭐ Select — `MochiSelect` / `MochiMultiSelect` + `MochiSelectOption`：外觀跟同尺寸的 TextField 一樣（label / description / error、跟按鈕等高），清單是 `MochiPopoverMenu`、至少跟欄位一樣寬、已選項打勾。多選時清單不會關、已選項目用 badge 顯示（按 × 直接移除，不會打開清單）、badge 多了欄位會長高。鍵盤 Enter / Space / 方向鍵開啟並停在已選的那一行（滑鼠點開則不搶 focus）。寬度沒限制時以最長選項為準，換選項不會跳。`MochiPopover` 新增 `matchAnchorWidth`、`MochiMenuItem` 新增 `autofocus`
 - [x] ⭐ Autocomplete — `MochiAutocomplete`：包 widgets 層的 `RawAutocomplete`，欄位是 `MochiTextField`、清單是 `MochiMenu` 放在 `MochiPopoverSurface` 上、寬度跟輸入框一樣。`optionsBuilder` 可回傳 Future（非同步建議），↑↓ 移動且會自動捲到看得見、Enter 選取、Esc 收起、失焦收起；打什麼都算數，`onChanged` 每次打字都回報、`onSelected` 只在選到選項時。沒有 `maxLength`（計數會卡在輸入框和清單中間），要限制長度用 `inputFormatters`
 - [x] ⭐ OTP field — `MochiOtpField`：底下只有一個看不見的 `EditableText`，畫出來的是一排格子，所以貼上整組碼會自動分配、backspace 往回刪、平台的 one-time-code 自動填入也能用。正在填的那格有游標會閃、`obscure` 顯示圓點、`digitsOnly` 可關、填滿時 `onCompleted`；格子跟同尺寸按鈕等高且是正方形
-- [ ] ⭐ SearchBar — TextField 加上搜尋圖示、清除鈕、debounce；接上 Autocomplete 就是搜尋建議
+- [x] ⭐ SearchBar — `MochiSearchBar`：`MochiTextField` 加放大鏡、× 和 debounce（預設 300ms，`Duration.zero` 就是每次打字都搜）。`onChanged` 每次打字、`onSearch` 是真的要搜的那次（停下來、送出、清空都會立刻搜），同一個字串不會搜兩次；`loading` 時 × 換成轉圈。hint 走 `MochiStrings.search`（新增），圖示走 `MochiIcons.search`（新增）。要搜尋建議就用 `MochiAutocomplete` 加放大鏡 prefix，不另外做
 - [ ] ⭐ Slider — 檢查時間、音量類設定
 - [ ] ⭐ SegmentedControl / Tabs — 統計頁切換（ao5 / ao12 / 圖表）
 - [ ] ⭐ Stepper 可直接輸入數字 — 點中間的數字就能打字（只收數字、觸控跳數字鍵盤），按 Enter 或離開那格才生效，超出範圍拉回 min / max，清空或打錯就還原；`format` 只在顯示時套用（編輯時是 `15` 不是 `15s`）；編輯時 ↑↓ 照樣加減、Esc 取消；預設開啟，`editable: false` 可關。ao 個數這種範圍大的值，打字比按住連發快
