@@ -223,6 +223,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TrailSample(),
           const SizedBox(height: 32),
+          const _ThemedText("menubar", .section),
+          const SizedBox(height: 12),
+          const _MenubarSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2784,3 +2788,82 @@ class _TrailSampleState extends State<_TrailSample> {
     );
   }
 }
+
+class _MenubarSample extends StatefulWidget {
+  const _MenubarSample();
+
+  @override
+  State<_MenubarSample> createState() => _MenubarSampleState();
+}
+
+class _MenubarSampleState extends State<_MenubarSample> {
+  String _last = "—";
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    MochiMenuItem row(String label, {String? shortcut}) => MochiMenuItem(
+      title: Text(label),
+      suffix: shortcut == null ? null : Text(shortcut),
+      onPress: () => setState(() => _last = label),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.sm,
+      children: [
+        DecoratedBox(
+          decoration: ShapeDecoration(
+            color: theme.colors.surface,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: g.radius.md,
+              side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+            ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(g.space.xs2),
+            child: MochiMenubar(
+              menus: [
+                MochiMenubarMenu(
+                  title: const Text("File"),
+                  menuBuilder: (context) => [
+                    row("New session", shortcut: "⌘N"),
+                    row("Import…"),
+                    const MochiMenuDivider(),
+                    MochiSubmenu(
+                      title: const Text("Export as"),
+                      menuBuilder: (context) => [row("CSV"), row("JSON")],
+                    ),
+                  ],
+                ),
+                MochiMenubarMenu(
+                  title: const Text("Session"),
+                  menuBuilder: (context) => [
+                    row("Rename", shortcut: "F2"),
+                    row("Clear solves"),
+                    const MochiMenuDivider(),
+                    MochiMenuItem(
+                      title: const Text("Delete session"),
+                      intent: MochiIntent.danger,
+                      onPress: () => setState(() => _last = "Delete session"),
+                    ),
+                  ],
+                ),
+                MochiMenubarMenu(
+                  title: const Text("View"),
+                  menuBuilder: (context) => [row("Zoom in"), row("Zoom out")],
+                ),
+                const MochiMenubarMenu(title: Text("Disabled"), enabled: false, menuBuilder: _none),
+              ],
+            ),
+          ),
+        ),
+        _ThemedText("chose: $_last  (open one, then hover the next)", .muted),
+      ],
+    );
+  }
+}
+
+List<Widget> _none(BuildContext context) => const [];

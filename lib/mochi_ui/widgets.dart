@@ -17,6 +17,7 @@ export "widgets/focus_ring.dart";
 export "widgets/header.dart";
 export "widgets/linear_progress.dart";
 export "widgets/menu.dart";
+export "widgets/menubar.dart";
 export "widgets/otp_field.dart";
 export "widgets/pagination.dart";
 export "widgets/popover.dart";

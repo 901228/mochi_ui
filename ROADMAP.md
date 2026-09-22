@@ -108,7 +108,7 @@
 - [x] BottomNavigationBar — `MochiBottomNav` / `MochiBottomNavItem`：平分寬度、選中的那格圖示後面有 soft 藥丸、可放 badge、`selectedIcon` 可換實心版、`showLabels: false` 就只有選中的那格有字；自己吃掉系統底部安全區，放進 scaffold 不用再包 SafeArea
 - [x] Breadcrumb — `MochiBreadcrumb` / `MochiBreadcrumbItem`：最後一階是「你在這」所以是純文字不是連結（語意上標成 header），分隔符跟著文字方向翻面，`maxItems` 超過就把中間折進 … 的選單裡
 - [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（但只差一頁時直接寫出來，因為 … 佔的寬度跟數字一樣），箭頭到頭到尾會 disable
-- [ ] ⭐ Menubar — 桌面的橫排選單列。成本很低：`MochiPopover` + `MochiMenu` + `MochiSubmenu` 都有了，只差「已經開著的時候 hover 到隔壁會直接換過去」這個行為
+- [x] ⭐ Menubar — `MochiMenubar` / `MochiMenubarMenu`：一個 menu 一個 `MochiPopoverMenu`，加上「已經開著的時候 hover 到隔壁就直接換過去」（沒有延遲、不用再按）、方向鍵沿著列走且跳過 disabled 的、開著的那個字會保持 selected
 - [ ] ⭐ Tree — 縮排、展開收合、縮排線、鍵盤（方向鍵進出層級）。widgets 層沒有現成的，整棵要自己寫，比 menubar 貴不少
 
 ## 8. P6：內容與日期
