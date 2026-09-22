@@ -42,4 +42,5 @@ export "widgets/tile.dart";
 export "widgets/tooltip.dart";
 export "widgets/toast.dart";
 export "widgets/transitions.dart";
+export "widgets/tree.dart";
 export "widgets/value_transition.dart";

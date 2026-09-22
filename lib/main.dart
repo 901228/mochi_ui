@@ -227,6 +227,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _MenubarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("tree", .section),
+          const SizedBox(height: 12),
+          const _TreeSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2867,3 +2871,84 @@ class _MenubarSampleState extends State<_MenubarSample> {
 }
 
 List<Widget> _none(BuildContext context) => const [];
+
+class _TreeSample extends StatefulWidget {
+  const _TreeSample();
+
+  @override
+  State<_TreeSample> createState() => _TreeSampleState();
+}
+
+class _TreeSampleState extends State<_TreeSample> {
+  String? _selected = "main";
+
+  static const _nodes = [
+    MochiTreeNode(
+      value: "sessions",
+      label: Text("Sessions"),
+      icon: Icon(TablerIcons.folder),
+      children: [
+        MochiTreeNode(
+          value: "3x3",
+          label: Text("3x3"),
+          icon: Icon(TablerIcons.box),
+          children: [
+            MochiTreeNode(value: "main", label: Text("main"), trailing: Text("482")),
+            MochiTreeNode(value: "oh", label: Text("OH"), trailing: Text("96")),
+            MochiTreeNode(value: "bld", label: Text("BLD"), enabled: false),
+          ],
+        ),
+        MochiTreeNode(
+          value: "mega",
+          label: Text("Megaminx"),
+          icon: Icon(TablerIcons.diamond),
+          children: [MochiTreeNode(value: "mega-main", label: Text("main"), trailing: Text("31"))],
+        ),
+      ],
+    ),
+    MochiTreeNode(
+      value: "archive",
+      label: Text("Archive"),
+      icon: Icon(TablerIcons.archive),
+      children: [MochiTreeNode(value: "2025", label: Text("2025"))],
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.lg,
+      children: [
+        SizedBox(
+          width: 280,
+          child: MochiCard(
+            child: MochiTree<String>(
+              nodes: _nodes,
+              selected: _selected,
+              initiallyExpanded: const {"sessions", "3x3"},
+              onSelected: (value) => setState(() => _selected = value),
+            ),
+          ),
+        ),
+        // Without the indent lines, and wider steps.
+        SizedBox(
+          width: 240,
+          child: MochiCard(
+            child: MochiTree<String>(
+              nodes: _nodes,
+              showLines: false,
+              indent: 24,
+              intent: MochiIntent.success,
+              initiallyExpanded: const {"sessions"},
+            ),
+          ),
+        ),
+        _ThemedText("chose: ${_selected ?? "—"}", .muted),
+      ],
+    );
+  }
+}

@@ -109,7 +109,7 @@
 - [x] Breadcrumb — `MochiBreadcrumb` / `MochiBreadcrumbItem`：最後一階是「你在這」所以是純文字不是連結（語意上標成 header），分隔符跟著文字方向翻面，`maxItems` 超過就把中間折進 … 的選單裡
 - [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（但只差一頁時直接寫出來，因為 … 佔的寬度跟數字一樣），箭頭到頭到尾會 disable
 - [x] ⭐ Menubar — `MochiMenubar` / `MochiMenubarMenu`：一個 menu 一個 `MochiPopoverMenu`，加上「已經開著的時候 hover 到隔壁就直接換過去」（沒有延遲、不用再按）、方向鍵沿著列走且跳過 disabled 的、開著的那個字會保持 selected
-- [ ] ⭐ Tree — 縮排、展開收合、縮排線、鍵盤（方向鍵進出層級）。widgets 層沒有現成的，整棵要自己寫，比 menubar 貴不少
+- [x] ⭐ Tree — `MochiTree` / `MochiTreeNode`：縮排、展開收合、縮排線（只畫在下面還有東西的那層）、鍵盤（↑↓ 走看得見的列、→ 先展開再進去、← 先收起再回父層、Home / End）。展開狀態預設自己管（`initiallyExpanded`），給 `expanded` 就換 app 管；選取一律是 app 的
 
 ## 8. P6：內容與日期
 
