@@ -1,6 +1,7 @@
 import "package:flutter/widgets.dart";
 
 import "../theme/theme.dart";
+import "../theme/typography.dart";
 import "collapsible.dart";
 import "divider.dart";
 
@@ -92,7 +93,8 @@ class _MochiAccordionState extends State<MochiAccordion> {
 
   @override
   Widget build(BuildContext context) {
-    final g = context.theme.geometry;
+    final theme = context.theme;
+    final g = theme.geometry;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -100,15 +102,25 @@ class _MochiAccordionState extends State<MochiAccordion> {
       children: [
         for (final (index, item) in widget.items.indexed) ...[
           if (index > 0 && widget.divider) const MochiDivider(),
-          MochiCollapsible(
-            title: item.title,
-            enabled: item.enabled,
-            expanded: _expanded.contains(index),
-            onExpandedChanged: (open) => _toggle(index, open),
-            headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: g.space.sm),
-            bodyPadding: EdgeInsets.only(left: g.space.xs, right: g.space.xs, bottom: g.space.sm),
-            radius: g.radius.sm,
-            child: item.child,
+          // A margin around each row, so the header's hover fill stops short of the line between
+          // them instead of running into it.
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: g.space.xs2),
+            child: MochiCollapsible(
+              // A heading, not another line of the answer: a step up in size as well as weight,
+              // or the two read as one block of text.
+              title: DefaultTextStyle.merge(
+                style: theme.typography.body.md.withWeight(FontWeight.w600),
+                child: item.title,
+              ),
+              enabled: item.enabled,
+              expanded: _expanded.contains(index),
+              onExpandedChanged: (open) => _toggle(index, open),
+              headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: g.space.xs),
+              bodyPadding: EdgeInsets.only(left: g.space.xs, right: g.space.xs, top: g.space.xs3),
+              radius: g.radius.sm,
+              child: item.child,
+            ),
           ),
         ],
       ],

@@ -121,4 +121,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(MochiDivider), findsNothing);
   });
+
+  testWidgets("a heading reads as one: bigger and heavier than the answer under it", (tester) async {
+    await tester.pumpWidget(accordion(open: {0}));
+    await tester.pumpAndSettle();
+
+    TextStyle styleOf(String text) => tester.widget<Text>(find.text(text)).style ?? const TextStyle();
+    final title = DefaultTextStyle.of(tester.element(find.text("Inspection"))).style
+        .merge(styleOf("Inspection"));
+    final body = DefaultTextStyle.of(tester.element(find.text("Count down first."))).style
+        .merge(styleOf("Count down first."));
+
+    expect(title.fontWeight, FontWeight.w600);
+    expect(body.fontWeight, isNot(FontWeight.w600));
+    expect(title.fontSize, greaterThan(body.fontSize!));
+  });
+
+  testWidgets("the header's fill stops short of the line between rows", (tester) async {
+    await tester.pumpWidget(accordion());
+    await tester.pumpAndSettle();
+
+    final header = tester.getRect(
+      find.ancestor(of: find.text("Display"), matching: find.byType(MochiTappable)).first,
+    );
+    final lines = tester.widgetList<MochiDivider>(find.byType(MochiDivider)).length;
+    expect(lines, 2);
+
+    final above = tester.getRect(find.byType(MochiDivider).first);
+    expect(header.top, greaterThan(above.bottom), reason: "a gap, not a seam");
+  });
 }
