@@ -339,6 +339,7 @@ class MochiSidebarGroup extends StatelessWidget {
     final theme = context.theme;
     final g = theme.geometry;
     final open = _SidebarScope.of(context)?.open ?? 1;
+    final label = this.label;
 
     final items = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,35 +347,50 @@ class MochiSidebarGroup extends StatelessWidget {
       children: children,
     );
 
-    final label = this.label;
-    // A rail has no room for a heading, and no need for one: the items are icons in a line.
-    if (label == null || open < 0.5) {
+    // A group with nothing written over it is just its items.
+    if (label == null) {
       return Padding(
         padding: EdgeInsets.only(top: g.space.xs2),
         child: items,
       );
     }
 
-    final heading = DefaultTextStyle.merge(
-      style: theme.typography.body.xs
-          .withWeight(FontWeight.w600)
-          .copyWith(color: theme.colors.mutedForeground),
-      maxLines: 1,
-      child: label,
+    // The heading folds away with the rail rather than vanishing at some point along the way:
+    // the column's height then changes as smoothly as its width does.
+    final heading = ClipRect(
+      child: Align(
+        alignment: AlignmentDirectional.topStart,
+        heightFactor: open,
+        child: Opacity(
+          opacity: open,
+          child: DefaultTextStyle.merge(
+            style: theme.typography.body.xs
+                .withWeight(FontWeight.w600)
+                .copyWith(color: theme.colors.mutedForeground),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            child: label,
+          ),
+        ),
+      ),
     );
 
     return Padding(
-      padding: EdgeInsets.only(top: g.space.sm),
+      padding: EdgeInsets.only(top: lerpDouble(g.space.xs2, g.space.sm, open)!),
       child: collapsible
           ? MochiCollapsible(
               title: heading,
-              expanded: expanded,
+              // On a rail the heading that folds them is gone, so the items are all there is:
+              // hiding them would leave no way back to them.
+              expanded: open < 0.5 ? true : expanded,
               initiallyExpanded: initiallyExpanded,
               onExpandedChanged: onExpandedChanged,
-              headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3),
+              // A header with no height is nothing to press, and nothing to stop at with Tab.
+              enabled: open > 0.5,
+              headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3 * open),
               radius: g.radius.sm,
               child: Padding(
-                padding: EdgeInsets.only(top: g.space.xs3),
+                padding: EdgeInsets.only(top: g.space.xs3 * open),
                 child: items,
               ),
             )
@@ -383,7 +399,7 @@ class MochiSidebarGroup extends StatelessWidget {
               spacing: g.space.xs3,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3),
+                  padding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3 * open),
                   child: heading,
                 ),
                 items,

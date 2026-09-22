@@ -244,7 +244,14 @@ void main() {
 
       await tester.pumpWidget(grouped(collapsed: true));
       await tester.pumpAndSettle();
-      expect(find.text("Sessions"), findsNothing, reason: "a heading over icons says nothing");
+      // Folded to nothing rather than taken out, so the column's height changes as smoothly as
+      // its width: a heading over icons says nothing, but it has to leave gracefully.
+      expect(
+        tester
+            .getSize(find.ancestor(of: find.text("Sessions"), matching: find.byType(ClipRect)).first)
+            .height,
+        0,
+      );
       expect(find.byType(MochiSidebarItem), findsNWidgets(2));
     });
 
@@ -260,6 +267,36 @@ void main() {
       await tester.tap(find.text("Sessions"));
       await tester.pumpAndSettle();
       expect(find.text("3x3 main"), findsOneWidget);
+    });
+
+    testWidgets("a folded group shows its items again on a rail", (tester) async {
+      await tester.pumpWidget(grouped(collapsible: true));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Sessions"));
+      await tester.pumpAndSettle();
+      expect(find.text("3x3 main"), findsNothing);
+
+      await tester.pumpWidget(grouped(collapsed: true, collapsible: true));
+      await tester.pumpAndSettle();
+      // The heading that folded them is gone, so hiding them would leave no way back.
+      expect(find.text("3x3 main"), findsOneWidget);
+    });
+
+    testWidgets("the heading's height eases away with the rail", (tester) async {
+      await tester.pumpWidget(grouped());
+      await tester.pumpAndSettle();
+      double headingHeight() => tester
+          .getSize(find.ancestor(of: find.text("Sessions"), matching: find.byType(ClipRect)).first)
+          .height;
+      final full = headingHeight();
+      expect(full, greaterThan(0));
+
+      await tester.pumpWidget(grouped(collapsed: true));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      final midway = headingHeight();
+      expect(midway, lessThan(full));
+      expect(midway, greaterThan(0), reason: "on its way, not gone");
     });
   });
 
