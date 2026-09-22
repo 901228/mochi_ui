@@ -104,7 +104,7 @@
 ## 7. P5：導覽
 
 - [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
-- [ ] Sidebar / SidebarGroup / SidebarItem（1 / 2 / 2）— 含 **expandable**，但注意是兩種不同的「展開」，兩個都要：group 的收合（共用 P3.5 的 `MochiCollapsible`），以及整條 sidebar 收成只剩圖示的 rail（寬度過渡走 `MochiValueTransition`，收起時項目文字換成 tooltip）
+- [x] Sidebar / SidebarGroup / SidebarItem — `MochiSidebar` / `MochiSidebarGroup` / `MochiSidebarItem`（+ `MochiSidebarHeading`）：兩種展開都有。group 收合共用 `MochiCollapsible`；整條收成 rail 時寬度走 `MochiValueTransition`（56 / 觸控 64），label 用 `Align(widthFactor)` 夾掉並淡出所以圖示不會位移，文字改用 tooltip（`Text` label 會自動拿字串），group 的標題在 rail 狀態直接不顯示
 - [ ] BottomNavigationBar（1）
 - [ ] Breadcrumb（1）
 - [ ] ⭐ Pagination — Bulma 有，長列表用得到

@@ -211,6 +211,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SegmentedSample(),
           const SizedBox(height: 32),
+          const _ThemedText("sidebar", .section),
+          const SizedBox(height: 12),
+          const _SidebarSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2529,6 +2533,108 @@ class _SegmentedSampleState extends State<_SegmentedSample> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SidebarSample extends StatefulWidget {
+  const _SidebarSample();
+
+  @override
+  State<_SidebarSample> createState() => _SidebarSampleState();
+}
+
+class _SidebarSampleState extends State<_SidebarSample> {
+  String _page = "timer";
+  bool _railed = false;
+  bool _sessionsOpen = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    Widget item(String value, IconData icon, String label, {Widget? trailing}) => MochiSidebarItem(
+      icon: Icon(icon),
+      label: Text(label),
+      trailing: trailing,
+      selected: _page == value,
+      onPress: () => setState(() => _page = value),
+    );
+
+    return SizedBox(
+      height: 420,
+      width: 640,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: theme.colors.background,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: g.radius.md,
+            side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+          ),
+        ),
+        child: ClipRSuperellipse(
+          borderRadius: g.radius.md,
+          child: Row(
+            children: [
+              MochiSidebar(
+                collapsed: _railed,
+                header: const MochiSidebarHeading(Text("Mochi Timer"), collapsedChild: Text("M")),
+                footer: Padding(
+                  padding: EdgeInsets.all(g.space.xs2),
+                  child: MochiSidebarItem(
+                    icon: Icon(
+                      _railed
+                          ? TablerIcons.layoutSidebarRightCollapse
+                          : TablerIcons.layoutSidebarLeftCollapse,
+                    ),
+                    label: const Text("Collapse"),
+                    onPress: () => setState(() => _railed = !_railed),
+                  ),
+                ),
+                children: [
+                  item("timer", TablerIcons.clock, "Timer"),
+                  item(
+                    "stats",
+                    TablerIcons.chartBar,
+                    "Statistics",
+                    trailing: const MochiBadge(child: Text("12")),
+                  ),
+                  item("settings", TablerIcons.settings, "Settings"),
+                  MochiSidebarGroup(
+                    label: const Text("Sessions"),
+                    collapsible: true,
+                    expanded: _sessionsOpen,
+                    onExpandedChanged: (open) => setState(() => _sessionsOpen = open),
+                    children: [
+                      item("3x3", TablerIcons.box, "3x3 main"),
+                      item("oh", TablerIcons.handStop, "3x3 OH"),
+                      item("mega", TablerIcons.diamond, "Megaminx"),
+                    ],
+                  ),
+                  MochiSidebarGroup(
+                    label: const Text("Archive"),
+                    children: [item("old", TablerIcons.archive, "Last year")],
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(g.space.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: g.space.sm,
+                    children: [
+                      _ThemedText(_page, .section),
+                      const _ThemedText("the page the sidebar points at", .muted),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

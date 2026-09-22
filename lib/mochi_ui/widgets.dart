@@ -27,6 +27,7 @@ export "widgets/search_bar.dart";
 export "widgets/select.dart";
 export "widgets/segmented_control.dart";
 export "widgets/sheet.dart";
+export "widgets/sidebar.dart";
 export "widgets/slider.dart";
 export "widgets/state_transition.dart";
 export "widgets/stepper.dart";
