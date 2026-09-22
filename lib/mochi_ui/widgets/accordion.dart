@@ -1,7 +1,6 @@
 import "package:flutter/widgets.dart";
 
 import "../theme/theme.dart";
-import "../theme/typography.dart";
 import "collapsible.dart";
 import "divider.dart";
 
@@ -107,12 +106,10 @@ class _MochiAccordionState extends State<MochiAccordion> {
           Padding(
             padding: EdgeInsets.symmetric(vertical: g.space.xs2),
             child: MochiCollapsible(
-              // A heading, not another line of the answer: a step up in size as well as weight,
-              // or the two read as one block of text.
-              title: DefaultTextStyle.merge(
-                style: theme.typography.body.md.withWeight(FontWeight.w600),
-                child: item.title,
-              ),
+              // The heading typeface, not a bolder body one: Comfortaa's 600 next to its 400 is
+              // a whisper at this size, and `title` is the weight this system reserves for
+              // headings anyway.
+              title: DefaultTextStyle.merge(style: theme.typography.title.md, child: item.title),
               enabled: item.enabled,
               expanded: _expanded.contains(index),
               onExpandedChanged: (open) => _toggle(index, open),

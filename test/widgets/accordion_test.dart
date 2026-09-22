@@ -132,8 +132,10 @@ void main() {
     final body = DefaultTextStyle.of(tester.element(find.text("Count down first."))).style
         .merge(styleOf("Count down first."));
 
-    expect(title.fontWeight, FontWeight.w600);
-    expect(body.fontWeight, isNot(FontWeight.w600));
+    expect(title.fontWeight, FontWeight.w700);
+    // The weight that counts for a variable font is the axis, not the enum beside it.
+    expect(title.fontVariations, contains(const FontVariation("wght", 700)));
+    expect(body.fontVariations, contains(const FontVariation("wght", 400)));
     expect(title.fontSize, greaterThan(body.fontSize!));
   });
 
