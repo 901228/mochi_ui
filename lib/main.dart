@@ -219,6 +219,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _BottomNavSample(),
           const SizedBox(height: 32),
+          const _ThemedText("breadcrumb + pagination", .section),
+          const SizedBox(height: 12),
+          const _TrailSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2716,6 +2720,66 @@ class _BottomNavSampleState extends State<_BottomNavSample> {
           ),
           _bare,
         ),
+      ],
+    );
+  }
+}
+
+class _TrailSample extends StatefulWidget {
+  const _TrailSample();
+
+  @override
+  State<_TrailSample> createState() => _TrailSampleState();
+}
+
+class _TrailSampleState extends State<_TrailSample> {
+  String _went = "—";
+  int _page = 1;
+  int _far = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    MochiBreadcrumbItem step(String label, {IconData? icon, bool last = false}) => MochiBreadcrumbItem(
+      label: Text(label),
+      icon: icon == null ? null : Icon(icon),
+      onPress: last ? null : () => setState(() => _went = label),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        MochiBreadcrumb(
+          items: [
+            step("Sessions", icon: TablerIcons.home),
+            step("3x3 main"),
+            step("12 July", last: true),
+          ],
+        ),
+        // Folded: the middle steps live in the … menu.
+        MochiBreadcrumb(
+          maxItems: 3,
+          items: [
+            step("Sessions", icon: TablerIcons.home),
+            step("2026"),
+            step("July"),
+            step("12 July"),
+            step("Solve 42", last: true),
+          ],
+        ),
+        _ThemedText("went to: $_went", .muted),
+        const MochiDivider(),
+        MochiPagination(page: _page, pages: 5, onChanged: (page) => setState(() => _page = page)),
+        MochiPagination(
+          page: _far,
+          pages: 20,
+          around: 2,
+          intent: MochiIntent.neutral,
+          onChanged: (page) => setState(() => _far = page),
+        ),
+        const MochiPagination(page: 2, pages: 4, onChanged: null),
       ],
     );
   }

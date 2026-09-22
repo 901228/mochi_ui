@@ -106,8 +106,8 @@
 - [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
 - [x] Sidebar / SidebarGroup / SidebarItem — `MochiSidebar` / `MochiSidebarGroup` / `MochiSidebarItem`（+ `MochiSidebarHeading`）：兩種展開都有。group 收合共用 `MochiCollapsible`；整條收成 rail 時寬度走 `MochiValueTransition`（56 / 觸控 64），label 用 `Align(widthFactor)` 夾掉並淡出所以圖示不會位移，文字改用 tooltip（`Text` label 會自動拿字串），group 的標題在 rail 狀態直接不顯示
 - [x] BottomNavigationBar — `MochiBottomNav` / `MochiBottomNavItem`：平分寬度、選中的那格圖示後面有 soft 藥丸、可放 badge、`selectedIcon` 可換實心版、`showLabels: false` 就只有選中的那格有字；自己吃掉系統底部安全區，放進 scaffold 不用再包 SafeArea
-- [ ] Breadcrumb（1）
-- [ ] ⭐ Pagination — Bulma 有，長列表用得到
+- [x] Breadcrumb — `MochiBreadcrumb` / `MochiBreadcrumbItem`：最後一階是「你在這」所以是純文字不是連結（語意上標成 header），分隔符跟著文字方向翻面，`maxItems` 超過就把中間折進 … 的選單裡
+- [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（但只差一頁時直接寫出來，因為 … 佔的寬度跟數字一樣），箭頭到頭到尾會 disable
 - [ ] ⭐ Menubar — 桌面的橫排選單列。成本很低：`MochiPopover` + `MochiMenu` + `MochiSubmenu` 都有了，只差「已經開著的時候 hover 到隔壁會直接換過去」這個行為
 - [ ] ⭐ Tree — 縮排、展開收合、縮排線、鍵盤（方向鍵進出層級）。widgets 層沒有現成的，整棵要自己寫，比 menubar 貴不少
 
