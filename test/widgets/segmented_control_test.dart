@@ -73,6 +73,8 @@ void main() {
     expect(first.left, closeTo(tester.getRect(segmentOf("ao5")).left, 4));
 
     await tester.tap(find.text("Chart"));
+    // One frame to draw the press, then the slide starts.
+    await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 60));
     final midway = indicator();
@@ -231,6 +233,7 @@ void main() {
 
     await tester.tap(find.text("Chart"));
     await tester.pump();
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 80));
     final mid = left();
     expect(mid, greaterThan(start));
@@ -239,6 +242,7 @@ void main() {
     // Off to the middle one before it arrives: it turns round from here, never reaching the third.
     await tester.tap(find.text("ao12"));
     await tester.pump();
+    await tester.pump();
     final second = tester.getRect(segmentOf("ao12")).left;
     for (var frame = 0; frame < 20; frame++) {
       await tester.pump(const Duration(milliseconds: 16));
@@ -246,5 +250,24 @@ void main() {
     }
     await tester.pumpAndSettle();
     expect(left(), closeTo(second, 4));
+  });
+
+  testWidgets("a slow frame doesn't eat the slide", (tester) async {
+    await tester.pumpWidget(live([]));
+    double left() => tester.getRect(find.byType(FractionallySizedBox)).left;
+    final start = left();
+    final third = tester.getRect(segmentOf("Chart")).left;
+
+    await tester.tap(find.text("Chart"));
+    // The frame that reacts to the press takes longer than the whole animation would.
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(left(), start, reason: "nothing has moved yet");
+
+    // The first tick after the start only marks the clock; the next one moves it.
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 80));
+    final mid = left();
+    expect(mid, greaterThan(start));
+    expect(mid, lessThan(third), reason: "the slide is still going, not over before it was seen");
   });
 }
