@@ -148,11 +148,19 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets("the header stays square at the bottom until the body has gone", (tester) async {
+    testWidgets("with a divider the header stays square at the bottom until the body has gone", (
+      tester,
+    ) async {
       const radius = BorderRadius.all(Radius.circular(10));
       await tester.pumpWidget(
         app(
-          const MochiCollapsible(title: Text("Title"), initiallyExpanded: true, radius: radius, child: body),
+          const MochiCollapsible(
+            title: Text("Title"),
+            initiallyExpanded: true,
+            radius: radius,
+            divider: true,
+            child: body,
+          ),
         ),
       );
       BorderRadiusGeometry corners() =>
@@ -180,6 +188,30 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(corners(), radius);
+    });
+
+    testWidgets("without a divider the header keeps its corners while open", (tester) async {
+      const radius = BorderRadius.all(Radius.circular(10));
+      await tester.pumpWidget(
+        app(
+          const MochiCollapsible(title: Text("Title"), initiallyExpanded: true, radius: radius, child: body),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final shape =
+          (tester
+                      .widget<DecoratedBox>(
+                        find
+                            .descendant(of: find.byType(MochiTappable), matching: find.byType(DecoratedBox))
+                            .first,
+                      )
+                      .decoration
+                  as ShapeDecoration)
+              .shape;
+      // Nothing meets the header's bottom edge, so a straight edge there would read as a seam
+      // that isn't here.
+      expect((shape as RoundedSuperellipseBorder).borderRadius, radius);
     });
 
     testWidgets("disabled does nothing", (tester) async {

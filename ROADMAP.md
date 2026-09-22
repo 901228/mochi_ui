@@ -107,7 +107,7 @@
 - [x] Sidebar / SidebarGroup / SidebarItem — `MochiSidebar` / `MochiSidebarGroup` / `MochiSidebarItem`（+ `MochiSidebarHeading`）：兩種展開都有。group 收合共用 `MochiCollapsible`；整條收成 rail 時寬度走 `MochiValueTransition`（56 / 觸控 64），label 用 `Align(widthFactor)` 夾掉並淡出所以圖示不會位移，文字改用 tooltip（`Text` label 會自動拿字串），group 的標題在 rail 狀態直接不顯示
 - [x] BottomNavigationBar — `MochiBottomNav` / `MochiBottomNavItem`：平分寬度、選中的那格圖示後面有 soft 藥丸、可放 badge、`selectedIcon` 可換實心版、`showLabels: false` 就只有選中的那格有字；自己吃掉系統底部安全區，放進 scaffold 不用再包 SafeArea
 - [x] Breadcrumb — `MochiBreadcrumb` / `MochiBreadcrumbItem`：最後一階是「你在這」所以是純文字不是連結（語意上標成 header），分隔符跟著文字方向翻面，`maxItems` 超過就把中間折進 … 的選單裡
-- [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（但只差一頁時直接寫出來，因為 … 佔的寬度跟數字一樣），箭頭到頭到尾會 disable
+- [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（只差一頁時直接寫出來）。每頁的寬度都一樣：格數固定（靠邊時窗格會變長補回折掉的那格），每格寬度以最大頁碼為準，箭頭到頭到尾會 disable
 - [x] ⭐ Menubar — `MochiMenubar` / `MochiMenubarMenu`：一個 menu 一個 `MochiPopoverMenu`，加上「已經開著的時候 hover 到隔壁就直接換過去」（沒有延遲、不用再按）、方向鍵沿著列走且跳過 disabled 的、開著的那個字會保持 selected
 - [x] ⭐ Tree — `MochiTree` / `MochiTreeNode`：縮排、展開收合、縮排線（只畫在下面還有東西的那層）、鍵盤（↑↓ 走看得見的列、→ 先展開再進去、← 先收起再回父層、Home / End）。展開狀態預設自己管（`initiallyExpanded`），給 `expanded` 就換 app 管；選取一律是 app 的
 

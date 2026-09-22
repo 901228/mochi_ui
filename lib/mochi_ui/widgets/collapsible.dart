@@ -152,7 +152,9 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
               enabled: widget.enabled,
               turns: _progress,
               padding: widget.headerPadding,
-              radius: _bodyShown
+              // The bottom corners are squared off only where the body meets them along a line:
+              // with no divider the header floats, and a straight edge in mid-air looks broken.
+              radius: _bodyShown && widget.divider
                   ? BorderRadius.only(topLeft: widget.radius.topLeft, topRight: widget.radius.topRight)
                   : widget.radius,
               title: widget.title,

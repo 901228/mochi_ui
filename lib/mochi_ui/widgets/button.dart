@@ -35,6 +35,7 @@ class MochiButton extends StatelessWidget {
     this.focusNode,
     this.autofocus = false,
     this.statesController,
+    this.scaleOnPress = true,
     this.semanticLabel,
     this.tooltip,
   }) : _iconOnly = false;
@@ -63,6 +64,7 @@ class MochiButton extends StatelessWidget {
     this.focusNode,
     this.autofocus = false,
     this.statesController,
+    this.scaleOnPress = true,
     this.semanticLabel,
     this.tooltip,
   }) : child = icon,
@@ -107,6 +109,10 @@ class MochiButton extends StatelessWidget {
   final FocusNode? focusNode;
   final bool autofocus;
   final WidgetStatesController? statesController;
+
+  /// Grow while pressed. Off for a button that is really a piece of chrome — a word in a
+  /// menubar, say — where the growth reads as the wrong kind of thing being pressed.
+  final bool scaleOnPress;
   final String? semanticLabel;
 
   /// Wraps the button in a [MochiTooltip] with this message.
@@ -133,6 +139,7 @@ class MochiButton extends StatelessWidget {
       focusNode: focusNode,
       autofocus: autofocus,
       statesController: statesController,
+      scaleOnPress: scaleOnPress,
       semanticLabel: semanticLabel,
       builder: (context, states, _) => _ButtonSurface(
         intent: intent,

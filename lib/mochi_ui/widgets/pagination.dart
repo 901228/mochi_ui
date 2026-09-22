@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/size.dart";
 import "../theme/styles/button_style.dart";
+import "../theme/typography.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
@@ -59,34 +60,55 @@ class MochiPagination extends StatelessWidget {
 
   bool get _enabled => onChanged != null;
 
-  /// The pages to write out, with nulls where a gap was folded away.
-  List<int?> get _slots {
-    final first = 1;
-    final last = pages;
-    final wanted = <int>{
-      first,
-      last,
-      for (var p = page - around; p <= page + around; p++)
-        if (p >= first && p <= last) p,
-    }.toList()..sort();
+  /// How many slots the row has, whatever page it is on: the two ends, two gaps, and a window
+  /// of [around] pages either side of the current one.
+  int get _slotCount => 2 * around + 5;
 
-    final slots = <int?>[];
-    for (final (index, p) in wanted.indexed) {
-      final missing = index == 0 ? 0 : p - wanted[index - 1] - 1;
-      // One page missing is written out: a … takes the same room as the number it hides, and
-      // hiding a single page is only a step someone now can't take.
-      if (missing == 1) slots.add(p - 1);
-      if (missing > 1) slots.add(null);
-      slots.add(p);
+  /// The pages to write out, with nulls where a gap was folded away.
+  ///
+  /// The count is the same on every page — the window slides along and grows at the ends to take
+  /// the room a gap gives back — so the row keeps its width instead of jumping about as you page
+  /// through it.
+  List<int?> get _slots {
+    if (pages <= _slotCount) return [for (var p = 1; p <= pages; p++) p];
+
+    final window = 2 * around + 1;
+    // Near the start: no gap on the left, so the run there is longer by what the gap cost.
+    if (page <= around + 3) {
+      return [for (var p = 1; p <= window + 2; p++) p, null, pages];
+    }
+    if (page >= pages - around - 2) {
+      return [1, null, for (var p = pages - window - 1; p <= pages; p++) p];
     }
 
-    return slots;
+    return [1, null, for (var p = page - around; p <= page + around; p++) p, null, pages];
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
+    final m = MochiButtonMetrics.of(size, touch: theme.touch, density: theme.density);
+    // Every slot is the same width — the widest page number, or a square, whichever is bigger —
+    // so the row keeps its width as the window slides and the numbers gain a digit.
+    final painter = TextPainter(
+      text: TextSpan(text: "$pages", style: m.textStyle(theme.typography).withWeight(FontWeight.w600)),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final side = [m.height, painter.width + m.horizontalPadding].reduce((a, b) => a > b ? a : b);
+    painter.dispose();
+
+    // The same metrics as the buttons would have picked, with the padding taken out: the width
+    // is the slot's now.
+    final slot = MochiButtonMetrics(
+      height: m.height,
+      horizontalPadding: 0,
+      gap: m.gap,
+      iconSize: m.iconSize,
+      radius: m.radius,
+      textStyle: m.textStyle,
+    );
 
     void go(int next) {
       if (next < 1 || next > pages || next == page) return;
@@ -110,20 +132,22 @@ class MochiPagination extends StatelessWidget {
               icon: Icon(theme.icons.chevronLeft),
               semanticLabel: "Previous page",
             ),
-          for (final slot in _slots)
-            if (slot == null)
-              const _Gap()
-            else
-              MochiButton(
-                size: size,
-                // The page you are on is filled in; the others are quiet until pointed at.
-                appearance: slot == page ? MochiButtonAppearance.solid : MochiButtonAppearance.ghost,
-                intent: slot == page ? intent : MochiIntent.neutral,
-                enabled: _enabled,
-                onPress: () => go(slot),
-                semanticLabel: slot == page ? "Page $slot, current" : "Page $slot",
-                child: Text("$slot"),
-              ),
+          for (final at in _slots)
+            SizedBox(
+              width: side,
+              child: at == null
+                  ? const _Gap()
+                  : MochiButton(
+                      metrics: slot,
+                      // The page you are on is filled in; the others are quiet until pointed at.
+                      appearance: at == page ? MochiButtonAppearance.solid : MochiButtonAppearance.ghost,
+                      intent: at == page ? intent : MochiIntent.neutral,
+                      enabled: _enabled,
+                      onPress: () => go(at),
+                      semanticLabel: at == page ? "Page $at, current" : "Page $at",
+                      child: Text("$at"),
+                    ),
+            ),
           if (showArrows)
             MochiButton.icon(
               size: size,
@@ -150,11 +174,8 @@ class _Gap extends StatelessWidget {
     final theme = context.theme;
 
     return ExcludeSemantics(
-      child: SizedBox(
-        width: theme.touch ? 24 : 20,
-        child: Center(
-          child: Text("…", style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground)),
-        ),
+      child: Center(
+        child: Text("…", style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground)),
       ),
     );
   }

@@ -96,4 +96,27 @@ void main() {
     final buttons = tester.widgetList<MochiButton>(find.byType(MochiButton));
     expect(buttons.every((b) => !b.enabled), isTrue);
   });
+
+  testWidgets("the row keeps its width whatever page it is on", (tester) async {
+    final widths = <double>[];
+    final counts = <int>{};
+    for (final page in [1, 2, 3, 5, 10, 16, 18, 19, 20]) {
+      await tester.pumpWidget(pagination(page: page, pages: 20, onChanged: (_) {}));
+      await tester.pumpAndSettle();
+      widths.add(tester.getSize(find.byType(MochiPagination)).width);
+      counts.add(numbers(tester).length);
+    }
+    expect(counts.length, 1, reason: "the same number of slots on every page: $counts");
+    expect(widths.toSet().length, 1, reason: "and so the same width: $widths");
+  });
+
+  testWidgets("the window grows at the ends to fill the room a gap gives back", (tester) async {
+    await tester.pumpWidget(pagination(page: 2, pages: 20, onChanged: (_) {}));
+    await tester.pumpAndSettle();
+    expect(numbers(tester), ["1", "2", "3", "4", "5", "…", "20"]);
+
+    await tester.pumpWidget(pagination(page: 19, pages: 20, onChanged: (_) {}));
+    await tester.pumpAndSettle();
+    expect(numbers(tester), ["1", "…", "16", "17", "18", "19", "20"]);
+  });
 }

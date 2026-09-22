@@ -218,7 +218,10 @@ class MochiSidebarItem extends StatelessWidget {
               opacity: blend.contains(WidgetState.disabled) ? 0.4 : 1,
               child: Container(
                 height: metrics.height,
-                padding: EdgeInsetsDirectional.symmetric(horizontal: metrics.inset),
+                // The padding fades out with the labels, and the row centres what is left: on a
+                // rail that is the icon alone, in the middle of a square, without anyone having
+                // to work out where the middle is.
+                padding: EdgeInsetsDirectional.symmetric(horizontal: metrics.inset * open),
                 decoration: ShapeDecoration(
                   color: blend.color(
                     (st) => st.contains(WidgetState.selected)
@@ -233,37 +236,47 @@ class MochiSidebarItem extends StatelessWidget {
                     style: theme.typography.body.sm
                         .withWeight(selected ? FontWeight.w600 : FontWeight.w400)
                         .copyWith(color: foreground),
-                    child: Row(
-                      children: [
-                        icon,
-                        // The label takes the room the width gives it and fades with it, so the
-                        // icon never shifts as the sidebar opens.
-                        Expanded(
-                          child: ClipRect(
-                            child: Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              widthFactor: open,
-                              child: Opacity(
-                                opacity: open,
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.only(start: metrics.gap),
-                                  child: Row(
-                                    children: [
-                                      Expanded(child: DefaultTextStyle.merge(maxLines: 1, child: label)),
-                                      if (trailing case final trailing?)
-                                        Padding(
-                                          padding: EdgeInsetsDirectional.only(start: metrics.gap),
-                                          child: trailing,
+                    // On a rail there is nothing but the icon, centred in the row: no label slot
+                    // to leave room for, and nobody has to work out where the middle is. As soon
+                    // as the sidebar starts opening, the slot is back and the labels grow out of
+                    // it.
+                    child: open == 0
+                        ? Center(child: icon)
+                        : Row(
+                            children: [
+                              icon,
+                              Expanded(
+                                child: ClipRect(
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    widthFactor: open,
+                                    child: Opacity(
+                                      opacity: open,
+                                      child: Padding(
+                                        padding: EdgeInsetsDirectional.only(start: metrics.gap),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: DefaultTextStyle.merge(maxLines: 1, child: label),
+                                            ),
+                                            // Flexible, so a narrow slot mid-animation squeezes it
+                                            // rather than overflowing the row.
+                                            if (trailing case final trailing?)
+                                              Flexible(
+                                                child: Padding(
+                                                  padding: EdgeInsetsDirectional.only(start: metrics.gap),
+                                                  child: trailing,
+                                                ),
+                                              ),
+                                          ],
                                         ),
-                                    ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -374,12 +387,19 @@ class MochiSidebarGroup extends StatelessWidget {
 
 /// A sidebar's own heading or footer row: padded like the items, and cut down with them.
 class MochiSidebarHeading extends StatelessWidget {
-  const MochiSidebarHeading(this.child, {super.key, this.collapsedChild});
+  const MochiSidebarHeading(this.child, {super.key, this.collapsedChild, this.trailing});
 
   final Widget child;
 
   /// Shown in place of [child] while the sidebar is a rail — a mark instead of a name.
   final Widget? collapsedChild;
+
+  /// At the end of the heading's line: the button that collapses the sidebar, usually.
+  ///
+  /// A rail is one thing wide, and of the two this is the one worth keeping: it is what gets the
+  /// sidebar back. So on a rail the heading shows this alone, centred, and the name waits until
+  /// there is room for it again.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -388,16 +408,29 @@ class MochiSidebarHeading extends StatelessWidget {
     final open = _SidebarScope.of(context);
     final metrics = _SidebarMetrics.of(theme);
     final railed = open < 0.5;
+    final trailing = this.trailing;
+
+    final name = DefaultTextStyle.merge(
+      style: theme.typography.title.md.copyWith(color: theme.colors.foreground),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      child: railed ? (collapsedChild ?? child) : child,
+    );
 
     return Container(
       height: metrics.height + 2 * g.space.xs2,
-      padding: EdgeInsets.symmetric(horizontal: g.space.xs2 + metrics.inset),
+      padding: EdgeInsets.symmetric(horizontal: railed ? g.space.xs2 : g.space.xs2 + metrics.inset),
       alignment: railed ? Alignment.center : AlignmentDirectional.centerStart,
-      child: DefaultTextStyle.merge(
-        style: theme.typography.title.md.copyWith(color: theme.colors.foreground),
-        maxLines: 1,
-        child: railed ? (collapsedChild ?? child) : child,
-      ),
+      child: switch ((railed, trailing)) {
+        (true, final trailing?) => trailing,
+        (_, null) => name,
+        _ => Row(
+          children: [
+            Expanded(child: name),
+            ?trailing,
+          ],
+        ),
+      },
     );
   }
 }

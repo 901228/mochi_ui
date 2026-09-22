@@ -92,8 +92,18 @@ void main() {
     await tester.pumpWidget(sidebar(collapsed: true));
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(MochiSidebar)).width, 56);
-    expect(tester.getSize(find.text("Timer")).width, 0, reason: "clipped away, not unmounted");
+    expect(find.text("Timer"), findsNothing, reason: "no room for a label on a rail");
     expect(find.byIcon(MochiIcons.standard.check), findsOneWidget, reason: "the icon stays");
+  });
+
+  testWidgets("a rail centres its icons", (tester) async {
+    await tester.pumpWidget(sidebar(collapsed: true));
+    await tester.pumpAndSettle();
+
+    final bar = tester.getRect(find.byType(MochiSidebar));
+    final icon = tester.getRect(find.byIcon(MochiIcons.standard.check));
+    expect(icon.center.dx, closeTo(bar.center.dx, 1));
+    expect(icon.width, icon.height, reason: "and it is still square");
   });
 
   testWidgets("the width is animated, not switched", (tester) async {
@@ -132,6 +142,30 @@ void main() {
     await tester.pumpWidget(sidebar(collapsed: true, header: heading()));
     await tester.pumpAndSettle();
     expect(find.text("M"), findsOneWidget);
+    expect(find.text("Mochi UI"), findsNothing);
+  });
+
+  testWidgets("the heading's trailing is what a rail keeps", (tester) async {
+    Widget heading() => MochiSidebarHeading(
+      const Text("Mochi UI"),
+      collapsedChild: const Text("M"),
+      trailing: MochiButton.icon(
+        onPress: () {},
+        icon: Icon(MochiIcons.standard.chevronLeft),
+        semanticLabel: "Collapse",
+      ),
+    );
+
+    await tester.pumpWidget(sidebar(header: heading()));
+    await tester.pumpAndSettle();
+    expect(find.text("Mochi UI"), findsOneWidget);
+    expect(find.byIcon(MochiIcons.standard.chevronLeft), findsOneWidget);
+
+    await tester.pumpWidget(sidebar(collapsed: true, header: heading()));
+    await tester.pumpAndSettle();
+    // One thing wide, and the one worth keeping is what gets the sidebar back.
+    expect(find.byIcon(MochiIcons.standard.chevronLeft), findsOneWidget);
+    expect(find.text("M"), findsNothing);
     expect(find.text("Mochi UI"), findsNothing);
   });
 

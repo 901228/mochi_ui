@@ -2595,17 +2595,21 @@ class _SidebarSampleState extends State<_SidebarSample> {
             children: [
               MochiSidebar(
                 collapsed: _railed,
-                header: const MochiSidebarHeading(Text("Mochi Timer"), collapsedChild: Text("M")),
-                footer: Padding(
-                  padding: EdgeInsets.all(g.space.xs2),
-                  child: MochiSidebarItem(
+                header: MochiSidebarHeading(
+                  const Text("Mochi Timer"),
+                  collapsedChild: const Text("M"),
+                  trailing: MochiButton.icon(
+                    size: MochiSize.sm,
+                    appearance: MochiButtonAppearance.ghost,
+                    intent: MochiIntent.neutral,
+                    scaleOnPress: false,
+                    tooltip: _railed ? "Expand" : "Collapse",
+                    onPress: () => setState(() => _railed = !_railed),
                     icon: Icon(
                       _railed
                           ? TablerIcons.layoutSidebarRightCollapse
                           : TablerIcons.layoutSidebarLeftCollapse,
                     ),
-                    label: const Text("Collapse"),
-                    onPress: () => setState(() => _railed = !_railed),
                   ),
                 ),
                 children: [

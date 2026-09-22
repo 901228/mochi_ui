@@ -117,6 +117,9 @@ class _MochiMenubarState extends State<MochiMenubar> {
                 size: widget.size,
                 appearance: MochiButtonAppearance.ghost,
                 intent: MochiIntent.neutral,
+                // A word in a bar, not a button: pressing it drops a panel rather than doing
+                // something, so it tints instead of growing.
+                scaleOnPress: false,
                 // The open one stays lit while its panel is down.
                 selected: _open == index,
                 enabled: menu.enabled,
