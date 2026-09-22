@@ -7,7 +7,6 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
-import "../theme/typography.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "popover.dart";
@@ -305,9 +304,7 @@ class MochiMenuLabel extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: g.space.xs2),
       child: DefaultTextStyle(
-        style: theme.typography.body.xs
-            .withWeight(FontWeight.w600)
-            .copyWith(color: theme.colors.mutedForeground),
+        style: theme.typography.title.xs.copyWith(color: theme.colors.mutedForeground),
         child: child,
       ),
     );

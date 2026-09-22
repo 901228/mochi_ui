@@ -5,7 +5,6 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
-import "../theme/typography.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
@@ -315,9 +314,7 @@ class MochiTileGroup extends StatelessWidget {
       children: [
         if (label case final label?)
           DefaultTextStyle(
-            style: theme.typography.body.xs
-                .withWeight(FontWeight.w600)
-                .copyWith(color: colors.mutedForeground),
+            style: theme.typography.title.xs.copyWith(color: colors.mutedForeground),
             child: label,
           ),
         DecoratedBox(

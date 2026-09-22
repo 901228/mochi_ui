@@ -4,7 +4,6 @@ import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
 import "../theme/theme.dart";
-import "../theme/typography.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
@@ -279,7 +278,9 @@ class _Header extends StatelessWidget {
                 children: [
                   Expanded(
                     child: DefaultTextStyle.merge(
-                      style: theme.typography.body.sm.withWeight(FontWeight.w600),
+                      // A heading, in the typeface this system keeps for headings: body at w600
+                      // is barely a whisper next to w400 in Comfortaa.
+                      style: theme.typography.title.sm,
                       child: title,
                     ),
                   ),

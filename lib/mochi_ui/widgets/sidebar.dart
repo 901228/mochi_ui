@@ -356,9 +356,7 @@ class MochiSidebarGroup extends StatelessWidget {
     }
 
     final heading = DefaultTextStyle.merge(
-      style: theme.typography.body.xs
-          .withWeight(FontWeight.w600)
-          .copyWith(color: theme.colors.mutedForeground),
+      style: theme.typography.title.xs.copyWith(color: theme.colors.mutedForeground),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       child: label,

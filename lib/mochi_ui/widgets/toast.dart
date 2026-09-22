@@ -9,7 +9,6 @@ import "close_button.dart";
 import "../theme/responsive.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
-import "../theme/typography.dart";
 
 /// A brief message over the page: what just happened, and sometimes how to undo it.
 ///
@@ -84,9 +83,8 @@ class MochiToast extends StatelessWidget {
                 spacing: g.space.xs3,
                 children: [
                   DefaultTextStyle(
-                    style: theme.typography.body.sm
-                        .withWeight(FontWeight.w500)
-                        .copyWith(color: colors.foreground),
+                    // A heading over its description, the same pairing as a dialog's.
+                    style: theme.typography.title.sm.copyWith(color: colors.foreground),
                     child: title,
                   ),
                   if (description case final description?)
