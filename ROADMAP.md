@@ -105,7 +105,7 @@
 
 - [x] Page transition：`MochiSurfaceTransition`（scaleFade / fade / slide）+ `MochiPageRoute` / `MochiPage`；時長與曲線收在 `MochiMotion`，浮層之後共用同一組
 - [x] Sidebar / SidebarGroup / SidebarItem — `MochiSidebar` / `MochiSidebarGroup` / `MochiSidebarItem`（+ `MochiSidebarHeading`）：兩種展開都有。group 收合共用 `MochiCollapsible`；整條收成 rail 時寬度走 `MochiValueTransition`（56 / 觸控 64），label 用 `Align(widthFactor)` 夾掉並淡出所以圖示不會位移，文字改用 tooltip（`Text` label 會自動拿字串），group 的標題在 rail 狀態直接不顯示
-- [ ] BottomNavigationBar（1）
+- [x] BottomNavigationBar — `MochiBottomNav` / `MochiBottomNavItem`：平分寬度、選中的那格圖示後面有 soft 藥丸、可放 badge、`selectedIcon` 可換實心版、`showLabels: false` 就只有選中的那格有字；自己吃掉系統底部安全區，放進 scaffold 不用再包 SafeArea
 - [ ] Breadcrumb（1）
 - [ ] ⭐ Pagination — Bulma 有，長列表用得到
 - [ ] ⭐ Menubar — 桌面的橫排選單列。成本很低：`MochiPopover` + `MochiMenu` + `MochiSubmenu` 都有了，只差「已經開著的時候 hover 到隔壁會直接換過去」這個行為

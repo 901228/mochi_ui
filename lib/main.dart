@@ -215,6 +215,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _SidebarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("bottom nav", .section),
+          const SizedBox(height: 12),
+          const _BottomNavSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2635,6 +2639,84 @@ class _SidebarSampleState extends State<_SidebarSample> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BottomNavSample extends StatefulWidget {
+  const _BottomNavSample();
+
+  @override
+  State<_BottomNavSample> createState() => _BottomNavSampleState();
+}
+
+class _BottomNavSampleState extends State<_BottomNavSample> {
+  String _page = "timer";
+  String _bare = "timer";
+
+  List<MochiBottomNavItem<String>> get _items => [
+    const MochiBottomNavItem(value: "timer", icon: Icon(TablerIcons.clock), label: Text("Timer")),
+    const MochiBottomNavItem(
+      value: "stats",
+      icon: Icon(TablerIcons.chartBar),
+      label: Text("Statistics"),
+      badge: MochiBadge(intent: MochiIntent.danger, appearance: MochiBadgeAppearance.solid, child: Text("3")),
+    ),
+    const MochiBottomNavItem(value: "sessions", icon: Icon(TablerIcons.box), label: Text("Sessions")),
+    const MochiBottomNavItem(value: "settings", icon: Icon(TablerIcons.settings), label: Text("Settings")),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    Widget phone(Widget bar, String page) => SizedBox(
+      width: 280,
+      height: 200,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: theme.colors.background,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: g.radius.lg,
+            side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+          ),
+        ),
+        child: ClipRSuperellipse(
+          borderRadius: g.radius.lg,
+          child: Column(
+            children: [
+              Expanded(child: Center(child: _ThemedText(page, .muted))),
+              bar,
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Row(
+      spacing: g.space.lg,
+      children: [
+        phone(
+          MochiBottomNav<String>(
+            value: _page,
+            items: _items,
+            onChanged: (value) => setState(() => _page = value),
+          ),
+          _page,
+        ),
+        // Labels only under the one you are on.
+        phone(
+          MochiBottomNav<String>(
+            value: _bare,
+            items: _items,
+            showLabels: false,
+            intent: MochiIntent.success,
+            onChanged: (value) => setState(() => _bare = value),
+          ),
+          _bare,
+        ),
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ export "widgets/animated_theme.dart";
 export "widgets/app.dart";
 export "widgets/autocomplete.dart";
 export "widgets/badge.dart";
+export "widgets/bottom_nav.dart";
 export "widgets/button.dart";
 export "widgets/card.dart";
 export "widgets/checkbox.dart";
