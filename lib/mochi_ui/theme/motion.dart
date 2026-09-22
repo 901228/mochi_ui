@@ -10,8 +10,8 @@ class MochiMotion {
     this.indeterminateDuration = const Duration(milliseconds: 1000),
     this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
-    this.indicatorDuration = const Duration(milliseconds: 320),
-    this.indicatorCurve = Curves.easeOutCubic,
+    this.indicatorDuration = const Duration(milliseconds: 360),
+    this.indicatorCurve = Curves.linear,
     this.transitionDuration = const Duration(milliseconds: 320),
     this.transitionReverseDuration = const Duration(milliseconds: 240),
     this.transitionCurve = Curves.easeOutCubic,
@@ -54,8 +54,8 @@ class MochiMotion {
   /// the line under a tab.
   final Duration indicatorDuration;
 
-  /// Off at full speed and settling at the end, unlike [sizeCurve]: a press is what sent it, so
-  /// it should leave the moment the finger lands rather than gathering itself first.
+  /// A constant speed, unlike [sizeCurve]: the marker is going from one segment to the next
+  /// because a press told it to, and easing either end of so short a trip reads as hesitation.
   final Curve indicatorCurve;
 
   /// Entering a page or an overlay (dialog, sheet, popover, toast).
