@@ -221,4 +221,30 @@ void main() {
       );
     }
   });
+
+  testWidgets("changing the choice mid-slide carries on from where it is", (tester) async {
+    final seen = <String>[];
+    await tester.pumpWidget(live(seen));
+    double left() => tester.getRect(find.byType(FractionallySizedBox)).left;
+    final start = left();
+    final third = tester.getRect(segmentOf("Chart")).left;
+
+    await tester.tap(find.text("Chart"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final mid = left();
+    expect(mid, greaterThan(start));
+    expect(mid, lessThan(third));
+
+    // Off to the middle one before it arrives: it turns round from here, never reaching the third.
+    await tester.tap(find.text("ao12"));
+    await tester.pump();
+    final second = tester.getRect(segmentOf("ao12")).left;
+    for (var frame = 0; frame < 20; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(left(), lessThan(third), reason: "never jumps to the one it was heading for");
+    }
+    await tester.pumpAndSettle();
+    expect(left(), closeTo(second, 4));
+  });
 }

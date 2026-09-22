@@ -220,8 +220,9 @@ class _MochiSliderState extends State<MochiSlider> {
               states: states,
               duration: theme.motion.stateDuration,
               builder: (context, blend) => SizedBox(
-                // Room for the thumb to grow into while it is held.
-                height: m.thumb + 2 * m.grow,
+                // Room for the thumb to grow into, and a band deep enough to aim at: the track
+                // and the knob are centred in it.
+                height: [m.hit, m.thumb + 2 * m.grow].reduce((a, b) => a > b ? a : b),
                 child: Stack(
                   alignment: AlignmentDirectional.centerStart,
                   children: [
@@ -441,10 +442,11 @@ class _Thumb extends StatelessWidget {
   }
 }
 
-/// Size-dependent layout of a slider. The thumb is 12 / 16 / 20 / 24 on the desktop scale.
+/// Size-dependent layout of a slider. The thumb is 12 / 16 / 20 / 24 on the desktop scale, and
+/// the whole thing is 28 tall to the pointer (44 on touch) whatever size it is.
 @immutable
 class MochiSliderMetrics {
-  const MochiSliderMetrics({required this.track, required this.thumb, required this.grow});
+  const MochiSliderMetrics({required this.track, required this.thumb, required this.grow, required this.hit});
 
   /// How thick the line is.
   final double track;
@@ -455,6 +457,10 @@ class MochiSliderMetrics {
   /// How far the knob grows per side while it is held.
   final double grow;
 
+  /// How tall the slider is to the pointer. A line and a small knob are a few pixels of target,
+  /// which is nothing to aim at — and a miss inside a scrolling page scrolls the page instead.
+  final double hit;
+
   factory MochiSliderMetrics.of(MochiSize size, {required bool touch}) {
     final extra = touch ? 4.0 : 0.0;
     final (track, thumb) = switch (size) {
@@ -464,19 +470,26 @@ class MochiSliderMetrics {
       MochiSize.lg => (6.0, 24.0),
     };
 
-    return MochiSliderMetrics(track: track, thumb: thumb + extra, grow: 2 + extra / 4);
+    final grow = 2 + extra / 4;
+
+    return MochiSliderMetrics(track: track, thumb: thumb + extra, grow: grow, hit: touch ? 44 : 28);
   }
 
   static MochiSliderMetrics lerp(MochiSliderMetrics a, MochiSliderMetrics b, double t) => MochiSliderMetrics(
     track: lerpDouble(a.track, b.track, t)!,
     thumb: lerpDouble(a.thumb, b.thumb, t)!,
     grow: lerpDouble(a.grow, b.grow, t)!,
+    hit: lerpDouble(a.hit, b.hit, t)!,
   );
 
   @override
   bool operator ==(Object other) =>
-      other is MochiSliderMetrics && track == other.track && thumb == other.thumb && grow == other.grow;
+      other is MochiSliderMetrics &&
+      track == other.track &&
+      thumb == other.thumb &&
+      grow == other.grow &&
+      hit == other.hit;
 
   @override
-  int get hashCode => Object.hash(track, thumb, grow);
+  int get hashCode => Object.hash(track, thumb, grow, hit);
 }

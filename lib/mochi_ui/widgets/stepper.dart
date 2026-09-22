@@ -23,7 +23,8 @@ import "value_transition.dart";
 /// Pressing the number types it instead, which beats holding a button for a value with a wide
 /// range: Enter or leaving the field takes what was typed (out of range is pulled back to [min]
 /// or [max], nonsense is put back the way it was), Escape drops it, and the arrows still step.
-/// [format] is for showing the value, so what is being typed is `15` rather than `15s`.
+/// Only the number is typed — whatever [format] puts around it (`15s`, `ao 5`) stays beside the
+/// field in muted text, so the unit is still there while the value is being changed.
 class MochiStepper extends StatefulWidget {
   const MochiStepper({
     super.key,
@@ -326,7 +327,7 @@ class _MochiStepperState extends State<MochiStepper> {
                   SizedBox(
                     width: valueWidth,
                     child: _editing
-                        ? _field(theme, textStyle)
+                        ? _field(theme, textStyle, _affixesOf(format, _value))
                         : GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: _startEditing,
@@ -382,11 +383,12 @@ class _MochiStepperState extends State<MochiStepper> {
 
 extension on _MochiStepperState {
   /// The field the number turns into while it is being typed.
-  Widget _field(MochiTheme theme, TextStyle textStyle) {
+  Widget _field(MochiTheme theme, TextStyle textStyle, (String, String) affixes) {
     final colors = theme.colors;
     final negatives = widget.min == null || widget.min! < 0;
+    final muted = textStyle.copyWith(color: colors.mutedForeground);
 
-    return CallbackShortcuts(
+    final field = CallbackShortcuts(
       // Bound inside the field, where the nearest binding wins: out here the arrows would walk
       // the caret about instead of stepping.
       bindings: {
@@ -416,6 +418,30 @@ extension on _MochiStepperState {
         onSubmitted: (_) => _finishEditing(commit: true, returnFocus: true),
       ),
     );
+
+    final (prefix, suffix) = affixes;
+    if (prefix.isEmpty && suffix.isEmpty) return field;
+
+    // Whatever the format puts around the number keeps its place, greyed: it is not being typed.
+    return Row(
+      children: [
+        if (prefix.isNotEmpty) Text(prefix, style: muted, maxLines: 1),
+        Expanded(child: field),
+        if (suffix.isNotEmpty) Text(suffix, style: muted, maxLines: 1),
+      ],
+    );
+  }
+
+  /// What [MochiStepper.format] puts before and after the number, when it is the plain number
+  /// with something around it. A format that rewrites the digits (`01:05`) has neither, and its
+  /// field shows the number alone.
+  (String, String) _affixesOf(String Function(int value) format, int value) {
+    final shown = format(value);
+    final plain = "$value";
+    final at = shown.indexOf(plain);
+    if (at < 0) return ("", "");
+
+    return (shown.substring(0, at), shown.substring(at + plain.length));
   }
 }
 

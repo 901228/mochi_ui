@@ -186,7 +186,8 @@ void main() {
       await tester.tap(find.text("5s"));
       await tester.pump();
       final editable = tester.widget<EditableText>(find.byType(EditableText));
-      expect(editable.controller.text, "5", reason: "the format is for reading, not for typing");
+      expect(editable.controller.text, "5", reason: "only the number is typed");
+      expect(find.text("s"), findsOneWidget, reason: "the unit stays beside the field");
       expect(editable.controller.selection.textInside("5"), "5");
       expect(editable.focusNode.hasFocus, isTrue);
     });
@@ -318,6 +319,17 @@ void main() {
       expect(seen, [12], reason: "the field it left took what was in it");
       expect(find.byType(EditableText), findsOneWidget, reason: "only the one just pressed");
       expect(tester.widget<EditableText>(find.byType(EditableText)).controller.text, "8");
+    });
+
+    testWidgets("a format that rewrites the digits leaves the field on its own", (tester) async {
+      await tester.pumpWidget(
+        live([], start: 65, format: (value) => "${(value ~/ 60)}:${(value % 60).toString().padLeft(2, "0")}"),
+      );
+      await tester.tap(find.text("1:05"));
+      await tester.pump();
+
+      expect(tester.widget<EditableText>(find.byType(EditableText)).controller.text, "65");
+      expect(find.byType(Text), findsNothing, reason: "nothing to put around it");
     });
   });
 }

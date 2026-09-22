@@ -221,4 +221,80 @@ void main() {
     expect(node.decreasedValue, "40%");
     handle.dispose();
   });
+
+  testWidgets("the band you can aim at is deeper than the track", (tester) async {
+    for (final size in MochiSize.values) {
+      final seen = <double>[];
+      var value = 0.0;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) => app(
+            MochiSlider(
+              value: value,
+              size: size,
+              onChanged: (next) => setState(() {
+                seen.add(next);
+                value = next;
+              }),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byType(MochiSlider));
+      expect(bar.height, greaterThanOrEqualTo(28), reason: size.name);
+
+      // A press near the top and near the bottom of that band both land on it.
+      await tester.tapAt(Offset(bar.left + bar.width / 4, bar.top + 1));
+      await tester.pump();
+      await tester.tapAt(Offset(bar.left + bar.width * 3 / 4, bar.bottom - 1));
+      await tester.pump();
+      expect(seen.length, 2, reason: size.name);
+    }
+  });
+
+  testWidgets("a drag inside a scrolling page moves the slider, not the page", (tester) async {
+    final seen = <double>[];
+    var value = 0.0;
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: ListView(
+          controller: controller,
+          children: [
+            const SizedBox(height: 400),
+            StatefulBuilder(
+              builder: (context, setState) => MochiSlider(
+                value: value,
+                size: MochiSize.xs,
+                onChanged: (next) => setState(() {
+                  seen.add(next);
+                  value = next;
+                }),
+              ),
+            ),
+            const SizedBox(height: 1200),
+          ],
+        ),
+      ),
+    );
+
+    final bar = tester.getRect(find.byType(MochiSlider));
+    // Starts on the slider and wanders a little vertically, the way a real drag does.
+    final gesture = await tester.startGesture(Offset(bar.left + 4, bar.center.dy));
+    await tester.pump();
+    await gesture.moveBy(const Offset(40, 6));
+    await tester.pump();
+    await gesture.moveBy(const Offset(60, -8));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(seen, isNotEmpty);
+    expect(controller.offset, 0, reason: "the page stayed put");
+  });
 }

@@ -146,18 +146,11 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
       lerp: MochiButtonMetrics.lerp,
       duration: theme.motion.sizeDuration,
       curve: theme.motion.sizeCurve,
-      builder: (context, m, _) => MochiValueTransition(
-        // The indicator slides between segments rather than jumping.
-        value: _index.toDouble(),
-        lerp: (a, b, t) => a + (b - a) * t,
-        duration: theme.motion.sizeDuration,
-        curve: theme.motion.sizeCurve,
-        builder: (context, at, _) => _build(context, theme, m, at),
-      ),
+      builder: (context, m, _) => _build(context, theme, m),
     );
   }
 
-  Widget _build(BuildContext context, MochiTheme theme, MochiButtonMetrics m, double at) {
+  Widget _build(BuildContext context, MochiTheme theme, MochiButtonMetrics m) {
     // Not an assert on the constructor: a const list's length can't be read at compile time.
     assert(widget.children.isNotEmpty, "A segmented control needs at least one segment.");
     final colors = theme.colors;
@@ -259,9 +252,14 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
     final row = Stack(
       children: [
         Positioned.fill(
-          child: Align(
-            // -1 is flush with the start, 1 with the end: the fraction walks between them.
-            alignment: AlignmentDirectional(count == 1 ? 0 : (2 * at / (count - 1)) - 1, 0),
+          // Only the indicator is rebuilt as it slides: a tick that rebuilt every segment costs
+          // enough on a busy page to drop the frames the slide is made of, and what is left
+          // reads as a jump.
+          child: MochiValueTransition(
+            value: _index.toDouble(),
+            lerp: (a, b, t) => a + (b - a) * t,
+            duration: theme.motion.sizeDuration,
+            curve: theme.motion.sizeCurve,
             child: FractionallySizedBox(
               widthFactor: 1 / count,
               heightFactor: 1,
@@ -274,6 +272,11 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
                 ),
                 child: indicator,
               ),
+            ),
+            builder: (context, at, child) => Align(
+              // -1 is flush with the start, 1 with the end: the fraction walks between them.
+              alignment: AlignmentDirectional(count == 1 ? 0 : (2 * at / (count - 1)) - 1, 0),
+              child: child,
             ),
           ),
         ),

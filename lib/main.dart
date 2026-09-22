@@ -2007,6 +2007,7 @@ class _StepperSample extends StatefulWidget {
 class _StepperSampleState extends State<_StepperSample> {
   int _inspection = 15;
   int _average = 5;
+  final _bySize = <MochiSize, int>{};
 
   @override
   Widget build(BuildContext context) {
@@ -2048,7 +2049,11 @@ class _StepperSampleState extends State<_StepperSample> {
           Row(
             spacing: g.space.xs,
             children: [
-              MochiStepper(value: 3, size: size, onChanged: (_) {}),
+              MochiStepper(
+                value: _bySize[size] ?? 3,
+                size: size,
+                onChanged: (value) => setState(() => _bySize[size] = value),
+              ),
               SizedBox(
                 width: 120,
                 child: MochiTextField(size: size, hint: size.name),
@@ -2085,6 +2090,7 @@ class _SelectSample extends StatefulWidget {
 class _SelectSampleState extends State<_SelectSample> {
   String? _alert = "beep";
   String? _puzzle;
+  final _bySize = <MochiSize, String>{};
   Set<String> _events = {"333", "444"};
 
   static const _alerts = [
@@ -2164,7 +2170,12 @@ class _SelectSampleState extends State<_SelectSample> {
           Row(
             spacing: g.space.xs,
             children: [
-              MochiSelect<String>(value: "beep", size: size, options: _alerts, onChanged: (_) {}),
+              MochiSelect<String>(
+                value: _bySize[size] ?? "beep",
+                size: size,
+                options: _alerts,
+                onChanged: (value) => setState(() => _bySize[size] = value),
+              ),
               MochiButton(size: size, onPress: () {}, child: const Text("Save")),
             ],
           ),
@@ -2359,6 +2370,7 @@ class _SliderSampleState extends State<_SliderSample> {
   double _volume = 0.6;
   double _inspection = 15;
   double _weight = 3;
+  final _bySize = <MochiSize, double>{};
 
   @override
   Widget build(BuildContext context) {
@@ -2406,7 +2418,11 @@ class _SliderSampleState extends State<_SliderSample> {
         for (final size in MochiSize.values)
           SizedBox(
             width: 220,
-            child: MochiSlider(value: 0.4, size: size, onChanged: (_) {}),
+            child: MochiSlider(
+              value: _bySize[size] ?? 0.4,
+              size: size,
+              onChanged: (value) => setState(() => _bySize[size] = value),
+            ),
           ),
         const SizedBox(width: 220, child: MochiSlider(value: 0.3, onChanged: null)),
       ],
@@ -2425,6 +2441,7 @@ class _SegmentedSampleState extends State<_SegmentedSample> {
   String _average = "ao5";
   String _tab = "times";
   String _view = "list";
+  final _bySize = <MochiSize, String>{};
 
   @override
   Widget build(BuildContext context) {
@@ -2488,10 +2505,10 @@ class _SegmentedSampleState extends State<_SegmentedSample> {
             spacing: g.space.xs,
             children: [
               MochiSegmentedControl<String>(
-                value: "a",
+                value: _bySize[size] ?? "a",
                 size: size,
                 expanded: false,
-                onChanged: (_) {},
+                onChanged: (value) => setState(() => _bySize[size] = value),
                 children: const [
                   MochiSegment(value: "a", label: Text("One")),
                   MochiSegment(value: "b", label: Text("Two")),
