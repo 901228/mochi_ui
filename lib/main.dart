@@ -243,6 +243,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _CalendarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("date picker", .section),
+          const SizedBox(height: 12),
+          const _DatePickerSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -3134,6 +3138,65 @@ class _CalendarSampleState extends State<_CalendarSample> {
             onChanged: (_) {},
           ),
           "bounded to this month",
+        ),
+      ],
+    );
+  }
+}
+
+class _DatePickerSample extends StatefulWidget {
+  const _DatePickerSample();
+
+  @override
+  State<_DatePickerSample> createState() => _DatePickerSampleState();
+}
+
+class _DatePickerSampleState extends State<_DatePickerSample> {
+  DateTime? _started;
+  MochiDateRange? _window;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final today = DateTime.now();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        SizedBox(
+          width: 320,
+          child: MochiDatePicker.single(
+            label: const Text("Session started"),
+            description: const Text("Opens under the field; on a phone it comes up as a sheet."),
+            value: _started,
+            last: today,
+            onChanged: (day) => setState(() => _started = day),
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: MochiDatePicker.range(
+            label: const Text("Statistics over"),
+            hint: "Any time",
+            intent: MochiIntent.success,
+            value: _window,
+            onChanged: (range) => setState(() => _window = range),
+          ),
+        ),
+        Row(
+          spacing: g.space.xs,
+          children: [
+            for (final size in MochiSize.values)
+              SizedBox(
+                width: 150,
+                child: MochiDatePicker.single(size: size, onChanged: (_) {}),
+              ),
+          ],
+        ),
+        const SizedBox(
+          width: 320,
+          child: MochiDatePicker.single(enabled: false, error: "Pick a day.", onChanged: null),
         ),
       ],
     );

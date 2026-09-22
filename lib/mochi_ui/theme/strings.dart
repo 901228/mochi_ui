@@ -25,6 +25,8 @@ class MochiStrings {
     required this.remove,
     required this.search,
     required this.clear,
+    required this.pickDate,
+    this.date = _dayMonthYear,
     required this.previousMonth,
     required this.nextMonth,
     required this.months,
@@ -60,6 +62,12 @@ class MochiStrings {
   /// Lets go of everything that was picked: a calendar gathering days, a filter.
   final String clear;
 
+  /// What a date field says while it is empty.
+  final String pickDate;
+
+  /// How a day is written out in a field. English counts up, Chinese counts down.
+  final String Function(int day, String month, int year) date;
+
   /// A calendar's two arrows.
   final String previousMonth;
   final String nextMonth;
@@ -90,6 +98,7 @@ class MochiStrings {
     remove: "Remove",
     search: "Search",
     clear: "Clear",
+    pickDate: "Pick a date",
     previousMonth: "Previous month",
     nextMonth: "Next month",
     months: [
@@ -122,11 +131,13 @@ class MochiStrings {
     remove: "移除",
     search: "搜尋",
     clear: "清除",
+    pickDate: "選擇日期",
     previousMonth: "上個月",
     nextMonth: "下個月",
     months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
     weekdays: ["一", "二", "三", "四", "五", "六", "日"],
     monthYear: _yearThenMonth,
+    date: _yearMonthDay,
     cut: "剪下",
     copy: "複製",
     paste: "貼上",
@@ -144,6 +155,8 @@ class MochiStrings {
     String? remove,
     String? search,
     String? clear,
+    String? pickDate,
+    String Function(int day, String month, int year)? date,
     String? previousMonth,
     String? nextMonth,
     List<String>? months,
@@ -162,6 +175,8 @@ class MochiStrings {
     remove: remove ?? this.remove,
     search: search ?? this.search,
     clear: clear ?? this.clear,
+    pickDate: pickDate ?? this.pickDate,
+    date: date ?? this.date,
     previousMonth: previousMonth ?? this.previousMonth,
     nextMonth: nextMonth ?? this.nextMonth,
     months: months ?? this.months,
@@ -185,6 +200,8 @@ class MochiStrings {
           remove == other.remove &&
           search == other.search &&
           clear == other.clear &&
+          pickDate == other.pickDate &&
+          date == other.date &&
           previousMonth == other.previousMonth &&
           nextMonth == other.nextMonth &&
           _sameWords(months, other.months) &&
@@ -205,6 +222,8 @@ class MochiStrings {
     remove,
     search,
     clear,
+    pickDate,
+    date,
     previousMonth,
     nextMonth,
     Object.hashAll(months),
@@ -216,6 +235,13 @@ class MochiStrings {
     selectAll,
   );
 }
+
+/// English and most of Europe: the day, the month, the year.
+String _dayMonthYear(int day, String month, int year) => "$day $month $year";
+
+/// Chinese, Japanese, Korean: biggest first, and the month is already a number with a word after
+/// it in [MochiStrings.months].
+String _yearMonthDay(int day, String month, int year) => "$year 年 $month $day 日";
 
 /// English and most of Europe: the month, then the year.
 String _monthThenYear(String month, int year) => "$month $year";

@@ -20,6 +20,7 @@ class MochiIcons {
     this.more = TablerIcons.dots,
     this.search = TablerIcons.search,
     this.user = TablerIcons.user,
+    this.calendar = TablerIcons.calendar,
     this.info = TablerIcons.infoCircle,
     this.success = TablerIcons.circleCheck,
     this.warning = TablerIcons.alertTriangle,
@@ -46,6 +47,9 @@ class MochiIcons {
 
   /// What an avatar shows when it has neither a picture nor initials.
   final IconData user;
+
+  /// A date field's leading icon.
+  final IconData calendar;
 
   /// One per [MochiIntent] that has something to say. A toast raised with an intent and no icon
   /// of its own takes the matching one from here.
@@ -82,6 +86,7 @@ class MochiIcons {
           more == other.more &&
           search == other.search &&
           user == other.user &&
+          calendar == other.calendar &&
           info == other.info &&
           success == other.success &&
           warning == other.warning &&
@@ -101,6 +106,7 @@ class MochiIcons {
     more,
     search,
     user,
+    calendar,
     info,
     success,
     warning,
