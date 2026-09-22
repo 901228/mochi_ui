@@ -17,17 +17,23 @@ import "value_transition.dart";
 ///
 /// Items read it to know whether to show their labels, so the whole column moves as one.
 class _SidebarScope extends InheritedWidget {
-  const _SidebarScope({required this.open, required super.child});
+  const _SidebarScope({required this.open, required this.railContentWidth, required super.child});
 
   /// 1 while the sidebar is at its full width, 0 while it is a rail, and in between while it is
   /// on its way.
   final double open;
 
-  static double of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_SidebarScope>()?.open ?? 1;
+  /// How wide a row ends up once the sidebar is a rail. An icon walks towards the middle of
+  /// *that*, which stands still, rather than the middle of the row it is in, which is sliding
+  /// left underneath it — aim at a moving target and the icon swings out to the right before
+  /// coming back.
+  final double railContentWidth;
+
+  static _SidebarScope? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_SidebarScope>();
 
   @override
-  bool updateShouldNotify(_SidebarScope old) => old.open != open;
+  bool updateShouldNotify(_SidebarScope old) => old.open != open || old.railContentWidth != railContentWidth;
 }
 
 /// The column of destinations down the side of an app: sessions, statistics, settings.
@@ -107,6 +113,9 @@ class MochiSidebar extends StatelessWidget {
       curve: theme.motion.sizeCurve,
       builder: (context, open, _) => _SidebarScope(
         open: open,
+        // What is left of the rail once its border and the column's padding are taken out.
+        railContentWidth:
+            rail - (border ? g.borderWidth : 0) - (padding ?? EdgeInsets.all(g.space.xs2)).horizontal,
         child: Container(
           width: lerpDouble(rail, width, open),
           decoration: BoxDecoration(
@@ -187,8 +196,13 @@ class MochiSidebarItem extends StatelessWidget {
     final colors = theme.colors;
     final g = theme.geometry;
     final tone = colors.of(intent);
-    final open = _SidebarScope.of(context);
+    final scope = _SidebarScope.of(context);
+    final open = scope?.open ?? 1;
     final metrics = _SidebarMetrics.of(theme);
+    // Where the icon sits: at the row's start while there are labels, in the middle of the rail
+    // once there aren't.
+    final railLead = (((scope?.railContentWidth ?? 0) - metrics.iconSize) / 2).clamp(0.0, double.infinity);
+    final lead = lerpDouble(railLead, metrics.inset, open)!;
 
     final row = MochiTappable(
       enabled: enabled && onPress != null,
@@ -218,10 +232,7 @@ class MochiSidebarItem extends StatelessWidget {
               opacity: blend.contains(WidgetState.disabled) ? 0.4 : 1,
               child: Container(
                 height: metrics.height,
-                // The padding fades out with the labels, and the row centres what is left: on a
-                // rail that is the icon alone, in the middle of a square, without anyone having
-                // to work out where the middle is.
-                padding: EdgeInsetsDirectional.symmetric(horizontal: metrics.inset * open),
+                padding: EdgeInsetsDirectional.only(start: lead, end: metrics.inset * open),
                 decoration: ShapeDecoration(
                   color: blend.color(
                     (st) => st.contains(WidgetState.selected)
@@ -236,47 +247,44 @@ class MochiSidebarItem extends StatelessWidget {
                     style: theme.typography.body.sm
                         .withWeight(selected ? FontWeight.w600 : FontWeight.w400)
                         .copyWith(color: foreground),
-                    // On a rail there is nothing but the icon, centred in the row: no label slot
-                    // to leave room for, and nobody has to work out where the middle is. As soon
-                    // as the sidebar starts opening, the slot is back and the labels grow out of
-                    // it.
-                    child: open == 0
-                        ? Center(child: icon)
-                        : Row(
-                            children: [
-                              icon,
-                              Expanded(
-                                child: ClipRect(
-                                  child: Align(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    widthFactor: open,
-                                    child: Opacity(
-                                      opacity: open,
-                                      child: Padding(
-                                        padding: EdgeInsetsDirectional.only(start: metrics.gap),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: DefaultTextStyle.merge(maxLines: 1, child: label),
-                                            ),
-                                            // Flexible, so a narrow slot mid-animation squeezes it
-                                            // rather than overflowing the row.
-                                            if (trailing case final trailing?)
-                                              Flexible(
-                                                child: Padding(
-                                                  padding: EdgeInsetsDirectional.only(start: metrics.gap),
-                                                  child: trailing,
-                                                ),
-                                              ),
-                                          ],
+                    // One tree the whole way: the row centres what it holds, and the label's
+                    // slot gives its width back as it closes, so the icon slides to the middle of
+                    // the rail instead of jumping there when the last pixel goes.
+                    child: Row(
+                      children: [
+                        icon,
+                        // Loose, not Expanded: an Expanded slot keeps its room even at nothing
+                        // wide, and that leftover is what pushes the icon off the middle.
+                        Flexible(
+                          child: ClipRect(
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              widthFactor: open,
+                              child: Opacity(
+                                opacity: open,
+                                child: Padding(
+                                  padding: EdgeInsetsDirectional.only(start: metrics.gap),
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: DefaultTextStyle.merge(maxLines: 1, child: label)),
+                                      // Flexible, so a narrow slot mid-animation squeezes it
+                                      // rather than overflowing the row.
+                                      if (trailing case final trailing?)
+                                        Flexible(
+                                          child: Padding(
+                                            padding: EdgeInsetsDirectional.only(start: metrics.gap),
+                                            child: trailing,
+                                          ),
                                         ),
-                                      ),
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -330,7 +338,7 @@ class MochiSidebarGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
-    final open = _SidebarScope.of(context);
+    final open = _SidebarScope.of(context)?.open ?? 1;
 
     final items = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -405,7 +413,7 @@ class MochiSidebarHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
-    final open = _SidebarScope.of(context);
+    final open = _SidebarScope.of(context)?.open ?? 1;
     final metrics = _SidebarMetrics.of(theme);
     final railed = open < 0.5;
     final trailing = this.trailing;

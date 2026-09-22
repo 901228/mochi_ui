@@ -92,7 +92,21 @@ void main() {
     await tester.pumpWidget(sidebar(collapsed: true));
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(MochiSidebar)).width, 56);
-    expect(find.text("Timer"), findsNothing, reason: "no room for a label on a rail");
+    // Still in the tree, clipped to nothing: the row keeps one shape the whole way, which is
+    // what lets the icon slide to the middle instead of jumping there.
+    expect(
+      tester
+          .getSize(
+            find
+                .descendant(
+                  of: find.ancestor(of: find.text("Timer"), matching: find.byType(MochiSidebarItem)),
+                  matching: find.byType(ClipRect),
+                )
+                .first,
+          )
+          .width,
+      0,
+    );
     expect(find.byIcon(MochiIcons.standard.check), findsOneWidget, reason: "the icon stays");
   });
 
@@ -119,6 +133,34 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(MochiSidebar)).width, 56);
+  });
+
+  testWidgets("the icon slides to the middle of the rail, never jumps or swings past it", (tester) async {
+    await tester.pumpWidget(sidebar());
+    await tester.pumpAndSettle();
+    double iconX() => tester.getRect(find.byIcon(MochiIcons.standard.check)).center.dx;
+    final start = iconX();
+
+    await tester.pumpWidget(sidebar(collapsed: true));
+    var previous = start;
+    var biggestStep = 0.0;
+    var wentBack = false;
+    for (var frame = 0; frame < 40; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      final now = iconX();
+      final step = now - previous;
+      if (step.abs() > biggestStep) biggestStep = step.abs();
+      if (step < -0.01) wentBack = true;
+      previous = now;
+    }
+
+    await tester.pumpAndSettle();
+    final bar = tester.getRect(find.byType(MochiSidebar));
+    expect(iconX(), closeTo(bar.center.dx, 1), reason: "it ends up in the middle");
+    expect(biggestStep, lessThan(1), reason: "no frame carries the move on its own");
+    // Aiming at the middle of the row it is in — which is still sliding left — would send it out
+    // to the right first and bring it back.
+    expect(wentBack, isFalse, reason: "it walks one way");
   });
 
   testWidgets("a collapsed item says its label in a tooltip", (tester) async {
