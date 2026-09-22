@@ -10,6 +10,8 @@ class MochiMotion {
     this.indeterminateDuration = const Duration(milliseconds: 1000),
     this.sizeDuration = const Duration(milliseconds: 320),
     this.sizeCurve = Curves.easeInOutCubic,
+    this.indicatorDuration = const Duration(milliseconds: 320),
+    this.indicatorCurve = Curves.easeOutCubic,
     this.transitionDuration = const Duration(milliseconds: 320),
     this.transitionReverseDuration = const Duration(milliseconds: 240),
     this.transitionCurve = Curves.easeOutCubic,
@@ -47,6 +49,14 @@ class MochiMotion {
   /// Eased at both ends: a size leaving rest at full speed reads as a jolt, since nothing the
   /// user did is driving it.
   final Curve sizeCurve;
+
+  /// A marker moving to the thing that was just chosen: a segmented control's raised segment,
+  /// the line under a tab.
+  final Duration indicatorDuration;
+
+  /// Off at full speed and settling at the end, unlike [sizeCurve]: a press is what sent it, so
+  /// it should leave the moment the finger lands rather than gathering itself first.
+  final Curve indicatorCurve;
 
   /// Entering a page or an overlay (dialog, sheet, popover, toast).
   final Duration transitionDuration;
@@ -98,6 +108,8 @@ class MochiMotion {
           indeterminateDuration == other.indeterminateDuration &&
           sizeDuration == other.sizeDuration &&
           sizeCurve == other.sizeCurve &&
+          indicatorDuration == other.indicatorDuration &&
+          indicatorCurve == other.indicatorCurve &&
           transitionDuration == other.transitionDuration &&
           transitionReverseDuration == other.transitionReverseDuration &&
           toastDuration == other.toastDuration &&
@@ -117,6 +129,8 @@ class MochiMotion {
     indeterminateDuration,
     sizeDuration,
     sizeCurve,
+    indicatorDuration,
+    indicatorCurve,
     transitionDuration,
     transitionReverseDuration,
     toastDuration,

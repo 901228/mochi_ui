@@ -258,8 +258,8 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
           child: MochiValueTransition(
             value: _index.toDouble(),
             lerp: (a, b, t) => a + (b - a) * t,
-            duration: theme.motion.sizeDuration,
-            curve: theme.motion.sizeCurve,
+            duration: theme.motion.indicatorDuration,
+            curve: theme.motion.indicatorCurve,
             child: FractionallySizedBox(
               widthFactor: 1 / count,
               heightFactor: 1,
