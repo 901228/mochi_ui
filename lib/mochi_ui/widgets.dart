@@ -7,6 +7,7 @@ export "widgets/badge.dart";
 export "widgets/bottom_nav.dart";
 export "widgets/breadcrumb.dart";
 export "widgets/button.dart";
+export "widgets/calendar.dart";
 export "widgets/card.dart";
 export "widgets/checkbox.dart";
 export "widgets/circular_progress.dart";

@@ -24,6 +24,11 @@ class MochiStrings {
     required this.dismiss,
     required this.remove,
     required this.search,
+    required this.previousMonth,
+    required this.nextMonth,
+    required this.months,
+    required this.weekdays,
+    this.monthYear = _monthThenYear,
     required this.cut,
     required this.copy,
     required this.paste,
@@ -51,6 +56,21 @@ class MochiStrings {
   /// A search field's own hint, when it is given none.
   final String search;
 
+  /// A calendar's two arrows.
+  final String previousMonth;
+  final String nextMonth;
+
+  /// The twelve month names, January first.
+  final List<String> months;
+
+  /// The seven weekday names as a calendar's header writes them — short — Monday first, the
+  /// order [DateTime.monday] counts in.
+  final List<String> weekdays;
+
+  /// How a calendar says which month it is showing. English puts the year after the month; other
+  /// languages don't.
+  final String Function(String month, int year) monthYear;
+
   /// A text field's context menu.
   final String cut;
   final String copy;
@@ -65,6 +85,23 @@ class MochiStrings {
     dismiss: "Dismiss",
     remove: "Remove",
     search: "Search",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    months: [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ],
+    weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     cut: "Cut",
     copy: "Copy",
     paste: "Paste",
@@ -79,6 +116,11 @@ class MochiStrings {
     dismiss: "關閉",
     remove: "移除",
     search: "搜尋",
+    previousMonth: "上個月",
+    nextMonth: "下個月",
+    months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
+    weekdays: ["一", "二", "三", "四", "五", "六", "日"],
+    monthYear: _yearThenMonth,
     cut: "剪下",
     copy: "複製",
     paste: "貼上",
@@ -95,6 +137,11 @@ class MochiStrings {
     String? dismiss,
     String? remove,
     String? search,
+    String? previousMonth,
+    String? nextMonth,
+    List<String>? months,
+    List<String>? weekdays,
+    String Function(String month, int year)? monthYear,
     String? cut,
     String? copy,
     String? paste,
@@ -107,6 +154,11 @@ class MochiStrings {
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
     search: search ?? this.search,
+    previousMonth: previousMonth ?? this.previousMonth,
+    nextMonth: nextMonth ?? this.nextMonth,
+    months: months ?? this.months,
+    weekdays: weekdays ?? this.weekdays,
+    monthYear: monthYear ?? this.monthYear,
     cut: cut ?? this.cut,
     copy: copy ?? this.copy,
     paste: paste ?? this.paste,
@@ -124,12 +176,49 @@ class MochiStrings {
           dismiss == other.dismiss &&
           remove == other.remove &&
           search == other.search &&
+          previousMonth == other.previousMonth &&
+          nextMonth == other.nextMonth &&
+          _sameWords(months, other.months) &&
+          _sameWords(weekdays, other.weekdays) &&
+          monthYear == other.monthYear &&
           cut == other.cut &&
           copy == other.copy &&
           paste == other.paste &&
           selectAll == other.selectAll;
 
   @override
-  int get hashCode =>
-      Object.hash(ok, cancel, back, close, dismiss, remove, search, cut, copy, paste, selectAll);
+  int get hashCode => Object.hash(
+    ok,
+    cancel,
+    back,
+    close,
+    dismiss,
+    remove,
+    search,
+    previousMonth,
+    nextMonth,
+    Object.hashAll(months),
+    Object.hashAll(weekdays),
+    monthYear,
+    cut,
+    copy,
+    paste,
+    selectAll,
+  );
+}
+
+/// English and most of Europe: the month, then the year.
+String _monthThenYear(String month, int year) => "$month $year";
+
+/// Chinese, Japanese, Korean: the year first, and the month written as a number with a word
+/// after it, which is already how [MochiStrings.months] reads there.
+String _yearThenMonth(String month, int year) => "$year 年 $month";
+
+bool _sameWords(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+
+  return true;
 }

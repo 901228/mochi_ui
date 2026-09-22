@@ -239,6 +239,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AvatarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("calendar", .section),
+          const SizedBox(height: 12),
+          const _CalendarSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -3056,6 +3060,80 @@ class _AvatarSample extends StatelessWidget {
             MochiAvatar(initials: "E"),
             MochiAvatar(initials: "F"),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _CalendarSample extends StatefulWidget {
+  const _CalendarSample();
+
+  @override
+  State<_CalendarSample> createState() => _CalendarSampleState();
+}
+
+class _CalendarSampleState extends State<_CalendarSample> {
+  DateTime? _day = DateTime.now();
+  Set<DateTime> _days = {};
+  MochiDateRange? _range;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final today = DateTime.now();
+
+    Widget framed(String label, Widget calendar, String value) => SizedBox(
+      width: 300,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: g.space.xs,
+        children: [
+          _ThemedText(label, .muted),
+          MochiCard(child: calendar),
+          _ThemedText(value, .muted),
+        ],
+      ),
+    );
+
+    String day(DateTime? date) => date == null
+        ? "—"
+        : "${date.year}-${date.month.toString().padLeft(2, "0")}-${date.day.toString().padLeft(2, "0")}";
+
+    return Wrap(
+      spacing: g.space.lg,
+      runSpacing: g.space.lg,
+      children: [
+        framed(
+          "one day",
+          MochiCalendar.single(value: _day, onChanged: (value) => setState(() => _day = value)),
+          day(_day),
+        ),
+        framed(
+          "several days",
+          MochiCalendar.multiple(
+            values: _days,
+            intent: MochiIntent.success,
+            onChanged: (values) => setState(() => _days = values),
+          ),
+          _days.isEmpty ? "—" : (_days.toList()..sort()).map(day).join(", "),
+        ),
+        framed(
+          "a run of days",
+          MochiCalendar.range(value: _range, onChanged: (value) => setState(() => _range = value)),
+          _range == null ? "—" : "${day(_range!.start)} → ${day(_range!.end)}",
+        ),
+        framed(
+          "this month only, weekends out, Sunday first",
+          MochiCalendar.single(
+            firstDayOfWeek: DateTime.sunday,
+            first: DateTime(today.year, today.month),
+            last: DateTime(today.year, today.month + 1, 0),
+            enabledDay: (d) => d.weekday != DateTime.saturday && d.weekday != DateTime.sunday,
+            intent: MochiIntent.warning,
+            onChanged: (_) {},
+          ),
+          "bounded to this month",
         ),
       ],
     );
