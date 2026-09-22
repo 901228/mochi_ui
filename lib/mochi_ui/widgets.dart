@@ -1,6 +1,8 @@
+export "widgets/accordion.dart";
 export "widgets/animated_theme.dart";
 export "widgets/app.dart";
 export "widgets/autocomplete.dart";
+export "widgets/avatar.dart";
 export "widgets/badge.dart";
 export "widgets/bottom_nav.dart";
 export "widgets/breadcrumb.dart";

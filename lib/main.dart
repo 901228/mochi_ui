@@ -231,6 +231,14 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TreeSample(),
           const SizedBox(height: 32),
+          const _ThemedText("accordion", .section),
+          const SizedBox(height: 12),
+          const _AccordionSample(),
+          const SizedBox(height: 32),
+          const _ThemedText("avatar", .section),
+          const SizedBox(height: 12),
+          const _AvatarSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -2952,6 +2960,103 @@ class _TreeSampleState extends State<_TreeSample> {
           ),
         ),
         _ThemedText("chose: ${_selected ?? "—"}", .muted),
+      ],
+    );
+  }
+}
+
+class _AccordionSample extends StatefulWidget {
+  const _AccordionSample();
+
+  @override
+  State<_AccordionSample> createState() => _AccordionSampleState();
+}
+
+class _AccordionSampleState extends State<_AccordionSample> {
+  bool _multiple = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.sm,
+      children: [
+        MochiCheckbox(
+          value: _multiple,
+          label: const Text("More than one at a time"),
+          onChanged: (value) => setState(() => _multiple = value ?? false),
+        ),
+        SizedBox(
+          width: 420,
+          child: MochiCard(
+            padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs2),
+            child: MochiAccordion(
+              multiple: _multiple,
+              initiallyExpanded: const {0},
+              items: const [
+                MochiAccordionItem(
+                  title: Text("Inspection"),
+                  child: Text("15 seconds, with a warning at 8 and 12."),
+                ),
+                MochiAccordionItem(
+                  title: Text("Display"),
+                  child: Text("Hide the time while solving, show it to two decimals after."),
+                ),
+                MochiAccordionItem(
+                  title: Text("Advanced"),
+                  child: Text("Manual entry, scramble filters, everything you can break."),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AvatarSample extends StatelessWidget {
+  const _AvatarSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        Row(
+          spacing: g.space.sm,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (final size in MochiSize.values) MochiAvatar(initials: "Harry Shih", size: size),
+            const MochiAvatar(),
+            const MochiAvatar(initials: "3x3", shape: MochiAvatarShape.rounded),
+            const MochiAvatar(icon: Icon(TablerIcons.box), shape: MochiAvatarShape.rounded),
+          ],
+        ),
+        Row(
+          spacing: g.space.sm,
+          children: [
+            for (final intent in MochiIntent.values)
+              MochiAvatar(initials: intent.name, intent: intent, size: MochiSize.sm),
+          ],
+        ),
+        const MochiAvatarGroup(
+          max: 4,
+          size: MochiSize.sm,
+          children: [
+            MochiAvatar(initials: "A", intent: MochiIntent.primary),
+            MochiAvatar(initials: "B", intent: MochiIntent.success),
+            MochiAvatar(initials: "C", intent: MochiIntent.warning),
+            MochiAvatar(initials: "D", intent: MochiIntent.danger),
+            MochiAvatar(initials: "E"),
+            MochiAvatar(initials: "F"),
+          ],
+        ),
       ],
     );
   }

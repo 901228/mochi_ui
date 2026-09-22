@@ -1,11 +1,11 @@
 import "dart:ui" show lerpDouble;
 
-import "package:flutter/rendering.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
 import "../theme/size.dart";
 import "../theme/theme.dart";
+import "overlap.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
 import "close_button.dart";
@@ -147,7 +147,7 @@ class MochiBadge extends StatelessWidget {
 
     // Neighbours in a group share one border rather than drawing two side by side.
     return switch (place) {
-      _Place.middle || _Place.end => _Overlap(by: g.borderWidth, child: badge),
+      _Place.middle || _Place.end => Overlap(by: g.borderWidth, child: badge),
       _ => badge,
     };
   }
@@ -197,59 +197,6 @@ class _BadgeGroupScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_BadgeGroupScope old) => old.place != place;
-}
-
-/// Tucks its child under the previous one by [by], at the start edge: a negative margin, which
-/// neither `Padding` nor a `Row`'s spacing allows.
-class _Overlap extends SingleChildRenderObjectWidget {
-  const _Overlap({required this.by, super.child});
-
-  final double by;
-
-  @override
-  _RenderOverlap createRenderObject(BuildContext context) =>
-      _RenderOverlap(by: by, textDirection: Directionality.of(context));
-
-  @override
-  void updateRenderObject(BuildContext context, _RenderOverlap renderObject) {
-    renderObject
-      ..by = by
-      ..textDirection = Directionality.of(context);
-  }
-}
-
-class _RenderOverlap extends RenderShiftedBox {
-  _RenderOverlap({required this._by, required this._textDirection}) : super(null);
-
-  double _by;
-  set by(double value) {
-    if (value == _by) return;
-    _by = value;
-    markNeedsLayout();
-  }
-
-  TextDirection _textDirection;
-  set textDirection(TextDirection value) {
-    if (value == _textDirection) return;
-    _textDirection = value;
-    markNeedsLayout();
-  }
-
-  @override
-  void performLayout() {
-    final child = this.child!;
-    child.layout(constraints.loosen(), parentUsesSize: true);
-    size = constraints.constrain(Size(child.size.width - _by, child.size.height));
-    (child.parentData! as BoxParentData).offset = Offset(_textDirection == TextDirection.ltr ? -_by : 0, 0);
-  }
-
-  @override
-  double computeMinIntrinsicWidth(double height) =>
-      (super.computeMinIntrinsicWidth(height) - _by).clamp(0, double.infinity);
-
-  @override
-  double computeMaxIntrinsicWidth(double height) =>
-      (super.computeMaxIntrinsicWidth(height) - _by).clamp(0, double.infinity);
 }
 
 /// Size-dependent layout of a badge. Desktop heights 16 / 20 / 24 / 28, touch four more.

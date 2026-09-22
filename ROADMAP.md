@@ -113,8 +113,8 @@
 
 ## 8. P6：內容與日期
 
-- [ ] ⭐ Accordion — 一組 `MochiCollapsible`，可設定單開 / 多開。跟 P3.5 的 card collapsible 共用同一個底層
-- [ ] ⭐ Avatar — 圖片 / 縮寫文字 / fallback 圖示，圓形與方形，size
+- [x] ⭐ Accordion — `MochiAccordion` / `MochiAccordionItem`：每一列就是一個 `MochiCollapsible`，accordion 只負責決定誰開著。`multiple` 關掉是單開（開一個就關掉上一個）、打開是各自獨立；沒給 `expanded` 就自己管狀態，給了就交給 app
+- [x] ⭐ Avatar — `MochiAvatar`：圖片 → 縮寫 → 圖示，自己往下退（載不到圖就用縮寫、沒縮寫就用 `MochiIcons.user`，新增這個 token）。圓形 / 圓角方形、四種尺寸、intent 決定底色。另有 `MochiAvatarGroup`：互相疊一角、超過 `max` 的變成 +n，疊法共用 badge group 那個負邊距的 render box（`Padding` 不收負值）
 - [ ] ⭐ Calendar — 月曆本體（選單日 / 多日 / 區間），下面三個 picker 都靠它
 - [ ] ⭐ DatePicker — Calendar 裝進 popover / sheet
 - [ ] ⭐ TimePicker — 時 / 分（/ 秒）滾輪或輸入
