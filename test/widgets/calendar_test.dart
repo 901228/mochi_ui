@@ -17,7 +17,9 @@ void main() {
   // July 2026 starts on a Wednesday and has 31 days, so it fills five weeks.
   final july = DateTime(2026, 7);
 
-  Finder day(String text) => find.ancestor(of: find.text(text), matching: find.byType(MochiTappable));
+  // Six weeks are always drawn, so a number can appear twice — 3 July and 3 August. The first is
+  // the one in the month on show, since the days before it belong to the end of the last month.
+  Finder day(String text) => find.ancestor(of: find.text(text), matching: find.byType(MochiTappable)).first;
 
   testWidgets("a month of days, with the ones either side greyed", (tester) async {
     await tester.pumpWidget(app(MochiCalendar.single(month: july, onChanged: (_) {})));
@@ -25,6 +27,8 @@ void main() {
 
     expect(find.text("July 2026"), findsOneWidget);
     expect(find.text("31"), findsOneWidget);
+    // Six weeks whatever the month needs, so the grid never changes height.
+    expect(find.text("8"), findsNWidgets(2), reason: "8 July and 8 August");
     // The days of June and August that fill the first and last weeks: the month runs Wed 1 July
     // to Fri 31 July, so 29 June leads and 1-2 August trail.
     expect(find.text("29"), findsNWidgets(2), reason: "29 June leads, 29 July is its own");
@@ -242,5 +246,121 @@ void main() {
     await tester.pumpAndSettle();
     expect(asked, [DateTime(2026, 8)]);
     expect(find.text("July 2026"), findsOneWidget, reason: "the app owns it and hasn't moved");
+  });
+
+  testWidgets("a day picked on its own keeps all four corners", (tester) async {
+    await tester.pumpWidget(
+      app(MochiCalendar.single(month: july, value: DateTime(2026, 7, 15), onChanged: (_) {})),
+    );
+    await tester.pumpAndSettle();
+
+    BorderRadiusGeometry cornersOf(String text) =>
+        ((tester
+                            .widget<Container>(
+                              find.descendant(of: day(text), matching: find.byType(Container)).first,
+                            )
+                            .decoration!
+                        as ShapeDecoration)
+                    .shape
+                as RoundedSuperellipseBorder)
+            .borderRadius;
+
+    expect(cornersOf("15"), MochiGeometry.standard.radius.sm);
+  });
+
+  testWidgets("a run keeps its corners at the ends and squares off in between", (tester) async {
+    await tester.pumpWidget(
+      app(
+        MochiCalendar.range(
+          month: july,
+          value: MochiDateRange(DateTime(2026, 7, 10), DateTime(2026, 7, 14)),
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    BorderRadius cornersOf(String text) =>
+        (((tester
+                                .widget<Container>(
+                                  find.descendant(of: day(text), matching: find.byType(Container)).first,
+                                )
+                                .decoration!
+                            as ShapeDecoration)
+                        .shape
+                    as RoundedSuperellipseBorder)
+                .borderRadius
+            as BorderRadius);
+
+    expect(cornersOf("12"), BorderRadius.zero, reason: "in the middle of the band");
+    expect(cornersOf("10").topLeft, isNot(Radius.zero));
+    expect(cornersOf("10").topRight, Radius.zero);
+    expect(cornersOf("14").topRight, isNot(Radius.zero));
+  });
+
+  testWidgets("the calendar is the same size whatever month it is on", (tester) async {
+    final heights = <double>{};
+    // February 2026 needs five weeks; August 2026 needs six.
+    for (final month in [DateTime(2026, 2), DateTime(2026, 8), DateTime(2026, 11)]) {
+      await tester.pumpWidget(app(MochiCalendar.single(month: month, onChanged: (_) {})));
+      await tester.pumpAndSettle();
+      heights.add(tester.getSize(find.byType(MochiCalendar)).height);
+    }
+    expect(heights.length, 1, reason: "heights: $heights");
+  });
+
+  testWidgets("a range can be drawn in one drag", (tester) async {
+    MochiDateRange? range;
+    await tester.pumpWidget(
+      app(
+        StatefulBuilder(
+          builder: (context, setState) => MochiCalendar.range(
+            month: july,
+            value: range,
+            onChanged: (next) => setState(() => range = next),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(tester.getCenter(day("6")));
+    await tester.pump();
+    await gesture.moveTo(tester.getCenter(day("9")));
+    await tester.pumpAndSettle();
+    await gesture.moveTo(tester.getCenter(day("16")));
+    await tester.pumpAndSettle();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(range, MochiDateRange(DateTime(2026, 7, 6), DateTime(2026, 7, 16)));
+  });
+
+  testWidgets("gathering days offers to let go of all of them", (tester) async {
+    var days = <DateTime>{};
+    await tester.pumpWidget(
+      app(
+        StatefulBuilder(
+          builder: (context, setState) => MochiCalendar.multiple(
+            month: july,
+            values: days,
+            onChanged: (next) => setState(() => days = next),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text("Clear"), findsNothing, reason: "nothing to clear yet");
+
+    await tester.tap(day("3"));
+    await tester.pumpAndSettle();
+    await tester.tap(day("8"));
+    await tester.pumpAndSettle();
+    expect(find.text("Clear"), findsOneWidget);
+
+    await tester.tap(find.text("Clear"));
+    await tester.pumpAndSettle();
+    expect(days, isEmpty);
+    expect(find.text("Clear"), findsNothing);
   });
 }

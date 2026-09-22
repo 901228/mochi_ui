@@ -115,7 +115,7 @@
 
 - [x] ⭐ Accordion — `MochiAccordion` / `MochiAccordionItem`：每一列就是一個 `MochiCollapsible`，accordion 只負責決定誰開著。`multiple` 關掉是單開（開一個就關掉上一個）、打開是各自獨立；沒給 `expanded` 就自己管狀態，給了就交給 app
 - [x] ⭐ Avatar — `MochiAvatar`：圖片 → 縮寫 → 圖示，自己往下退（載不到圖就用縮寫、沒縮寫就用 `MochiIcons.user`，新增這個 token）。圓形 / 圓角方形、四種尺寸、intent 決定底色。另有 `MochiAvatarGroup`：互相疊一角、超過 `max` 的變成 +n，疊法共用 badge group 那個負邊距的 render box（`Padding` 不收負值）
-- [x] ⭐ Calendar — `MochiCalendar.single` / `.multiple` / `.range`（+ `MochiDateRange`）：三種選法各一個 constructor，值的型別不同所以不混成一個參數。月份預設自己管（箭頭會動），給 `month` 就交給 app；`first` / `last` / `enabledDay` 管哪些日子能選，今天有外框，區間只有兩端是圓角、中間接成一條。鍵盤整個格子都能走（←→ 一天、↑↓ 一週、PageUp/Down 換月、Home/End 到該週兩端、Enter 選取），走出月底會自動翻頁。月份和星期名稱走 `MochiStrings`（新增 `months` / `weekdays` / `monthYear` / 兩個箭頭的說明，中文是「2026 年 7 月」）
+- [x] ⭐ Calendar — `MochiCalendar.single` / `.multiple` / `.range`（+ `MochiDateRange`）：三種選法各一個 constructor，值的型別不同所以不混成一個參數。月份預設自己管（箭頭會動），給 `month` 就交給 app；`first` / `last` / `enabledDay` 管哪些日子能選，今天有外框；區間只有兩端是圓角、中間接成一條，兩端填實心其餘填淡色；區間也可以用拖的（從手指按下的那天算起）；永遠畫六週所以每個月高度一樣；多選有「清除」按鈕。鍵盤整個格子都能走（←→ 一天、↑↓ 一週、PageUp/Down 換月、Home/End 到該週兩端、Enter 選取），走出月底會自動翻頁。月份和星期名稱走 `MochiStrings`（新增 `months` / `weekdays` / `monthYear` / 兩個箭頭的說明，中文是「2026 年 7 月」）
 - [ ] ⭐ DatePicker — Calendar 裝進 popover / sheet
 - [ ] ⭐ TimePicker — 時 / 分（/ 秒）滾輪或輸入
 - [ ] ⭐ DateTimePicker — 上面兩個合起來

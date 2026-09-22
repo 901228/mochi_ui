@@ -40,6 +40,9 @@ class MochiDateRange {
 
   @override
   int get hashCode => Object.hash(start, end);
+
+  @override
+  String toString() => "MochiDateRange(${start.toIso8601String()} → ${end?.toIso8601String()})";
 }
 
 /// What a calendar is picking.
@@ -75,6 +78,7 @@ class MochiCalendar extends StatefulWidget {
     this.firstDayOfWeek = DateTime.monday,
     this.intent = MochiIntent.primary,
     this.showAdjacentMonths = true,
+    this.showClear = true,
     this.autofocus = false,
   }) : _pick = _Pick.single,
        _pickedDay = value,
@@ -97,6 +101,7 @@ class MochiCalendar extends StatefulWidget {
     this.firstDayOfWeek = DateTime.monday,
     this.intent = MochiIntent.primary,
     this.showAdjacentMonths = true,
+    this.showClear = true,
     this.autofocus = false,
   }) : _pick = _Pick.multiple,
        _pickedDay = null,
@@ -119,6 +124,7 @@ class MochiCalendar extends StatefulWidget {
     this.firstDayOfWeek = DateTime.monday,
     this.intent = MochiIntent.primary,
     this.showAdjacentMonths = true,
+    this.showClear = true,
     this.autofocus = false,
   }) : _pick = _Pick.range,
        _pickedDay = null,
@@ -157,6 +163,10 @@ class MochiCalendar extends StatefulWidget {
   /// Whether the days either side of the month are drawn, greyed, or left blank.
   final bool showAdjacentMonths;
 
+  /// Whether a calendar gathering days offers a way to let go of all of them at once. It only
+  /// appears once there is something to clear.
+  final bool showClear;
+
   final bool autofocus;
 
   @override
@@ -168,6 +178,10 @@ class _MochiCalendarState extends State<MochiCalendar> {
   late DateTime _focused = _anchor;
 
   final _focusNode = FocusNode(debugLabel: "MochiCalendar");
+  final _gridKey = GlobalKey();
+
+  /// The day the finger went down on, which is where a dragged run starts.
+  DateTime? _pressedDay;
   bool _focusVisible = false;
 
   /// Where a calendar opens when nothing says otherwise: what is already picked, else today.
@@ -275,9 +289,12 @@ class _MochiCalendarState extends State<MochiCalendar> {
   };
 
   /// Which end of a range a day is, so the fill can be rounded there and square in between.
+  ///
+  /// A day picked on its own is both ends of itself: all four corners, and the solid fill a
+  /// chosen day gets.
   (bool start, bool end) _rangeEnds(DateTime day) {
     final range = widget._range;
-    if (widget._pick != _Pick.range || range == null) return (false, false);
+    if (widget._pick != _Pick.range || range == null) return (true, true);
 
     final from = _dayOf(range.start);
     final to = range.end == null ? from : _dayOf(range.end!);
@@ -342,31 +359,100 @@ class _MochiCalendarState extends State<MochiCalendar> {
           SizedBox(height: g.space.xs),
           _WeekdayRow(firstDayOfWeek: widget.firstDayOfWeek),
           SizedBox(height: g.space.xs3),
-          for (final week in _weeks(month, widget.firstDayOfWeek))
-            Row(
-              children: [
-                for (final day in week)
-                  Expanded(
-                    child: _Day(
-                      day: day,
-                      // Days from the months either side are there to fill the grid; they can be
-                      // taken, but they read as somewhere else.
-                      adjacent: day.month != month.month,
-                      hidden: !widget.showAdjacentMonths && day.month != month.month,
-                      today: _sameDay(day, _today),
-                      selected: _isSelected(day),
-                      ends: _rangeEnds(day),
-                      enabled: _canPick(day),
-                      focused: _focusVisible && _sameDay(day, _focused),
-                      intent: widget.intent,
-                      onPress: () => _pick(day),
+          // A range can be drawn in one gesture as well as picked in two presses; the days keep
+          // their own taps, since a drag only wins the arena once it has moved.
+          Listener(
+            // Where the finger went down, which is where the run starts: by the time a drag
+            // begins it has already moved the slop distance, and that is a different day.
+            onPointerDown: widget._pick == _Pick.range
+                ? (event) => _pressedDay = _dayAt(event.position)
+                : null,
+            child: GestureDetector(
+              onHorizontalDragStart: widget._pick == _Pick.range ? _dragFrom : null,
+              onHorizontalDragUpdate: widget._pick == _Pick.range ? _dragTo : null,
+              onVerticalDragStart: widget._pick == _Pick.range ? _dragFrom : null,
+              onVerticalDragUpdate: widget._pick == _Pick.range ? _dragTo : null,
+              child: Column(
+                key: _gridKey,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final week in _weeks(month, widget.firstDayOfWeek))
+                    Row(
+                      children: [
+                        for (final day in week)
+                          Expanded(
+                            child: _Day(
+                              day: day,
+                              // Days from the months either side are there to fill the grid; they
+                              // can be taken, but they read as somewhere else.
+                              adjacent: day.month != month.month,
+                              hidden: !widget.showAdjacentMonths && day.month != month.month,
+                              today: _sameDay(day, _today),
+                              selected: _isSelected(day),
+                              ends: _rangeEnds(day),
+                              enabled: _canPick(day),
+                              focused: _focusVisible && _sameDay(day, _focused),
+                              intent: widget.intent,
+                              onPress: () => _pick(day),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-              ],
+                ],
+              ),
+            ),
+          ),
+          if (_canClear)
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: MochiButton(
+                size: MochiSize.sm,
+                appearance: MochiButtonAppearance.text,
+                intent: MochiIntent.neutral,
+                onPress: () => widget._onDays?.call(const {}),
+                child: Text(strings.clear),
+              ),
             ),
         ],
       ),
     );
+  }
+
+  bool get _canClear => widget.showClear && widget._pick == _Pick.multiple && widget._picked.isNotEmpty;
+
+  /// The day under a point in the grid, or null when the point is outside it.
+  DateTime? _dayAt(Offset global) {
+    final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return null;
+
+    final local = box.globalToLocal(global);
+    final weeks = _weeks(_shownMonth, widget.firstDayOfWeek);
+    final column = (local.dx / (box.size.width / 7)).floor().clamp(0, 6);
+    final row = (local.dy / (box.size.height / weeks.length)).floor().clamp(0, weeks.length - 1);
+
+    return weeks[row][column];
+  }
+
+  void _dragFrom(DragStartDetails details) {
+    final day = _pressedDay ?? _dayAt(details.globalPosition);
+    if (day == null || !_canPick(day)) return;
+
+    // A drag starts a run rather than continuing one: it is one gesture, so it says both ends.
+    setState(() => _focused = day);
+    widget._onRange?.call(MochiDateRange(day));
+  }
+
+  void _dragTo(DragUpdateDetails details) {
+    final day = _dayAt(details.globalPosition);
+    final range = widget._range;
+    if (day == null || range == null || !_canPick(day)) return;
+
+    final start = _dayOf(range.start);
+    if (range.end != null && _sameDay(day, _dayOf(range.end!))) return;
+
+    setState(() => _focused = day);
+    widget._onRange?.call(day.isBefore(start) ? MochiDateRange(day, start) : MochiDateRange(start, day));
   }
 }
 
@@ -397,6 +483,10 @@ class _MonthBar extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
+            // One line, always: a wrapped month name would make the calendar taller in some
+            // months than others.
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
           ),
         ),
@@ -478,9 +568,12 @@ class _Day extends StatelessWidget {
 
     if (hidden) return SizedBox.square(dimension: side);
 
-    // A run of days is one band: only its ends are rounded, so the middle reads as joined.
+    // A run of days is one band: only its ends are rounded, so the middle reads as joined. A day
+    // picked on its own is a day, not a band of one, and keeps all four corners.
     final (isStart, isEnd) = ends;
-    final radius = switch ((selected, isStart, isEnd)) {
+    final end = isStart || isEnd;
+    final inBand = selected && !(isStart && isEnd);
+    final radius = switch ((inBand, isStart, isEnd)) {
       (true, false, false) => BorderRadius.zero,
       (true, true, false) => BorderRadiusDirectional.horizontal(
         start: g.radius.sm.topLeft,
@@ -512,9 +605,21 @@ class _Day extends StatelessWidget {
               alignment: Alignment.center,
               decoration: ShapeDecoration(
                 color: blend.color(
-                  (st) => st.contains(WidgetState.selected)
-                      ? MochiColors.stateLayer(colors.softOn(tone, colors.surface), tone.onSoft, st)
-                      : MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
+                  (st) => switch (st) {
+                    // The ends of a run are filled solid and the days between them tinted, so the
+                    // two days you chose stand out from the ones that came along with them.
+                    _ when st.contains(WidgetState.selected) && end => MochiColors.stateLayer(
+                      tone.base,
+                      tone.onBase,
+                      st,
+                    ),
+                    _ when st.contains(WidgetState.selected) => MochiColors.stateLayer(
+                      colors.softOn(tone, colors.surface),
+                      tone.onSoft,
+                      st,
+                    ),
+                    _ => MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
+                  },
                 ),
                 shape: RoundedSuperellipseBorder(
                   borderRadius: radius,
@@ -529,6 +634,7 @@ class _Day extends StatelessWidget {
                 style: theme.typography.body.sm.copyWith(
                   color: blend.color(
                     (st) => switch (st) {
+                      _ when st.contains(WidgetState.selected) && end => tone.onBase,
                       _ when st.contains(WidgetState.selected) => tone.onSoft,
                       _ when adjacent => colors.mutedForeground,
                       _ => colors.foreground,
@@ -580,11 +686,10 @@ List<List<DateTime>> _weeks(DateTime month, int firstDayOfWeek) {
   final start = first.subtract(Duration(days: lead));
   final weeks = <List<DateTime>>[];
 
+  // Always six, even when the month only needs five: a calendar that changes height as you page
+  // through the year shifts whatever is under it.
   for (var week = 0; week < 6; week++) {
-    final days = [for (var day = 0; day < 7; day++) _dayOf(start.add(Duration(days: week * 7 + day)))];
-    // A sixth week only when the month actually reaches into it.
-    if (week == 5 && days.first.month != month.month) break;
-    weeks.add(days);
+    weeks.add([for (var day = 0; day < 7; day++) _dayOf(start.add(Duration(days: week * 7 + day)))]);
   }
 
   return weeks;

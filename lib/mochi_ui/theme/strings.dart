@@ -24,6 +24,7 @@ class MochiStrings {
     required this.dismiss,
     required this.remove,
     required this.search,
+    required this.clear,
     required this.previousMonth,
     required this.nextMonth,
     required this.months,
@@ -56,6 +57,9 @@ class MochiStrings {
   /// A search field's own hint, when it is given none.
   final String search;
 
+  /// Lets go of everything that was picked: a calendar gathering days, a filter.
+  final String clear;
+
   /// A calendar's two arrows.
   final String previousMonth;
   final String nextMonth;
@@ -85,6 +89,7 @@ class MochiStrings {
     dismiss: "Dismiss",
     remove: "Remove",
     search: "Search",
+    clear: "Clear",
     previousMonth: "Previous month",
     nextMonth: "Next month",
     months: [
@@ -116,6 +121,7 @@ class MochiStrings {
     dismiss: "關閉",
     remove: "移除",
     search: "搜尋",
+    clear: "清除",
     previousMonth: "上個月",
     nextMonth: "下個月",
     months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
@@ -137,6 +143,7 @@ class MochiStrings {
     String? dismiss,
     String? remove,
     String? search,
+    String? clear,
     String? previousMonth,
     String? nextMonth,
     List<String>? months,
@@ -154,6 +161,7 @@ class MochiStrings {
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
     search: search ?? this.search,
+    clear: clear ?? this.clear,
     previousMonth: previousMonth ?? this.previousMonth,
     nextMonth: nextMonth ?? this.nextMonth,
     months: months ?? this.months,
@@ -176,6 +184,7 @@ class MochiStrings {
           dismiss == other.dismiss &&
           remove == other.remove &&
           search == other.search &&
+          clear == other.clear &&
           previousMonth == other.previousMonth &&
           nextMonth == other.nextMonth &&
           _sameWords(months, other.months) &&
@@ -195,6 +204,7 @@ class MochiStrings {
     dismiss,
     remove,
     search,
+    clear,
     previousMonth,
     nextMonth,
     Object.hashAll(months),
