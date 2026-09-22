@@ -298,6 +298,19 @@ void main() {
       expect(midway, lessThan(full));
       expect(midway, greaterThan(0), reason: "on its way, not gone");
     });
+
+    testWidgets("the chevron goes with the heading, rather than hanging about unpressable", (tester) async {
+      await tester.pumpWidget(grouped(collapsible: true));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(MochiIcons.standard.chevronDown), findsOneWidget);
+
+      await tester.pumpWidget(grouped(collapsed: true, collapsible: true));
+      await tester.pumpAndSettle();
+      final header = find
+          .ancestor(of: find.byIcon(MochiIcons.standard.chevronDown), matching: find.byType(ClipRect))
+          .first;
+      expect(tester.getSize(header).height, 0, reason: "folded away with the name it belonged to");
+    });
   });
 
   testWidgets("rows are taller on touch", (tester) async {

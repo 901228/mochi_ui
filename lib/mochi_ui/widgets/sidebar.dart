@@ -355,23 +355,22 @@ class MochiSidebarGroup extends StatelessWidget {
       );
     }
 
+    final heading = DefaultTextStyle.merge(
+      style: theme.typography.body.xs
+          .withWeight(FontWeight.w600)
+          .copyWith(color: theme.colors.mutedForeground),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      child: label,
+    );
+
     // The heading folds away with the rail rather than vanishing at some point along the way:
     // the column's height then changes as smoothly as its width does.
-    final heading = ClipRect(
+    Widget folded(Widget child) => ClipRect(
       child: Align(
         alignment: AlignmentDirectional.topStart,
         heightFactor: open,
-        child: Opacity(
-          opacity: open,
-          child: DefaultTextStyle.merge(
-            style: theme.typography.body.xs
-                .withWeight(FontWeight.w600)
-                .copyWith(color: theme.colors.mutedForeground),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            child: label,
-          ),
-        ),
+        child: Opacity(opacity: open, child: child),
       ),
     );
 
@@ -380,14 +379,15 @@ class MochiSidebarGroup extends StatelessWidget {
       child: collapsible
           ? MochiCollapsible(
               title: heading,
+              // The collapsible folds its own header, chevron and all: a lone chevron over a
+              // group with no name left says nothing about what it would fold.
+              headerVisibility: open,
               // On a rail the heading that folds them is gone, so the items are all there is:
               // hiding them would leave no way back to them.
               expanded: open < 0.5 ? true : expanded,
               initiallyExpanded: initiallyExpanded,
               onExpandedChanged: onExpandedChanged,
-              // A header with no height is nothing to press, and nothing to stop at with Tab.
-              enabled: open > 0.5,
-              headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3 * open),
+              headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3),
               radius: g.radius.sm,
               child: Padding(
                 padding: EdgeInsets.only(top: g.space.xs3 * open),
@@ -398,9 +398,11 @@ class MochiSidebarGroup extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: g.space.xs3,
               children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3 * open),
-                  child: heading,
+                folded(
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3),
+                    child: heading,
+                  ),
                 ),
                 items,
               ],

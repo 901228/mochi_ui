@@ -33,6 +33,7 @@ class MochiCollapsible extends StatefulWidget {
     this.bodyPadding = EdgeInsets.zero,
     this.radius = BorderRadius.zero,
     this.divider = false,
+    this.headerVisibility = 1,
   });
 
   /// The header's label. Styled as a heading; the chevron is added after it.
@@ -67,6 +68,14 @@ class MochiCollapsible extends StatefulWidget {
   /// Wants a full [bodyPadding] on top. Without one, whatever holds the collapsible has to leave
   /// the gap below the header, and the header's hover fill runs right up to the content.
   final bool divider;
+
+  /// How much of the header is showing, 0 to 1, height and all.
+  ///
+  /// For a header that has to fold away with whatever holds it — a sidebar group's heading as the
+  /// sidebar narrows to a rail — where taking it out in one frame would make the column's height
+  /// jump. At 0 there is nothing to see and nothing to press: the header is disabled, so it is
+  /// not a tab stop either.
+  final double headerVisibility;
 
   @override
   State<MochiCollapsible> createState() => _MochiCollapsibleState();
@@ -140,24 +149,28 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          expanded: _open,
-          child: MochiTappable(
-            enabled: widget.enabled,
-            onPress: _toggle,
-            // A header is a row, not a button: it tints rather than grows.
-            scaleOnPress: false,
-            builder: (context, states, _) => _Header(
-              states: states,
-              enabled: widget.enabled,
-              turns: _progress,
-              padding: widget.headerPadding,
-              // The bottom corners are squared off only where the body meets them along a line:
-              // with no divider the header floats, and a straight edge in mid-air looks broken.
-              radius: _bodyShown && widget.divider
-                  ? BorderRadius.only(topLeft: widget.radius.topLeft, topRight: widget.radius.topRight)
-                  : widget.radius,
-              title: widget.title,
+        _FoldedHeader(
+          visibility: widget.headerVisibility,
+          child: Semantics(
+            expanded: _open,
+            child: MochiTappable(
+              enabled: widget.enabled && widget.headerVisibility > 0,
+              onPress: _toggle,
+              // A header is a row, not a button: it tints rather than grows.
+              scaleOnPress: false,
+              builder: (context, states, _) => _Header(
+                states: states,
+                enabled: widget.enabled,
+                turns: _progress,
+                padding: widget.headerPadding,
+                // The bottom corners are squared off only where the body meets them along a
+                // line: with no divider the header floats, and a straight edge in mid-air looks
+                // broken.
+                radius: _bodyShown && widget.divider
+                    ? BorderRadius.only(topLeft: widget.radius.topLeft, topRight: widget.radius.topRight)
+                    : widget.radius,
+                title: widget.title,
+              ),
             ),
           ),
         ),
@@ -195,6 +208,28 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The header as it folds away with its container: the chevron goes with it, since a lone
+/// chevron over a nameless group says nothing about what it would fold.
+class _FoldedHeader extends StatelessWidget {
+  const _FoldedHeader({required this.visibility, required this.child});
+
+  final double visibility;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (visibility >= 1) return child;
+
+    return ClipRect(
+      child: Align(
+        alignment: AlignmentDirectional.topStart,
+        heightFactor: visibility,
+        child: Opacity(opacity: visibility, child: child),
+      ),
     );
   }
 }
