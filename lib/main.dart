@@ -251,6 +251,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _TimePickerSample(),
           const SizedBox(height: 32),
+          const _ThemedText("date and time picker", .section),
+          const SizedBox(height: 12),
+          const _DateTimePickerSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -3267,6 +3271,50 @@ class _TimePickerSampleState extends State<_TimePickerSample> {
         _ThemedText(
           "wheel: ${_wheel.hour.toString().padLeft(2, "0")}:${_wheel.minute.toString().padLeft(2, "0")}:${_wheel.second.toString().padLeft(2, "0")}",
           .muted,
+        ),
+      ],
+    );
+  }
+}
+
+class _DateTimePickerSample extends StatefulWidget {
+  const _DateTimePickerSample();
+
+  @override
+  State<_DateTimePickerSample> createState() => _DateTimePickerSampleState();
+}
+
+class _DateTimePickerSampleState extends State<_DateTimePickerSample> {
+  DateTime? _starts;
+  DateTime _deadline = DateTime(2026, 7, 12, 17, 30);
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.md,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 280,
+          child: MochiDateTimePicker(
+            label: const Text("Competition starts"),
+            description: const Text("Pick a day, then the time."),
+            value: _starts,
+            onChanged: (at) => setState(() => _starts = at),
+          ),
+        ),
+        SizedBox(
+          width: 280,
+          child: MochiDateTimePicker(
+            label: const Text("Entries close"),
+            value: _deadline,
+            minuteStep: 15,
+            use24HourFormat: false,
+            intent: MochiIntent.warning,
+            onChanged: (at) => setState(() => _deadline = at),
+          ),
         ),
       ],
     );

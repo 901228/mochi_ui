@@ -14,6 +14,7 @@ export "widgets/circular_progress.dart";
 export "widgets/close_button.dart";
 export "widgets/collapsible.dart";
 export "widgets/date_picker.dart";
+export "widgets/date_time_picker.dart";
 export "widgets/dialog.dart";
 export "widgets/divider.dart";
 export "widgets/field_frame.dart";
