@@ -18,7 +18,9 @@ class _TypographySample extends StatelessWidget {
           width: _labelWidth,
           child: Text(name, style: t.body.xs.copyWith(color: muted)),
         ),
-        Text(_text, style: style),
+        // Flexible, not fixed: at a narrow width a long specimen wraps rather than running off
+        // the page.
+        Flexible(child: Text(_text, style: style)),
       ],
     );
 
@@ -104,8 +106,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: g.space.md,
       children: [
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             // A Row gives its children unbounded width, so the cards get an explicit one.
             SizedBox(
@@ -205,8 +208,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
           ],
         ),
         // Deletable tags, and tags joined into one.
-        Row(
+        Wrap(
           spacing: g.space.xs,
+          runSpacing: g.space.xs,
           children: [
             for (final tag in _tags)
               MochiBadge(
@@ -295,8 +299,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
             ),
           ],
         ),
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             SizedBox(width: _labelWidth, child: const _ThemedText("divider", .muted)),
             const SizedBox(width: 200, child: MochiDivider()),
@@ -314,8 +319,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
             ),
           ],
         ),
-        Row(
+        Wrap(
           spacing: g.space.xs,
+          runSpacing: g.space.xs,
           children: [
             MochiButton(
               size: MochiSize.xs,

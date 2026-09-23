@@ -91,50 +91,57 @@ class _MochiMenubarState extends State<MochiMenubar> {
   Widget build(BuildContext context) {
     final theme = context.theme;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: theme.geometry.space.xs3,
-      children: [
-        for (final (index, menu) in widget.menus.indexed)
-          MochiPopoverMenu(
-            controller: _controllerFor(index),
-            align: MochiPopoverAlign.start,
-            minWidth: menu.minWidth,
-            onOpen: () => setState(() => _open = index),
-            onClose: () => setState(() {
-              // Another menu may already have opened by now; only clear what is still ours.
-              if (_open == index) _open = null;
-            }),
-            menuBuilder: menu.menuBuilder,
-            builder: (context, anchor, _) => CallbackShortcuts(
-              // Bound inside the anchor, under the traversal RawMenuAnchor installs: out there
-              // the arrows would only move the focus along.
-              bindings: {
-                const SingleActivator(LogicalKeyboardKey.arrowRight): () => _move(1),
-                const SingleActivator(LogicalKeyboardKey.arrowLeft): () => _move(-1),
-              },
-              child: MochiButton(
-                size: widget.size,
-                appearance: MochiButtonAppearance.ghost,
-                intent: MochiIntent.neutral,
-                // A word in a bar, not a button: pressing it drops a panel rather than doing
-                // something, so it tints instead of growing.
-                scaleOnPress: false,
-                // The open one stays lit while its panel is down.
-                selected: _open == index,
-                enabled: menu.enabled,
-                focusNode: anchor.focusNode,
-                onPress: () => anchor.isOpen ? anchor.close() : _openAt(index),
-                onHoverChange: (hovered) {
-                  // Only while the bar is already open: pointing at a menubar shouldn't open
-                  // anything by itself.
-                  if (hovered && _open != null) _openAt(index);
+    // A bar of words has nothing it can drop when the window narrows — a menu that isn't there
+    // cannot be opened — so it scrolls sideways instead of running off its own edge. It still
+    // shrink-wraps when there is room, since the scroll view is only as wide as it is given.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      primary: false,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: theme.geometry.space.xs3,
+        children: [
+          for (final (index, menu) in widget.menus.indexed)
+            MochiPopoverMenu(
+              controller: _controllerFor(index),
+              align: MochiPopoverAlign.start,
+              minWidth: menu.minWidth,
+              onOpen: () => setState(() => _open = index),
+              onClose: () => setState(() {
+                // Another menu may already have opened by now; only clear what is still ours.
+                if (_open == index) _open = null;
+              }),
+              menuBuilder: menu.menuBuilder,
+              builder: (context, anchor, _) => CallbackShortcuts(
+                // Bound inside the anchor, under the traversal RawMenuAnchor installs: out there
+                // the arrows would only move the focus along.
+                bindings: {
+                  const SingleActivator(LogicalKeyboardKey.arrowRight): () => _move(1),
+                  const SingleActivator(LogicalKeyboardKey.arrowLeft): () => _move(-1),
                 },
-                child: menu.title,
+                child: MochiButton(
+                  size: widget.size,
+                  appearance: MochiButtonAppearance.ghost,
+                  intent: MochiIntent.neutral,
+                  // A word in a bar, not a button: pressing it drops a panel rather than doing
+                  // something, so it tints instead of growing.
+                  scaleOnPress: false,
+                  // The open one stays lit while its panel is down.
+                  selected: _open == index,
+                  enabled: menu.enabled,
+                  focusNode: anchor.focusNode,
+                  onPress: () => anchor.isOpen ? anchor.close() : _openAt(index),
+                  onHoverChange: (hovered) {
+                    // Only while the bar is already open: pointing at a menubar shouldn't open
+                    // anything by itself.
+                    if (hovered && _open != null) _openAt(index);
+                  },
+                  child: menu.title,
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

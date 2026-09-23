@@ -62,15 +62,15 @@ class MochiPagination extends StatelessWidget {
 
   /// How many slots the row has, whatever page it is on: the two ends, two gaps, and a window
   /// of [around] pages either side of the current one.
-  int get _slotCount => 2 * around + 5;
+  int _slotCount(int around) => 2 * around + 5;
 
   /// The pages to write out, with nulls where a gap was folded away.
   ///
   /// The count is the same on every page — the window slides along and grows at the ends to take
   /// the room a gap gives back — so the row keeps its width instead of jumping about as you page
   /// through it.
-  List<int?> get _slots {
-    if (pages <= _slotCount) return [for (var p = 1; p <= pages; p++) p];
+  List<int?> _slots(int around) {
+    if (pages <= _slotCount(around)) return [for (var p = 1; p <= pages; p++) p];
 
     final window = 2 * around + 1;
     // Near the start: no gap on the left, so the run there is longer by what the gap cost.
@@ -115,6 +115,45 @@ class MochiPagination extends StatelessWidget {
       onChanged?.call(next);
     }
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // A narrow page gets a shorter window rather than a row that runs off it: the ends, the
+        // gaps and the page you are on are what a pagination cannot do without, and the pages
+        // either side of it are what it can.
+        var fits = around;
+        if (constraints.hasBoundedWidth) {
+          final arrows = showArrows ? 2 * (m.height + g.space.xs3) : 0.0;
+          final room = constraints.maxWidth - arrows;
+          while (fits > 0 && _slotCount(fits) * (side + g.space.xs3) > room) {
+            fits--;
+          }
+        }
+
+        final row = _row(context, around: fits, side: side, slot: slot, go: go);
+        if (!constraints.hasBoundedWidth) return row;
+
+        final arrows = showArrows ? 2 * (m.height + g.space.xs3) : 0.0;
+        final needed = _slotCount(fits) * (side + g.space.xs3) + arrows;
+
+        // Narrower than the five slots it cannot do without: it scrolls sideways rather than
+        // painting over whatever is beside it.
+        return needed > constraints.maxWidth
+            ? SingleChildScrollView(scrollDirection: Axis.horizontal, primary: false, child: row)
+            : row;
+      },
+    );
+  }
+
+  Widget _row(
+    BuildContext context, {
+    required int around,
+    required double side,
+    required MochiButtonMetrics slot,
+    required void Function(int) go,
+  }) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
     return Semantics(
       container: true,
       label: label ?? "Pagination",
@@ -132,7 +171,7 @@ class MochiPagination extends StatelessWidget {
               icon: Icon(theme.icons.chevronLeft),
               semanticLabel: "Previous page",
             ),
-          for (final at in _slots)
+          for (final at in _slots(around))
             SizedBox(
               width: side,
               child: at == null

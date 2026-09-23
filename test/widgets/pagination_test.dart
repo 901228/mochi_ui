@@ -119,4 +119,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(numbers(tester), ["1", "…", "16", "17", "18", "19", "20"]);
   });
+
+  testWidgets("a narrow row gives up the pages either side before it runs off the page", (tester) async {
+    // The ends, the gaps and the page you are on are what it cannot do without.
+    Future<void> show(double width) async {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          touch: false,
+          home: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: width,
+              child: MochiPagination(page: 10, pages: 20, around: 2, onChanged: (_) {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await show(600);
+    expect(find.text("8"), findsOneWidget, reason: "two either side, with room to spare");
+
+    await show(200);
+    expect(tester.takeException(), isNull);
+    expect(find.text("8"), findsNothing, reason: "the window gave way first");
+    expect(find.text("10"), findsOneWidget, reason: "the page you are on stays");
+    expect(find.text("1"), findsOneWidget);
+    expect(find.text("20"), findsOneWidget);
+  });
 }

@@ -7,8 +7,9 @@ class _TransitionSample extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = context.theme.geometry;
 
-    return Row(
+    return Wrap(
       spacing: g.space.sm,
+      runSpacing: g.space.sm,
       children: [
         for (final transition in MochiTransition.values)
           MochiButton(

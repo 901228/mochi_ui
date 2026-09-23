@@ -85,8 +85,9 @@ class _ScrollAreaSample extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = context.theme.geometry;
 
-    return Row(
+    return Wrap(
       spacing: g.space.lg,
+      runSpacing: g.space.lg,
       children: [
         SizedBox(
           width: 260,
@@ -184,8 +185,9 @@ class _AvatarSample extends StatelessWidget {
             const MochiAvatar(icon: Icon(TablerIcons.box), shape: MochiAvatarShape.rounded),
           ],
         ),
-        Row(
+        Wrap(
           spacing: g.space.sm,
+          runSpacing: g.space.sm,
           children: [
             for (final intent in MochiIntent.values)
               MochiAvatar(initials: intent.name, intent: intent, size: MochiSize.sm),

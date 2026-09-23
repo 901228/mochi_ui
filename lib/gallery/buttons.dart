@@ -10,8 +10,9 @@ class _SizeSample extends StatelessWidget {
       spacing: 10,
       children: [
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: 12,
+            runSpacing: 12,
             children: [
               SizedBox(width: _labelWidth - 12, child: _ThemedText(size.name, .muted)),
               MochiButton(size: size, onPress: () {}, child: const Text("Button")),
@@ -65,8 +66,9 @@ class _PlaygroundState extends State<_Playground> {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 16,
       children: [
-        Row(
+        Wrap(
           spacing: 12,
+          runSpacing: 12,
           children: [
             MochiButton(
               appearance: MochiButtonAppearance.outlined,
@@ -91,8 +93,9 @@ class _PlaygroundState extends State<_Playground> {
             _ThemedText("last event: $_event", .muted),
           ],
         ),
-        Row(
+        Wrap(
           spacing: 4,
+          runSpacing: 4,
           children: [
             for (final (icon, tip, intent) in const [
               (TablerIcons.pencil, "Edit", MochiIntent.neutral),

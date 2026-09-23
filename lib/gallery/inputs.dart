@@ -69,8 +69,9 @@ class _TextFieldSampleState extends State<_TextFieldSample> {
         ),
         // Fields and buttons of one size share a height.
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: g.space.xs,
+            runSpacing: g.space.xs,
             children: [
               SizedBox(
                 width: 200,
@@ -165,9 +166,9 @@ class _CheckboxSampleState extends State<_CheckboxSample> {
             ],
           ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
           spacing: g.space.sm,
+          runSpacing: g.space.sm,
           children: [
             MochiCheckbox(value: _inspection, onChanged: (value) => setState(() => _inspection = value!)),
             const _ThemedText("no label", .muted),
@@ -272,8 +273,9 @@ class _StepperSampleState extends State<_StepperSample> {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: g.space.md,
       children: [
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             MochiStepper(
               value: _inspection,
@@ -286,8 +288,9 @@ class _StepperSampleState extends State<_StepperSample> {
             const _ThemedText("inspection, 0–60s (hold to repeat, or press the number to type)", .muted),
           ],
         ),
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             MochiStepper(
               value: _average,
@@ -301,8 +304,9 @@ class _StepperSampleState extends State<_StepperSample> {
         ),
         // Lines up with fields and buttons of the same size.
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: g.space.xs,
+            runSpacing: g.space.xs,
             children: [
               MochiStepper(
                 value: _bySize[size] ?? 3,
@@ -316,8 +320,9 @@ class _StepperSampleState extends State<_StepperSample> {
               MochiButton(size: size, onPress: () {}, child: const Text("Save")),
             ],
           ),
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             MochiStepper(
               value: _average,
@@ -408,8 +413,9 @@ class _SelectSampleState extends State<_SelectSample> {
           ),
         ),
         // Unbounded: as wide as the longest option, beside a label.
-        Row(
+        Wrap(
           spacing: g.space.md,
+          runSpacing: g.space.md,
           children: [
             const _ThemedText("in a row", .muted),
             MochiSelect<String>(
@@ -422,8 +428,9 @@ class _SelectSampleState extends State<_SelectSample> {
           ],
         ),
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: g.space.xs,
+            runSpacing: g.space.xs,
             children: [
               MochiSelect<String>(
                 value: _bySize[size] ?? "beep",
@@ -542,8 +549,9 @@ class _OtpSampleState extends State<_OtpSample> {
         const MochiOtpField(label: Text("PIN"), length: 4, obscure: true),
         const MochiOtpField(label: Text("Letters too"), length: 5, digitsOnly: false),
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: g.space.xs,
+            runSpacing: g.space.xs,
             children: [
               MochiOtpField(length: 3, size: size),
               MochiButton(size: size, onPress: () {}, child: const Text("Verify")),
@@ -756,8 +764,9 @@ class _SegmentedSampleState extends State<_SegmentedSample> {
           ],
         ),
         for (final size in MochiSize.values)
-          Row(
+          Wrap(
             spacing: g.space.xs,
+            runSpacing: g.space.xs,
             children: [
               MochiSegmentedControl<String>(
                 value: _bySize[size] ?? "a",

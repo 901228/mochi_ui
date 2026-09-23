@@ -1,3 +1,4 @@
+import "package:flutter/rendering.dart";
 import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
@@ -77,5 +78,56 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.byType(MochiSheet), findsOneWidget, reason: "the tier is what decides, not the window");
+  });
+
+  testWidgets("no page overflows at any viewport", (tester) async {
+    // The gallery is where every component is laid out at once, so this is the cheapest check
+    // that none of them runs off a narrow page — which is what a phone is.
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const PreviewApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    Finder knob(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is MochiButton &&
+          widget.size == MochiSize.xs &&
+          widget.child is Text &&
+          (widget.child as Text).data == label,
+    );
+
+    for (final viewport in ["mobile", "tablet", "full"]) {
+      await tester.tap(knob(viewport));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      for (final page in ["foundations", "buttons", "inputs", "navigation", "content", "dates", "overlays"]) {
+        await tester.tap(find.text(page).first);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+
+        final over = <String>[];
+        for (final element in find.byElementPredicate((e) => e.renderObject is RenderFlex).evaluate()) {
+          final box = element.renderObject! as RenderFlex;
+          if (!box.hasSize) continue;
+
+          var along = 0.0;
+          box.visitChildren((child) {
+            if (child is! RenderBox || !child.hasSize) return;
+            along += box.direction == Axis.horizontal ? child.size.width : child.size.height;
+          });
+          final room = box.direction == Axis.horizontal
+              ? box.constraints.maxWidth
+              : box.constraints.maxHeight;
+          if (along > room + 0.5) {
+            over.add("${element.widget.runtimeType} over by ${(along - room).toStringAsFixed(0)}");
+          }
+        }
+
+        expect(over, isEmpty, reason: "$viewport · $page");
+      }
+    }
   });
 }

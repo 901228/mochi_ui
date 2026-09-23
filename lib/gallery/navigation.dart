@@ -157,8 +157,9 @@ class _BottomNavSampleState extends State<_BottomNavSample> {
       ),
     );
 
-    return Row(
+    return Wrap(
       spacing: g.space.lg,
+      runSpacing: g.space.lg,
       children: [
         phone(
           MochiBottomNav<String>(
