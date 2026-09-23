@@ -239,6 +239,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AvatarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("skeleton", .section),
+          const SizedBox(height: 12),
+          const _SkeletonSample(),
+          const SizedBox(height: 32),
           const _ThemedText("calendar", .section),
           const SizedBox(height: 12),
           const _CalendarSample(),
@@ -3314,6 +3318,60 @@ class _DateTimePickerSampleState extends State<_DateTimePickerSample> {
             use24HourFormat: false,
             intent: MochiIntent.warning,
             onChanged: (at) => setState(() => _deadline = at),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SkeletonSample extends StatelessWidget {
+  const _SkeletonSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.md,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // What a row of content looks like before it arrives: the same shapes, at the same sizes.
+        SizedBox(
+          width: 320,
+          child: MochiCard(
+            child: Row(
+              spacing: g.space.md,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const MochiSkeleton.circle(size: 40),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MochiSkeleton(width: 120, height: 14),
+                      SizedBox(height: 12),
+                      MochiSkeleton.text(lines: 3),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 220,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: g.space.sm,
+            children: [
+              const _ThemedText("shimmer", .muted),
+              const MochiSkeleton(height: 56),
+              const _ThemedText("pulse", .muted),
+              const MochiSkeleton(height: 56, effect: MochiSkeletonEffect.pulse),
+              const _ThemedText("none", .muted),
+              const MochiSkeleton(height: 56, effect: MochiSkeletonEffect.none),
+            ],
           ),
         ),
       ],
