@@ -88,6 +88,62 @@ void main() {
     expect(picked, const MochiTime(hour: 9, minute: 15));
   });
 
+  testWidgets("a value set from outside doesn't answer itself back", (tester) async {
+    // The gallery's shape: the wheel reports, the parent rebuilds with the new value, and the
+    // wheel is then put where that value says — which must not report again, let alone from
+    // inside the build that is happening.
+    var value = const MochiTime(hour: 9, minute: 30);
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: StatefulBuilder(
+          builder: (context, setState) => Center(
+            child: SizedBox(
+              width: 200,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MochiButton(
+                    onPress: () => setState(() => value = const MochiTime(hour: 15)),
+                    child: const Text("15:00"),
+                  ),
+                  MochiTimeWheel(value: value, onChanged: (time) => setState(() => value = time)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Setting the time elsewhere moves the wheel, and moving a wheel is a change it reports.
+    await tester.tap(find.text("15:00"));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(value, const MochiTime(hour: 15));
+
+    await tester.drag(find.byType(ListWheelScrollView).first, const Offset(0, -64));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(value.hour, 17);
+  });
+
+  testWidgets("a mouse can drag the wheel, not only turn it", (tester) async {
+    MochiTime? picked;
+    await tester.pumpWidget(wheel(onChanged: (time) => picked = time));
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.byType(ListWheelScrollView).first,
+      const Offset(0, -32),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pumpAndSettle();
+    expect(picked, const MochiTime(hour: 10, minute: 30));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   group("the field", () {
     Future<void> click(WidgetTester tester, Finder finder) async {
       await tester.tap(finder, kind: PointerDeviceKind.mouse);

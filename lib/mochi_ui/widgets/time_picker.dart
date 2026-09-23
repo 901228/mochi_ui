@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/responsive.dart";
@@ -97,6 +98,11 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
 
   int get _hourIndex => widget.use24HourFormat ? widget.value.hour : widget.value.hourOf12 - 1;
 
+  /// Set while a column is being put where the value says it belongs. A jump makes the wheel
+  /// report a change like any other, and reporting one back to whoever just set the value would
+  /// be a rebuild answering a rebuild.
+  bool _settling = false;
+
   @override
   void didUpdateWidget(MochiTimeWheel old) {
     super.didUpdateWidget(old);
@@ -110,7 +116,22 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
 
   void _settle(FixedExtentScrollController controller, int item) {
     if (!controller.hasClients || controller.selectedItem == item) return;
-    controller.jumpToItem(item);
+
+    _settling = true;
+    // After the frame, not inside it: didUpdateWidget runs during a build, and a jump from there
+    // lands a change notification in the middle of one.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && controller.hasClients && controller.selectedItem != item) {
+        controller.jumpToItem(item);
+      }
+      _settling = false;
+    });
+  }
+
+  /// A change the wheel was asked to make is not a change to report back.
+  void _report(MochiTime time) {
+    if (_settling) return;
+    widget.onChanged(time);
   }
 
   @override
@@ -124,11 +145,11 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
   }
 
   void _setHour(int index) {
-    if (widget.use24HourFormat) return widget.onChanged(widget.value.copyWith(hour: index));
+    if (widget.use24HourFormat) return _report(widget.value.copyWith(hour: index));
 
     // On a twelve-hour clock the column says 1 to 12 and the half of the day says the rest.
     final hour = (index + 1) % 12;
-    widget.onChanged(widget.value.copyWith(hour: widget.value.isAfternoon ? hour + 12 : hour));
+    _report(widget.value.copyWith(hour: widget.value.isAfternoon ? hour + 12 : hour));
   }
 
   void _setHalf(int index) {
@@ -136,7 +157,7 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
     if (afternoon == widget.value.isAfternoon) return;
 
     final hour = widget.value.hour % 12;
-    widget.onChanged(widget.value.copyWith(hour: afternoon ? hour + 12 : hour));
+    _report(widget.value.copyWith(hour: afternoon ? hour + 12 : hour));
   }
 
   @override
@@ -184,8 +205,7 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
                   rowHeight: rowHeight,
                   count: 60 ~/ widget.minuteStep,
                   label: (index) => (index * widget.minuteStep).toString().padLeft(2, "0"),
-                  onChanged: (index) =>
-                      widget.onChanged(widget.value.copyWith(minute: index * widget.minuteStep)),
+                  onChanged: (index) => _report(widget.value.copyWith(minute: index * widget.minuteStep)),
                 ),
               ),
               if (widget.showSeconds) ...[
@@ -196,7 +216,7 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
                     rowHeight: rowHeight,
                     count: 60,
                     label: (index) => index.toString().padLeft(2, "0"),
-                    onChanged: (index) => widget.onChanged(widget.value.copyWith(second: index)),
+                    onChanged: (index) => _report(widget.value.copyWith(second: index)),
                   ),
                 ),
               ],
@@ -273,19 +293,25 @@ class _Column extends StatelessWidget {
       ),
     );
 
-    return ListWheelScrollView.useDelegate(
-      controller: controller,
-      itemExtent: rowHeight,
-      // Flat, not a barrel: a barrel bends the numbers away from the eye at the edges, and these
-      // are things to read rather than a wheel to admire.
-      diameterRatio: 100,
-      perspective: 0.001,
-      overAndUnderCenterOpacity: 0.45,
-      physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: (index) => onChanged(index % count),
-      childDelegate: loop
-          ? ListWheelChildLoopingListDelegate(children: [for (var i = 0; i < count; i++) row(i)])
-          : ListWheelChildListDelegate(children: [for (var i = 0; i < count; i++) row(i)]),
+    return ScrollConfiguration(
+      // A wheel is there to be dragged, and on a desktop platform a mouse is not allowed to drag
+      // a scrollable unless it is told it may.
+      behavior: ScrollConfiguration.of(context)
+          .copyWith(dragDevices: {...ScrollConfiguration.of(context).dragDevices, PointerDeviceKind.mouse}),
+      child: ListWheelScrollView.useDelegate(
+        controller: controller,
+        itemExtent: rowHeight,
+        // Flat, not a barrel: a barrel bends the numbers away from the eye at the edges, and these
+        // are things to read rather than a wheel to admire.
+        diameterRatio: 100,
+        perspective: 0.001,
+        overAndUnderCenterOpacity: 0.45,
+        physics: const FixedExtentScrollPhysics(),
+        onSelectedItemChanged: (index) => onChanged(index % count),
+        childDelegate: loop
+            ? ListWheelChildLoopingListDelegate(children: [for (var i = 0; i < count; i++) row(i)])
+            : ListWheelChildListDelegate(children: [for (var i = 0; i < count; i++) row(i)]),
+      ),
     );
   }
 }
