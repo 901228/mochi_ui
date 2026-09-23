@@ -122,7 +122,7 @@
 - [x] ⭐ Skeleton — `MochiSkeleton`（方塊）/ `.circle(size:)` / `.text(lines:)`：預設 shimmer，也可以選 pulse 或 none，`MediaQuery.disableAnimations` 會自動變成 none。同一頁上的 skeleton 都同相位（週期從 scheduler 的 frame timestamp 取，不是從自己被 build 的時間），一排列的時候才不會像雜訊。沒給寬度就填滿（跟 divider 一樣需要有界的寬度），`.text` 的最後一行是短的。週期沿用 `motion.indeterminateDuration`
 - [x] ⭐ Sortable — `MochiSortable`（包 widgets 層的 `ReorderableList`）+ `MochiSortableHandle`：桌面用 grip 拖、觸控長按整列拖（`wholeItemDrags` 可以自己指定，預設看 `theme.touch`）。`onReorder(from, to)` 的 to 已經是把那列抽掉之後的索引（用新的 `onReorderItem`，省掉大家手寫的 off-by-one）。被拿起來的那列會長大一點並帶 lg 陰影；`spacing` 的間距算在列身上，放手才會落在眼睛預期的位置。新增 `MochiIcons.grip` 和 `MochiStrings.reorder`
 - [x] ⭐ RefreshIndicator — `MochiRefresh`：包住一個 scrollable，聽 `OverscrollNotification`（clamping）和捲過頭的 `ScrollUpdateNotification`（bouncing），拉的距離打五折才是指示器下來的距離。指示器就是現成的 `MochiCircularProgress`：拉的時候是 determinate（還差多少才會觸發），放手觸發之後變 indeterminate 並把清單頂住，直到 `onRefresh` 的 future 結束；丟例外也會還原，例外走 `FlutterError.reportError` 而不是吞掉或留一個沒人接的 future。**沒有併進 toast**，理由寫在元件註解裡
-- [ ] ⭐ Resizable — 可拖曳分隔線的分割面板。**優先度最低**，cube timer 沒有這種版面
+- [x] ⭐ Resizable — `MochiResizable` + `MochiResizablePane`：尺寸存的是比例，所以視窗變大變小時分割不會全部倒向某一邊；拖曳線只在相鄰兩個 pane 之間搬空間，兩邊的 `minSize` / `maxSize` 誰先到底誰決定停在哪。每條線自己是一個 tab stop，方向鍵一次走 `keyboardStep`（只能用拖的等於不能用鍵盤設定）。可以巢狀，橫的裡面包直的。handle 桌面 8px / 觸控 16px，hover 和拖曳時線會變成 primary
 
 ## 9. 決定不做的（免得再繞回來）
 

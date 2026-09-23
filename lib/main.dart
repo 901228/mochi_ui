@@ -239,6 +239,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AvatarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("resizable", .section),
+          const SizedBox(height: 12),
+          const _ResizableSample(),
+          const SizedBox(height: 32),
           const _ThemedText("refresh", .section),
           const SizedBox(height: 12),
           const _RefreshSample(),
@@ -3466,6 +3470,59 @@ class _RefreshSampleState extends State<_RefreshSample> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ResizableSample extends StatefulWidget {
+  const _ResizableSample();
+
+  @override
+  State<_ResizableSample> createState() => _ResizableSampleState();
+}
+
+class _ResizableSampleState extends State<_ResizableSample> {
+  List<double> _split = const [0.3, 0.7];
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final colors = context.colors;
+
+    Widget panel(String label) => ColoredBox(
+      color: colors.surface,
+      child: Padding(padding: EdgeInsets.all(g.space.md), child: _ThemedText(label, .muted)),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.sm,
+      children: [
+        SizedBox(
+          width: 560,
+          height: 220,
+          child: MochiCard(
+            padding: EdgeInsets.zero,
+            child: MochiResizable(
+              onChanged: (fractions) => setState(() => _split = fractions),
+              panes: [
+                MochiResizablePane(initialFraction: 0.3, minSize: 120, child: panel("sessions")),
+                MochiResizablePane(
+                  minSize: 200,
+                  child: MochiResizable(
+                    axis: Axis.vertical,
+                    panes: [
+                      MochiResizablePane(initialFraction: 0.6, minSize: 60, child: panel("solves")),
+                      MochiResizablePane(minSize: 60, child: panel("statistics")),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _ThemedText(_split.map((f) => f.toStringAsFixed(2)).join(" / "), .muted),
+      ],
     );
   }
 }
