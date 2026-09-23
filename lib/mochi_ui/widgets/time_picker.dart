@@ -279,16 +279,42 @@ class _Column extends StatelessWidget {
   /// Whether the column wraps round: 23 is one notch from 00, but PM is not one notch from AM.
   final bool loop;
 
+  /// One notch of the mouse wheel, one row.
+  ///
+  /// Left alone, a scroll event carries however many pixels the device felt like sending — 50 on
+  /// one machine, 120 and accelerating on another — and a column whose rows are 32 apart then
+  /// jumps two or three at a time, differently on every turn.
+  void _turn(BuildContext context, int direction) {
+    if (!controller.hasClients) return;
+
+    final next = controller.selectedItem + direction;
+    if (!loop && (next < 0 || next >= count)) return;
+
+    final motion = context.theme.motion;
+    controller.animateToItem(next, duration: motion.stateDuration, curve: motion.sizeCurve);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
 
-    Widget row(int index) => Center(
-      child: Text(
-        label(index % count),
-        style: theme.typography.body.md.copyWith(
-          color: theme.colors.foreground,
-          fontFeatures: const [FontFeature.tabularFigures()],
+    Widget row(int index) => Listener(
+      // On the rows, not around the column: a pointer signal goes to whoever registers for it
+      // first, and the scrollable's own handler sits between the two.
+      onPointerSignal: (event) {
+        if (event is! PointerScrollEvent) return;
+        final direction = event.scrollDelta.dy.sign.toInt();
+        if (direction == 0) return;
+
+        GestureBinding.instance.pointerSignalResolver.register(event, (_) => _turn(context, direction));
+      },
+      child: Center(
+        child: Text(
+          label(index % count),
+          style: theme.typography.body.md.copyWith(
+            color: theme.colors.foreground,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );
@@ -301,8 +327,8 @@ class _Column extends StatelessWidget {
       child: ListWheelScrollView.useDelegate(
         controller: controller,
         itemExtent: rowHeight,
-        // Flat, not a barrel: a barrel bends the numbers away from the eye at the edges, and these
-        // are things to read rather than a wheel to admire.
+        // Flat, not a barrel: a barrel bends the numbers away from the eye at the edges, and
+        // these are things to read rather than a wheel to admire.
         diameterRatio: 100,
         perspective: 0.001,
         overAndUnderCenterOpacity: 0.45,

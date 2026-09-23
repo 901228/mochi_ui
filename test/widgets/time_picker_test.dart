@@ -144,6 +144,54 @@ void main() {
     expect(picked, const MochiTime(hour: 10, minute: 30));
   }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
 
+  testWidgets("one notch of the mouse wheel is one row, whatever the device sends", (tester) async {
+    MochiTime? picked;
+    await tester.pumpWidget(wheel(onChanged: (time) => picked = time));
+    await tester.pumpAndSettle();
+
+    final hours = tester.getCenter(find.byType(ListWheelScrollView).first);
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(hours));
+
+    // A big notch and a small one: both are one row.
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+    await tester.pumpAndSettle();
+    expect(picked, const MochiTime(hour: 10, minute: 30));
+
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 40)));
+    await tester.pumpAndSettle();
+    expect(picked, const MochiTime(hour: 11, minute: 30));
+
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -240)));
+    await tester.pumpAndSettle();
+    expect(picked, const MochiTime(hour: 10, minute: 30), reason: "and one row back");
+  });
+
+  testWidgets("a column that doesn't wrap stops at its ends", (tester) async {
+    MochiTime? picked;
+    await tester.pumpWidget(
+      wheel(
+        value: const MochiTime(hour: 9, minute: 30),
+        use24HourFormat: false,
+        onChanged: (time) => picked = time,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final halves = tester.getCenter(find.byType(ListWheelScrollView).last);
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(halves));
+
+    // AM is the first of two: there is nothing above it to turn to.
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -120)));
+    await tester.pumpAndSettle();
+    expect(picked, isNull);
+
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+    await tester.pumpAndSettle();
+    expect(picked, const MochiTime(hour: 21, minute: 30));
+  });
+
   group("the field", () {
     Future<void> click(WidgetTester tester, Finder finder) async {
       await tester.tap(finder, kind: PointerDeviceKind.mouse);
