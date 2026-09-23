@@ -1,3 +1,5 @@
+import "package:flutter/gestures.dart";
+import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
@@ -148,5 +150,80 @@ void main() {
     expect(find.text("10"), findsOneWidget, reason: "the page you are on stays");
     expect(find.text("1"), findsOneWidget);
     expect(find.text("20"), findsOneWidget);
+  });
+
+  group("the … is the way back to the pages it hides", () {
+    Future<void> open(WidgetTester tester) async {
+      await tester.tap(find.text("…").first, kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> type(WidgetTester tester, String text) async {
+      await tester.enterText(find.byType(MochiTextField), text);
+      await tester.pumpAndSettle();
+      await tester.testTextInput.receiveAction(TextInputAction.go);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("typing a page goes to it", (tester) async {
+      int? asked;
+      await tester.pumpWidget(pagination(page: 10, pages: 20, onChanged: (next) => asked = next));
+      await tester.pumpAndSettle();
+
+      await open(tester);
+      expect(find.byType(MochiTextField), findsOneWidget);
+
+      await type(tester, "17");
+      expect(asked, 17);
+      expect(find.byType(MochiTextField), findsNothing, reason: "asked and answered");
+    });
+
+    testWidgets("a page outside the run lands on the nearest end", (tester) async {
+      int? asked;
+      await tester.pumpWidget(pagination(page: 10, pages: 20, onChanged: (next) => asked = next));
+      await tester.pumpAndSettle();
+
+      await open(tester);
+      await type(tester, "99");
+      expect(asked, 20);
+    });
+
+    testWidgets("nothing typed is nothing asked", (tester) async {
+      int? asked;
+      await tester.pumpWidget(pagination(page: 10, pages: 20, onChanged: (next) => asked = next));
+      await tester.pumpAndSettle();
+
+      await open(tester);
+      await type(tester, "");
+      expect(asked, isNull, reason: "a blank field is not an instruction to go anywhere");
+    });
+
+    testWidgets("a row that cannot be paged has nothing to jump to either", (tester) async {
+      await tester.pumpWidget(pagination(page: 10, pages: 20, onChanged: null));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("…").first, kind: PointerDeviceKind.mouse, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.byType(MochiTextField), findsNothing);
+    });
+
+    testWidgets("turning it off leaves the … as it was", (tester) async {
+      await tester.pumpWidget(app(MochiPagination(page: 10, pages: 20, jumpable: false, onChanged: (_) {})));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text("…").first, kind: PointerDeviceKind.mouse, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.byType(MochiTextField), findsNothing);
+    });
+
+    testWidgets("it costs the row no width", (tester) async {
+      await tester.pumpWidget(pagination(page: 10, pages: 20, onChanged: (_) {}));
+      await tester.pumpAndSettle();
+      final jumpable = tester.getSize(find.byType(MochiPagination)).width;
+
+      await tester.pumpWidget(app(MochiPagination(page: 10, pages: 20, jumpable: false, onChanged: (_) {})));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(MochiPagination)).width, jumpable);
+    });
   });
 }

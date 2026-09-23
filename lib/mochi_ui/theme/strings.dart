@@ -24,6 +24,7 @@ class MochiStrings {
     required this.dismiss,
     required this.remove,
     required this.reorder,
+    required this.goToPage,
     required this.search,
     required this.clear,
     required this.pickDate,
@@ -64,6 +65,9 @@ class MochiStrings {
 
   /// The grip a sortable row is dragged by, which has no words of its own.
   final String reorder;
+
+  /// What a pagination's … asks for when it is pressed.
+  final String goToPage;
 
   /// A search field's own hint, when it is given none.
   final String search;
@@ -121,6 +125,7 @@ class MochiStrings {
     dismiss: "Dismiss",
     remove: "Remove",
     reorder: "Reorder",
+    goToPage: "Go to page",
     search: "Search",
     clear: "Clear",
     pickDate: "Pick a date",
@@ -159,6 +164,7 @@ class MochiStrings {
     dismiss: "關閉",
     remove: "移除",
     reorder: "重新排序",
+    goToPage: "跳至頁數",
     search: "搜尋",
     clear: "清除",
     pickDate: "選擇日期",
@@ -189,6 +195,7 @@ class MochiStrings {
     String? dismiss,
     String? remove,
     String? reorder,
+    String? goToPage,
     String? search,
     String? clear,
     String? pickDate,
@@ -215,6 +222,7 @@ class MochiStrings {
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
     reorder: reorder ?? this.reorder,
+    goToPage: goToPage ?? this.goToPage,
     search: search ?? this.search,
     clear: clear ?? this.clear,
     pickDate: pickDate ?? this.pickDate,
@@ -246,6 +254,7 @@ class MochiStrings {
           dismiss == other.dismiss &&
           remove == other.remove &&
           reorder == other.reorder &&
+          goToPage == other.goToPage &&
           search == other.search &&
           clear == other.clear &&
           pickDate == other.pickDate &&
@@ -275,6 +284,7 @@ class MochiStrings {
     dismiss,
     remove,
     reorder,
+    goToPage,
     search,
     clear,
     pickDate,

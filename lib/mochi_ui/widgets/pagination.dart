@@ -1,3 +1,4 @@
+import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/size.dart";
@@ -6,6 +7,8 @@ import "../theme/typography.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
+import "popover.dart";
+import "text_field.dart";
 
 /// The row of page numbers under a long list: ‹ 1 … 4 5 6 … 20 ›.
 ///
@@ -31,6 +34,7 @@ class MochiPagination extends StatelessWidget {
     this.size = MochiSize.sm,
     this.intent = MochiIntent.primary,
     this.showArrows = true,
+    this.jumpable = true,
     this.label,
   }) : assert(pages > 0),
        assert(page >= 1),
@@ -54,6 +58,13 @@ class MochiPagination extends StatelessWidget {
   final MochiIntent intent;
 
   final bool showArrows;
+
+  /// Whether a … can be pressed to type a page number.
+  ///
+  /// The … stands for the pages the row folded away, so it is where asking for one of them
+  /// belongs — and it costs the row no width, which on a narrow page it has none of to spare. A
+  /// row short enough to list every page has no …, and needs none: the pages are all there.
+  final bool jumpable;
 
   /// Names the row for screen readers. Defaults to "Pagination".
   final String? label;
@@ -175,7 +186,7 @@ class MochiPagination extends StatelessWidget {
             SizedBox(
               width: side,
               child: at == null
-                  ? const _Gap()
+                  ? _Gap(pages: pages, size: size, metrics: slot, enabled: _enabled && jumpable, onJump: go)
                   : MochiButton(
                       metrics: slot,
                       // The page you are on is filled in; the others are quiet until pointed at.
@@ -203,18 +214,83 @@ class MochiPagination extends StatelessWidget {
   }
 }
 
-/// The … standing in for the pages a row folded away. Not a button: there is nothing to press,
-/// and the neighbouring numbers are how you get there.
-class _Gap extends StatelessWidget {
-  const _Gap();
+/// The … standing in for the pages a row folded away, and the way back to them: pressing it asks
+/// for a page number, since those are exactly the pages it is hiding.
+class _Gap extends StatefulWidget {
+  const _Gap({
+    required this.pages,
+    required this.size,
+    required this.metrics,
+    required this.enabled,
+    required this.onJump,
+  });
+
+  final int pages;
+  final MochiSize size;
+
+  /// The slot's metrics, so the … is exactly as wide as the numbers beside it.
+  final MochiButtonMetrics metrics;
+  final bool enabled;
+  final ValueChanged<int> onJump;
+
+  @override
+  State<_Gap> createState() => _GapState();
+}
+
+class _GapState extends State<_Gap> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit(BuildContext context) {
+    final page = int.tryParse(_controller.text.trim());
+    _controller.clear();
+    MenuController.maybeOf(context)?.close();
+
+    // Nothing at all rather than a guess: a typo is not an instruction to go somewhere.
+    if (page == null) return;
+    widget.onJump(page.clamp(1, widget.pages));
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
+    final dots = Text("…", style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground));
 
-    return ExcludeSemantics(
-      child: Center(
-        child: Text("…", style: theme.typography.body.sm.copyWith(color: theme.colors.mutedForeground)),
+    if (!widget.enabled) return ExcludeSemantics(child: Center(child: dots));
+
+    return MochiPopover(
+      side: MochiPopoverSide.top,
+      align: MochiPopoverAlign.center,
+      popoverBuilder: (context) => SizedBox(
+        width: 160,
+        child: MochiTextField(
+          controller: _controller,
+          size: MochiSize.sm,
+          autofocus: true,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.go,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          hint: "1–${widget.pages}",
+          label: Text(theme.strings.goToPage),
+          onSubmitted: (_) => _submit(context),
+        ),
+      ),
+      builder: (context, anchor, _) => MochiButton(
+        size: widget.size,
+        appearance: MochiButtonAppearance.ghost,
+        intent: MochiIntent.neutral,
+        // The slot's own metrics, so pressing it changes nothing about the row's width.
+        metrics: widget.metrics,
+        focusNode: anchor.focusNode,
+        onPress: anchor.toggle,
+        semanticLabel: theme.strings.goToPage,
+        child: dots,
       ),
     );
   }
