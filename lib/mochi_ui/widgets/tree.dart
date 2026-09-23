@@ -1,3 +1,5 @@
+import "dart:math" as math;
+
 import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 
@@ -8,6 +10,7 @@ import "../theme/typography.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
+import "value_transition.dart";
 
 /// A node in a [MochiTree].
 class MochiTreeNode<T> {
@@ -405,13 +408,17 @@ class _Chevron extends StatelessWidget {
     return MochiTappable(
       onPress: onPress,
       scaleOnPress: false,
-      semanticLabel: expanded ? "Collapse" : "Expand",
+      semanticLabel: expanded ? theme.strings.collapse : theme.strings.expand,
       // The row takes the keyboard; the chevron is for the pointer.
       builder: (context, states, _) => ExcludeFocus(
         child: Center(
-          child: AnimatedRotation(
-            turns: expanded ? 0.25 : 0,
+          // The same turn a collapsible's chevron makes, through the same transition: an
+          // implicit AnimatedRotation would restart on every frame of a theme change.
+          child: MochiValueTransition<double>(
+            value: expanded ? 0.25 : 0,
+            lerp: _turns,
             duration: theme.motion.stateDuration,
+            builder: (context, turns, child) => Transform.rotate(angle: turns * 2 * math.pi, child: child),
             child: Icon(theme.icons.chevronRight, size: size),
           ),
         ),
@@ -437,3 +444,6 @@ class _EdgeIntent extends Intent {
 
   final bool last;
 }
+
+/// Between two quarter turns.
+double _turns(double a, double b, double t) => a + (b - a) * t;

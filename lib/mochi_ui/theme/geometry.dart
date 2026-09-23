@@ -123,6 +123,7 @@ class MochiSpace {
         );
 }
 
+/// How far off the page something is lifted, which is what its shadow is picked from.
 enum MochiElevation { sm, md, lg }
 
 /// One layer of a shadow, colorless; the color comes from [MochiColors.shadow].

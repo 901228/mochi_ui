@@ -11,6 +11,7 @@ import "tappable.dart";
 import "tooltip.dart";
 import "value_transition.dart";
 
+/// The corners a close button wears: an icon button's, or a circle for a badge or a toast.
 enum MochiCloseButtonShape {
   /// Corners like an icon button's, so it sits among other controls: a toast, a dialog, a sheet.
   rounded,

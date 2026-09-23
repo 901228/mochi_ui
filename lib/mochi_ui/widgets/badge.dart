@@ -11,8 +11,10 @@ import "../theme/typography.dart";
 import "close_button.dart";
 import "value_transition.dart";
 
+/// How loudly a badge carries its intent.
 enum MochiBadgeAppearance { solid, soft, outlined }
 
+/// The corners a badge wears.
 enum MochiBadgeShape {
   /// Fully round ends.
   pill,

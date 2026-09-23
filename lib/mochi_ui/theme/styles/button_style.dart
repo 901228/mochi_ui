@@ -8,6 +8,8 @@ import "../size.dart";
 import "../tone.dart";
 import "../typography.dart";
 
+/// How loudly a button carries its [MochiIntent], from a filled surface down to a bare word.
+/// The colour is the intent's; this is the weight.
 enum MochiButtonAppearance { solid, soft, outlined, ghost, text, inverted }
 
 /// Size-dependent layout of a button. Heights follow forui: desktop 28/32/36/40, touch 32/40/44/48.

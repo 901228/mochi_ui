@@ -35,7 +35,7 @@ class MochiPagination extends StatelessWidget {
     this.intent = MochiIntent.primary,
     this.showArrows = true,
     this.jumpable = true,
-    this.label,
+    this.semanticLabel,
   }) : assert(pages > 0),
        assert(page >= 1),
        assert(around >= 0);
@@ -66,8 +66,8 @@ class MochiPagination extends StatelessWidget {
   /// row short enough to list every page has no …, and needs none: the pages are all there.
   final bool jumpable;
 
-  /// Names the row for screen readers. Defaults to "Pagination".
-  final String? label;
+  /// Names the row for screen readers. Defaults to `strings.pagination`.
+  final String? semanticLabel;
 
   bool get _enabled => onChanged != null;
 
@@ -167,7 +167,7 @@ class MochiPagination extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: label ?? "Pagination",
+      label: semanticLabel ?? theme.strings.pagination,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: g.space.xs3,
@@ -180,7 +180,7 @@ class MochiPagination extends StatelessWidget {
               enabled: _enabled && page > 1,
               onPress: () => go(page - 1),
               icon: Icon(theme.icons.chevronLeft),
-              semanticLabel: "Previous page",
+              semanticLabel: theme.strings.previousPage,
             ),
           for (final at in _slots(around))
             SizedBox(
@@ -194,7 +194,7 @@ class MochiPagination extends StatelessWidget {
                       intent: at == page ? intent : MochiIntent.neutral,
                       enabled: _enabled,
                       onPress: () => go(at),
-                      semanticLabel: at == page ? "Page $at, current" : "Page $at",
+                      semanticLabel: theme.strings.pageNumber(at, at == page),
                       child: Text("$at"),
                     ),
             ),
@@ -206,7 +206,7 @@ class MochiPagination extends StatelessWidget {
               enabled: _enabled && page < pages,
               onPress: () => go(page + 1),
               icon: Icon(theme.icons.chevronRight),
-              semanticLabel: "Next page",
+              semanticLabel: theme.strings.nextPage,
             ),
         ],
       ),

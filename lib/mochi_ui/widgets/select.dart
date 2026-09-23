@@ -1,3 +1,5 @@
+import "dart:math" as math;
+
 import "dart:async";
 
 import "package:flutter/services.dart";
@@ -520,7 +522,7 @@ class _SelectField extends StatelessWidget {
                         Expanded(child: content(context, m)),
                         // Turns to point up while the list is open.
                         Transform.rotate(
-                          angle: blend.number((st) => st.contains(WidgetState.selected) ? 1 : 0) * 3.14159265,
+                          angle: blend.number((st) => st.contains(WidgetState.selected) ? 1 : 0) * math.pi,
                           child: Icon(theme.icons.chevronDown),
                         ),
                       ],

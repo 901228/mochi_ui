@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 
 import "contrast.dart";
 
+/// What a colour means, rather than what it is: every component takes one of these and looks
+/// the matching [MochiTone] up in [MochiColors].
 enum MochiIntent { neutral, primary, info, success, warning, danger }
 
 /// A group of colors derived from one intent, shared by every component.

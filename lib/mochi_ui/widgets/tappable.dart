@@ -2,6 +2,12 @@ import "package:flutter/widgets.dart";
 
 import "press_scale.dart";
 
+/// What every pressable thing here is built on: the gestures, the keyboard, the focus, the
+/// cursor, the semantics and the interaction states, with nothing drawn.
+///
+/// It owns a [WidgetStatesController] (hovered / focused / pressed / selected / disabled) and
+/// hands the set to [builder], so a component decides what those states look like. Disabled is
+/// `enabled: false`, or every callback being null.
 class MochiTappable extends StatefulWidget {
   const MochiTappable({
     super.key,

@@ -12,6 +12,7 @@ abstract final class MochiBreakpoint {
   static const wide = _contentWide + _gutter * 2; // 1248
 }
 
+/// The tier the screen falls into, from the content widths in [MochiBreakpoint].
 enum MochiScreenSize {
   mobile(0),
   tablet(MochiBreakpoint.tablet),

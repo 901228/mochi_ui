@@ -12,6 +12,15 @@ import "value_transition.dart";
 import "tappable.dart";
 import "tooltip.dart";
 
+/// A press, in every colour and weight the kit has.
+///
+/// Colour and weight are separate axes: [intent] says what it means and
+/// [MochiButtonAppearance] says how loudly, so a destructive action is `danger` whether it is
+/// solid in a dialog or a ghost in a row. [MochiButton.icon] is the square form.
+///
+/// ```dart
+/// MochiButton(intent: .danger, onPress: delete, child: const Text("Delete"))
+/// ```
 class MochiButton extends StatelessWidget {
   const MochiButton({
     super.key,

@@ -157,6 +157,7 @@ class MochiToaster extends StatefulWidget {
       context.findAncestorStateOfType<MochiToasterState>();
 }
 
+/// What [showMochiToast] reaches through: the stack of toasts, and the queue behind it.
 class MochiToasterState extends State<MochiToaster> {
   final _toasts = <_ToastRequest>[];
   final _waiting = <_ToastRequest>[];

@@ -8,6 +8,16 @@ import "scroll_behavior.dart";
 import "toast.dart";
 import "transitions.dart";
 
+/// The root of an app built on this kit: a [WidgetsApp] with the theme, the toaster and the
+/// scroll behaviour already in place.
+///
+/// Takes the two themes and a [MochiThemeMode] rather than one theme, so the light and dark
+/// pair can cross-fade when the system switches; `touch`, `radius`, `density` and `textScale`
+/// are the app-wide appearance knobs, and `strings` is the language the components speak.
+///
+/// ```dart
+/// MochiApp(themeMode: MochiThemeMode.system, home: const HomePage())
+/// ```
 class MochiApp extends StatelessWidget {
   const MochiApp({
     super.key,

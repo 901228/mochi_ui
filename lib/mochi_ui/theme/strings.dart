@@ -35,6 +35,12 @@ class MochiStrings {
     this.dateRange = _enRange,
     required this.previousMonth,
     required this.nextMonth,
+    required this.previousPage,
+    required this.nextPage,
+    required this.pagination,
+    this.pageNumber = _pageNumber,
+    required this.expand,
+    required this.collapse,
     required this.months,
     required this.monthsShort,
     required this.weekdays,
@@ -96,6 +102,18 @@ class MochiStrings {
   final String previousMonth;
   final String nextMonth;
 
+  /// A pagination's arrows, and the name of the row itself.
+  final String previousPage;
+  final String nextPage;
+  final String pagination;
+
+  /// How a page's button names itself to a screen reader, current or not.
+  final String Function(int page, bool current) pageNumber;
+
+  /// What opens and closes a branch of a tree, or anything else that folds.
+  final String expand;
+  final String collapse;
+
   /// The twelve month names, January first.
   final List<String> months;
 
@@ -134,6 +152,11 @@ class MochiStrings {
     pm: "PM",
     previousMonth: "Previous month",
     nextMonth: "Next month",
+    previousPage: "Previous page",
+    nextPage: "Next page",
+    pagination: "Pagination",
+    expand: "Expand",
+    collapse: "Collapse",
     months: [
       "January",
       "February",
@@ -173,6 +196,12 @@ class MochiStrings {
     pm: "下午",
     previousMonth: "上個月",
     nextMonth: "下個月",
+    previousPage: "上一頁",
+    nextPage: "下一頁",
+    pagination: "分頁",
+    pageNumber: _zhPageNumber,
+    expand: "展開",
+    collapse: "收合",
     months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
     monthsShort: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
     weekdays: ["一", "二", "三", "四", "五", "六", "日"],
@@ -206,6 +235,12 @@ class MochiStrings {
     String Function(DateTime start, DateTime end, List<String> months)? dateRange,
     String? previousMonth,
     String? nextMonth,
+    String? previousPage,
+    String? nextPage,
+    String? pagination,
+    String Function(int page, bool current)? pageNumber,
+    String? expand,
+    String? collapse,
     List<String>? months,
     List<String>? monthsShort,
     List<String>? weekdays,
@@ -233,6 +268,12 @@ class MochiStrings {
     dateRange: dateRange ?? this.dateRange,
     previousMonth: previousMonth ?? this.previousMonth,
     nextMonth: nextMonth ?? this.nextMonth,
+    previousPage: previousPage ?? this.previousPage,
+    nextPage: nextPage ?? this.nextPage,
+    pagination: pagination ?? this.pagination,
+    pageNumber: pageNumber ?? this.pageNumber,
+    expand: expand ?? this.expand,
+    collapse: collapse ?? this.collapse,
     months: months ?? this.months,
     monthsShort: monthsShort ?? this.monthsShort,
     weekdays: weekdays ?? this.weekdays,
@@ -265,6 +306,12 @@ class MochiStrings {
           dateRange == other.dateRange &&
           previousMonth == other.previousMonth &&
           nextMonth == other.nextMonth &&
+          previousPage == other.previousPage &&
+          nextPage == other.nextPage &&
+          pagination == other.pagination &&
+          pageNumber == other.pageNumber &&
+          expand == other.expand &&
+          collapse == other.collapse &&
           _sameWords(months, other.months) &&
           _sameWords(monthsShort, other.monthsShort) &&
           _sameWords(weekdays, other.weekdays) &&
@@ -295,6 +342,12 @@ class MochiStrings {
     dateRange,
     previousMonth,
     nextMonth,
+    previousPage,
+    nextPage,
+    pagination,
+    pageNumber,
+    expand,
+    collapse,
     Object.hashAll(months),
     Object.hashAll(monthsShort),
     Object.hashAll(weekdays),
@@ -361,3 +414,9 @@ bool _sameWords(List<String> a, List<String> b) {
 
   return true;
 }
+
+/// English: "Page 4", and the one you are on says so.
+String _pageNumber(int page, bool current) => current ? "Page $page, current" : "Page $page";
+
+/// Chinese counts the same way round, with the word after the number.
+String _zhPageNumber(int page, bool current) => current ? "第 $page 頁，目前所在" : "第 $page 頁";

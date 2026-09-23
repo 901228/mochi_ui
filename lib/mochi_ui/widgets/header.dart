@@ -7,6 +7,7 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
 
+/// Where a header's title sits between its two groups of actions.
 enum MochiHeaderAlignment { start, center }
 
 /// Whether the header is separated from the content below it.

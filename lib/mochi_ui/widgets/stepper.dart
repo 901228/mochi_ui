@@ -34,6 +34,7 @@ class MochiStepper extends StatefulWidget {
     this.max,
     this.step = 1,
     this.size = MochiSize.md,
+    this.enabled = true,
     this.editable = true,
     this.format,
     this.width,
@@ -45,13 +46,17 @@ class MochiStepper extends StatefulWidget {
 
   final int value;
 
-  /// Null disables the stepper.
+  /// Null disables the stepper, the same as `enabled: false`.
   final ValueChanged<int>? onChanged;
 
   final int? min;
   final int? max;
   final int step;
   final MochiSize size;
+
+  /// The other way to disable it, which a form can drive without dropping its callback — the
+  /// same knob every other field here has.
+  final bool enabled;
 
   /// Whether pressing the number lets it be typed. Off, the buttons and the keyboard are the only
   /// ways to change it.
@@ -91,7 +96,7 @@ class _MochiStepperState extends State<MochiStepper> {
   int? _sent;
   int get _value => _sent ?? widget.value;
 
-  bool get _enabled => widget.onChanged != null;
+  bool get _enabled => widget.enabled && widget.onChanged != null;
 
   // Typing the value: the field only exists while it is being edited.
   final _editController = TextEditingController();

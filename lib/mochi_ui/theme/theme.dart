@@ -9,6 +9,7 @@ import "motion.dart";
 import "strings.dart";
 import "typography.dart";
 
+/// Which of the two themes an app is showing, or that the system decides.
 enum MochiThemeMode {
   system,
   light,
@@ -214,6 +215,8 @@ class MochiTheme {
   );
 }
 
+/// Holds the [MochiTheme] for everything below it. Read it through `context.theme` rather
+/// than reaching for this directly.
 class MochiThemeScope extends InheritedWidget {
   const MochiThemeScope({super.key, required this.theme, required super.child});
   final MochiTheme theme;
