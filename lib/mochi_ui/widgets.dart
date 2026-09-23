@@ -43,6 +43,7 @@ export "widgets/switch.dart";
 export "widgets/tappable.dart";
 export "widgets/text_field.dart";
 export "widgets/tile.dart";
+export "widgets/time_picker.dart";
 export "widgets/tooltip.dart";
 export "widgets/toast.dart";
 export "widgets/transitions.dart";

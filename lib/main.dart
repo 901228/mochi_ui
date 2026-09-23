@@ -247,6 +247,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _DatePickerSample(),
           const SizedBox(height: 32),
+          const _ThemedText("time picker", .section),
+          const SizedBox(height: 12),
+          const _TimePickerSample(),
+          const SizedBox(height: 32),
           const _ThemedText("popover", .section),
           const SizedBox(height: 12),
           const _PopoverSample(),
@@ -3197,6 +3201,72 @@ class _DatePickerSampleState extends State<_DatePickerSample> {
         const SizedBox(
           width: 320,
           child: MochiDatePicker.single(enabled: false, error: "Pick a day.", onChanged: null),
+        ),
+      ],
+    );
+  }
+}
+
+class _TimePickerSample extends StatefulWidget {
+  const _TimePickerSample();
+
+  @override
+  State<_TimePickerSample> createState() => _TimePickerSampleState();
+}
+
+class _TimePickerSampleState extends State<_TimePickerSample> {
+  MochiTime? _starts;
+  MochiTime _reminder = const MochiTime(hour: 20, minute: 30);
+  MochiTime _wheel = const MochiTime(hour: 9, minute: 5, second: 30);
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.md,
+      children: [
+        Row(
+          spacing: g.space.md,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 220,
+              child: MochiTimePicker(
+                label: const Text("Session starts"),
+                value: _starts,
+                onChanged: (time) => setState(() => _starts = time),
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: MochiTimePicker(
+                label: const Text("Remind me"),
+                description: const Text("Quarter hours, twelve-hour clock."),
+                value: _reminder,
+                minuteStep: 15,
+                use24HourFormat: false,
+                intent: MochiIntent.success,
+                onChanged: (time) => setState(() => _reminder = time),
+              ),
+            ),
+          ],
+        ),
+        // The wheels on their own, which is what a sheet or a settings page would hold.
+        SizedBox(
+          width: 260,
+          child: MochiCard(
+            child: MochiTimeWheel(
+              value: _wheel,
+              showSeconds: true,
+              onChanged: (time) => setState(() => _wheel = time),
+            ),
+          ),
+        ),
+        _ThemedText(
+          "wheel: ${_wheel.hour.toString().padLeft(2, "0")}:${_wheel.minute.toString().padLeft(2, "0")}:${_wheel.second.toString().padLeft(2, "0")}",
+          .muted,
         ),
       ],
     );

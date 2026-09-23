@@ -21,6 +21,7 @@ class MochiIcons {
     this.search = TablerIcons.search,
     this.user = TablerIcons.user,
     this.calendar = TablerIcons.calendar,
+    this.clock = TablerIcons.clock,
     this.info = TablerIcons.infoCircle,
     this.success = TablerIcons.circleCheck,
     this.warning = TablerIcons.alertTriangle,
@@ -50,6 +51,9 @@ class MochiIcons {
 
   /// A date field's leading icon.
   final IconData calendar;
+
+  /// A time field's.
+  final IconData clock;
 
   /// One per [MochiIntent] that has something to say. A toast raised with an intent and no icon
   /// of its own takes the matching one from here.
@@ -87,6 +91,7 @@ class MochiIcons {
           search == other.search &&
           user == other.user &&
           calendar == other.calendar &&
+          clock == other.clock &&
           info == other.info &&
           success == other.success &&
           warning == other.warning &&
@@ -107,6 +112,7 @@ class MochiIcons {
     search,
     user,
     calendar,
+    clock,
     info,
     success,
     warning,

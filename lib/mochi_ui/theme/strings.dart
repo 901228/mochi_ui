@@ -26,6 +26,9 @@ class MochiStrings {
     required this.search,
     required this.clear,
     required this.pickDate,
+    required this.pickTime,
+    required this.am,
+    required this.pm,
     this.date = _dayMonthYear,
     this.dateRange = _enRange,
     required this.previousMonth,
@@ -66,6 +69,13 @@ class MochiStrings {
 
   /// What a date field says while it is empty.
   final String pickDate;
+
+  /// What a time field says while it is empty.
+  final String pickTime;
+
+  /// The two halves of a twelve-hour clock.
+  final String am;
+  final String pm;
 
   /// How a day is written out in a field. English counts up, Chinese counts down.
   final String Function(int day, String month, int year) date;
@@ -109,6 +119,9 @@ class MochiStrings {
     search: "Search",
     clear: "Clear",
     pickDate: "Pick a date",
+    pickTime: "Pick a time",
+    am: "AM",
+    pm: "PM",
     previousMonth: "Previous month",
     nextMonth: "Next month",
     months: [
@@ -143,6 +156,9 @@ class MochiStrings {
     search: "搜尋",
     clear: "清除",
     pickDate: "選擇日期",
+    pickTime: "選擇時間",
+    am: "上午",
+    pm: "下午",
     previousMonth: "上個月",
     nextMonth: "下個月",
     months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
@@ -169,6 +185,9 @@ class MochiStrings {
     String? search,
     String? clear,
     String? pickDate,
+    String? pickTime,
+    String? am,
+    String? pm,
     String Function(int day, String month, int year)? date,
     String Function(DateTime start, DateTime end, List<String> months)? dateRange,
     String? previousMonth,
@@ -191,6 +210,9 @@ class MochiStrings {
     search: search ?? this.search,
     clear: clear ?? this.clear,
     pickDate: pickDate ?? this.pickDate,
+    pickTime: pickTime ?? this.pickTime,
+    am: am ?? this.am,
+    pm: pm ?? this.pm,
     date: date ?? this.date,
     dateRange: dateRange ?? this.dateRange,
     previousMonth: previousMonth ?? this.previousMonth,
@@ -218,6 +240,9 @@ class MochiStrings {
           search == other.search &&
           clear == other.clear &&
           pickDate == other.pickDate &&
+          pickTime == other.pickTime &&
+          am == other.am &&
+          pm == other.pm &&
           date == other.date &&
           dateRange == other.dateRange &&
           previousMonth == other.previousMonth &&
@@ -243,6 +268,9 @@ class MochiStrings {
     search,
     clear,
     pickDate,
+    pickTime,
+    am,
+    pm,
     date,
     dateRange,
     previousMonth,
