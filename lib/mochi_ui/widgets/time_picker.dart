@@ -121,9 +121,15 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
     // After the frame, not inside it: didUpdateWidget runs during a build, and a jump from there
     // lands a change notification in the middle of one.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && controller.hasClients && controller.selectedItem != item) {
-        controller.jumpToItem(item);
+      if (!mounted || !controller.hasClients) {
+        _settling = false;
+        return;
       }
+
+      // A wheel that is still moving is left alone: it is already on its way to the very value
+      // that was just reported, and a jump into the middle of that is the wobble.
+      final moving = controller.position.isScrollingNotifier.value;
+      if (!moving && controller.selectedItem != item) controller.jumpToItem(item);
       _settling = false;
     });
   }
@@ -260,7 +266,7 @@ class _Gap extends StatelessWidget {
 }
 
 /// One scrolling column of numbers.
-class _Column extends StatelessWidget {
+class _Column extends StatefulWidget {
   const _Column({
     required this.controller,
     required this.rowHeight,
@@ -279,19 +285,27 @@ class _Column extends StatelessWidget {
   /// Whether the column wraps round: 23 is one notch from 00, but PM is not one notch from AM.
   final bool loop;
 
-  /// One notch of the mouse wheel, one row.
+  @override
+  State<_Column> createState() => _ColumnState();
+}
+
+class _ColumnState extends State<_Column> {
+  /// One notch of the mouse wheel, one row — and no animation to get there.
   ///
-  /// Left alone, a scroll event carries however many pixels the device felt like sending — 50 on
-  /// one machine, 120 and accelerating on another — and a column whose rows are 32 apart then
-  /// jumps two or three at a time, differently on every turn.
-  void _turn(BuildContext context, int direction) {
-    if (!controller.hasClients) return;
+  /// Two things would otherwise go wrong. A scroll event carries however many pixels the device
+  /// felt like sending (50 on one machine, 120 and accelerating on another), which over rows 32
+  /// apart is two or three at a time and a different number on every turn. And a scrollable
+  /// wraps its contents in an `IgnorePointer` while it is animating, so a notch arriving during
+  /// the journey never reaches this handler at all: it falls through to the native pixel
+  /// scrolling, which is the stumble backwards and forwards you see when turning the wheel
+  /// quickly. Landing on the row at once leaves no window for either.
+  void _turn(int direction) {
+    if (!widget.controller.hasClients) return;
 
-    final next = controller.selectedItem + direction;
-    if (!loop && (next < 0 || next >= count)) return;
+    final next = widget.controller.selectedItem + direction;
+    if (!widget.loop && (next < 0 || next >= widget.count)) return;
 
-    final motion = context.theme.motion;
-    controller.animateToItem(next, duration: motion.stateDuration, curve: motion.sizeCurve);
+    widget.controller.jumpToItem(next);
   }
 
   @override
@@ -299,6 +313,10 @@ class _Column extends StatelessWidget {
     final theme = context.theme;
 
     Widget row(int index) => Listener(
+      // The whole row, not only the digits in the middle of it: left to defer to its child, the
+      // listener is only hit while the pointer is over the glyphs, and a row sliding past the
+      // pointer would hand every other notch back to the scrollable.
+      behavior: HitTestBehavior.opaque,
       // On the rows, not around the column: a pointer signal goes to whoever registers for it
       // first, and the scrollable's own handler sits between the two.
       onPointerSignal: (event) {
@@ -306,11 +324,15 @@ class _Column extends StatelessWidget {
         final direction = event.scrollDelta.dy.sign.toInt();
         if (direction == 0) return;
 
-        GestureBinding.instance.pointerSignalResolver.register(event, (_) => _turn(context, direction));
+        debugPrint("SIGNAL row");
+        GestureBinding.instance.pointerSignalResolver.register(event, (_) {
+          debugPrint("SIGNAL won");
+          _turn(direction);
+        });
       },
       child: Center(
         child: Text(
-          label(index % count),
+          widget.label(index % widget.count),
           style: theme.typography.body.md.copyWith(
             color: theme.colors.foreground,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -325,18 +347,18 @@ class _Column extends StatelessWidget {
       behavior: ScrollConfiguration.of(context)
           .copyWith(dragDevices: {...ScrollConfiguration.of(context).dragDevices, PointerDeviceKind.mouse}),
       child: ListWheelScrollView.useDelegate(
-        controller: controller,
-        itemExtent: rowHeight,
+        controller: widget.controller,
+        itemExtent: widget.rowHeight,
         // Flat, not a barrel: a barrel bends the numbers away from the eye at the edges, and
         // these are things to read rather than a wheel to admire.
         diameterRatio: 100,
         perspective: 0.001,
         overAndUnderCenterOpacity: 0.45,
         physics: const FixedExtentScrollPhysics(),
-        onSelectedItemChanged: (index) => onChanged(index % count),
-        childDelegate: loop
-            ? ListWheelChildLoopingListDelegate(children: [for (var i = 0; i < count; i++) row(i)])
-            : ListWheelChildListDelegate(children: [for (var i = 0; i < count; i++) row(i)]),
+        onSelectedItemChanged: (index) => widget.onChanged(index % widget.count),
+        childDelegate: widget.loop
+            ? ListWheelChildLoopingListDelegate(children: [for (var i = 0; i < widget.count; i++) row(i)])
+            : ListWheelChildListDelegate(children: [for (var i = 0; i < widget.count; i++) row(i)]),
       ),
     );
   }

@@ -192,6 +192,84 @@ void main() {
     expect(picked, const MochiTime(hour: 21, minute: 30));
   });
 
+  testWidgets("a wheel a parent is echoing lands where the notch says", (tester) async {
+    // The gallery's shape: every notch is reported, the parent rebuilds with it, and the wheel
+    // must not be shoved about afterwards.
+    var value = const MochiTime(hour: 9, minute: 30);
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: StatefulBuilder(
+          builder: (context, setState) => Center(
+            child: SizedBox(
+              width: 200,
+              child: MochiTimeWheel(value: value, onChanged: (time) => setState(() => value = time)),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final hours = find.byType(ListWheelScrollView).first;
+    double offset() => tester.widget<ListWheelScrollView>(hours).controller!.position.pixels;
+    final start = offset();
+
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(tester.getCenter(hours)));
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 120)));
+    await tester.pump();
+
+    expect(offset() - start, 32, reason: "a row, at once");
+    expect(value, const MochiTime(hour: 10, minute: 30));
+
+    await tester.pumpAndSettle();
+    expect(offset() - start, 32, reason: "and it stays there");
+  });
+
+  testWidgets("turning it quickly is a row a notch, never a stumble", (tester) async {
+    var value = const MochiTime(hour: 9, minute: 30);
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: StatefulBuilder(
+          builder: (context, setState) => Center(
+            child: SizedBox(
+              width: 200,
+              child: MochiTimeWheel(value: value, onChanged: (time) => setState(() => value = time)),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final hours = find.byType(ListWheelScrollView).first;
+    double offset() => tester.widget<ListWheelScrollView>(hours).controller!.position.pixels;
+    final start = offset();
+
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(tester.getCenter(hours)));
+
+    var previous = start;
+    var wentBack = false;
+    for (var notch = 0; notch < 3; notch++) {
+      // No pump in between: three notches inside one frame, which is what a quick turn sends.
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, 100)));
+      await tester.pump();
+      final now = offset();
+      if (now < previous - 0.01) wentBack = true;
+      previous = now;
+    }
+    await tester.pumpAndSettle();
+
+    expect(wentBack, isFalse, reason: "it never stumbles back");
+    expect(offset() - start, 96, reason: "three notches, three rows");
+    expect(value, const MochiTime(hour: 12, minute: 30));
+  });
+
   group("the field", () {
     Future<void> click(WidgetTester tester, Finder finder) async {
       await tester.tap(finder, kind: PointerDeviceKind.mouse);
