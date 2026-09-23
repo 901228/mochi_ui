@@ -98,8 +98,14 @@ class MochiSortable extends StatelessWidget {
       // The framework's newer callback, which has already counted the row out of the list: the
       // adjustment everyone writes by hand under the old one is exactly the bug it caused.
       onReorderItem: onReorder,
-      proxyDecorator: (child, index, animation) =>
-          _Carried(animation: animation, radius: liftRadius, child: child),
+      proxyDecorator: (child, index, animation) => _Carried(
+        animation: animation,
+        radius: liftRadius,
+        // The row the list hands back has the gap inside it, so the shadow is told to keep off
+        // it: cast around the padded box it would stand proud of the row on every side.
+        gap: spacing == 0 ? EdgeInsets.zero : gap,
+        child: child,
+      ),
       itemBuilder: (context, index) {
         final item = itemBuilder(context, index);
         assert(item.key != null, "Every row of a MochiSortable needs a key of its own.");
@@ -119,10 +125,14 @@ class MochiSortable extends StatelessWidget {
 
 /// The row being carried: lifted off the page, and grown the way a press grows it.
 class _Carried extends StatelessWidget {
-  const _Carried({required this.animation, required this.radius, required this.child});
+  const _Carried({required this.animation, required this.radius, required this.gap, required this.child});
 
   final Animation<double> animation;
   final BorderRadius? radius;
+
+  /// The spacing the row carries inside itself, which the shadow stays out of.
+  final EdgeInsets gap;
+
   final Widget child;
 
   @override
@@ -140,14 +150,24 @@ class _Carried extends StatelessWidget {
 
         return Transform.scale(
           scale: 1 + 0.03 * t,
-          child: DecoratedBox(
-            // A shape, not a plain box: a shadow cast off a rectangle behind a row with rounded
-            // corners is a grey square nobody drew.
-            decoration: ShapeDecoration(
-              shape: RoundedSuperellipseBorder(borderRadius: radius ?? theme.geometry.radius.md),
-              shadows: [for (final shadow in shadows) shadow.scale(t)],
-            ),
-            child: child,
+          child: Stack(
+            children: [
+              // Behind the row and inside its gap, so what shows is the blur around the row
+              // itself. A shape, not a plain box: a shadow cast off a rectangle behind a row
+              // with rounded corners is a grey square nobody drew.
+              Positioned.fill(
+                child: Padding(
+                  padding: gap,
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      shape: RoundedSuperellipseBorder(borderRadius: radius ?? theme.geometry.radius.md),
+                      shadows: [for (final shadow in shadows) shadow.scale(t)],
+                    ),
+                  ),
+                ),
+              ),
+              child!,
+            ],
           ),
         );
       },

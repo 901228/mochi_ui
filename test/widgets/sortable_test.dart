@@ -143,9 +143,31 @@ void main() {
     expect(second.center.dy - first.center.dy, 72, reason: "60 of row and 12 of gap");
   });
 
-  testWidgets("a row carried off the list is lifted", (tester) async {
+  testWidgets("a row carried off the list is lifted, and its shadow fits the row", (tester) async {
     final words = ["one", "two", "three", "four"];
-    await tester.pumpWidget(app(words));
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: SizedBox(
+          height: 400,
+          child: MochiSortable(
+            itemCount: words.length,
+            spacing: 8,
+            onReorder: (from, to) {},
+            itemBuilder: (context, index) => MochiCard(
+              key: ValueKey(words[index]),
+              child: Row(
+                children: [
+                  Expanded(child: Text(words[index])),
+                  MochiSortableHandle(index: index),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final gesture = await tester.startGesture(
@@ -156,17 +178,26 @@ void main() {
     await gesture.moveBy(const Offset(0, 30));
     await tester.pumpAndSettle();
 
-    final lifted = tester
-        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
-        .map((box) => box.decoration)
-        .whereType<ShapeDecoration>()
-        .where((decoration) => decoration.shadows?.isNotEmpty == true);
-    expect(lifted, isNotEmpty, reason: "the row being carried casts a shadow");
+    // The lift is the one shadow with nothing filled in behind it; the cards have their own.
+    final shadowed = find.byWidgetPredicate((widget) {
+      final decoration = widget is DecoratedBox ? widget.decoration : null;
+      return decoration is ShapeDecoration &&
+          decoration.color == null &&
+          decoration.shadows?.isNotEmpty == true;
+    });
+    expect(shadowed, findsOneWidget, reason: "the row being carried casts a shadow");
     expect(
-      lifted.every((decoration) => decoration.shape is RoundedSuperellipseBorder),
-      isTrue,
+      tester.widget<DecoratedBox>(shadowed).decoration,
+      isA<ShapeDecoration>().having((d) => d.shape, "shape", isA<RoundedSuperellipseBorder>()),
       reason: "a square shadow under a rounded row is a grey box nobody drew",
     );
+    // And it keeps out of the gap between rows: cast around the padded row it would stand proud
+    // of the row on every side, which reads as a shadow hanging over nothing.
+    final carried = find.descendant(
+      of: find.ancestor(of: shadowed, matching: find.byType(Stack)).first,
+      matching: find.byType(MochiCard),
+    );
+    expect(tester.getRect(shadowed), tester.getRect(carried));
 
     await gesture.up();
     await tester.pumpAndSettle();
