@@ -234,12 +234,21 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
                         },
                       ),
                     ),
+                // Segments share the width equally, so a long label has to give: it is cut short
+                // rather than pushed out of its own segment and over its neighbour's.
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                softWrap: false,
                 child: IconTheme.merge(
                   data: IconThemeData(size: m.iconSize),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     spacing: m.gap,
-                    children: [?segment.icon, ?segment.label],
+                    children: [
+                      ?segment.icon,
+                      // The icon keeps its size; whatever is left over is the label's.
+                      if (segment.label case final label?) Flexible(child: label),
+                    ],
                   ),
                 ),
               ),

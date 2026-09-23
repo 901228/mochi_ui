@@ -28,7 +28,15 @@
 - [x] ⭐ 評估各元件是否需要獨立的 style 類別 — **結論：不要整組加 style，但有 size 軸的元件要有 metrics。** P3 做完後回頭看，實際會想覆寫的是「尺寸」而不是「顏色」：顏色都能從 intent × appearance 推出來，真的要換主色是換 `MochiColors`，要換單一 app 的規則是 `MochiThemeExtension`，兩條路都已經有了。所以規則訂為：
   - **有 size 選項的元件 → 一份 `XxxMetrics`**（像 `MochiButtonMetrics`）：值要有 value equality 才能餵給 `MochiValueTransition`。Badge、Progress 接下來就是照這個做
   - **顏色 → 不開 style 類別**，除非某個元件的配色規則複雜到不是 `(colors, states) → color` 能講完（目前只有 button 是）
-- [ ] ⭐ 評估導入 Widgetbook：等 P3 / P4 做完、元件穩定後再看。要導入的話放獨立 package（它的介面是 Material 的），現有的 gallery 保留矩陣視圖，Widgetbook 負責單一元件加 knobs
+- [x] ⭐ 評估導入 Widgetbook — **結論：不導入。** 它有非 Material 的 `Widgetbook(...)` 和 `ThemeAddon<T>`（`themeBuilder` 可以包 `MochiApp`），所以技術上接得起來，但外殼是 Material 寫的，一定要獨立 package + build_runner，51 個元件要寫 use case，而且會和現有 gallery 變成兩份要同步的東西。它真正多給的只有「單一元件 knobs」和「裝置框」，這兩件事改成直接做進 gallery：頁面頂端的 knob bar（size / intent / enabled，頁面自己宣告用哪些，樣本從 `_Knobs` 讀）和 viewport 切換（mobile / tablet / full，同時設 `ResponsiveScope`，所以 popover↔sheet 這種斷點規則不用縮視窗就能驗）。真的要重看的時機：這個 kit 要發佈給別人用，或是有第二個人 review UI
+
+## 0.5 預覽 gallery
+
+- [x] gallery 改成 sidebar + scaffold 的外框，分成 7 頁（foundations / buttons / inputs / navigation / content / dates / overlays），不用一路往下滑
+- [x] 頂端 top bar：頁名、viewport（mobile 420 / tablet 900 / full，同時套 `ResponsiveScope`）、touch、中文、主題模式，第二排是 look bar（圓角 / 密度 / 字級 / 主色），第三排是該頁的 knobs
+- [x] knobs 走 `_Knobs` InheritedWidget，每頁第一段「knobs」把 size / intent / enabled 直接畫出來；其餘樣本維持自己刻意的變化組合
+- [x] `lib/main.dart` 只留外框和頁面清單，樣本拆進 `lib/gallery/*.dart`（用 `part`，所以私有類別名稱不用改）
+- [x] `test/gallery_smoke_test.dart`：每頁都開得起來（順便抓 overflow）、knob bar 真的會傳到樣本、mobile viewport 會讓 picker 變 sheet
 
 ## 1. 已完成的元件
 
