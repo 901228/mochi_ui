@@ -27,9 +27,11 @@ class MochiStrings {
     required this.clear,
     required this.pickDate,
     this.date = _dayMonthYear,
+    this.dateRange = _enRange,
     required this.previousMonth,
     required this.nextMonth,
     required this.months,
+    required this.monthsShort,
     required this.weekdays,
     this.monthYear = _monthThenYear,
     required this.cut,
@@ -68,12 +70,20 @@ class MochiStrings {
   /// How a day is written out in a field. English counts up, Chinese counts down.
   final String Function(int day, String month, int year) date;
 
+  /// How a run of days is written out, with whatever the two ends share written once: a field
+  /// showing "12 July 2026 – 18 July 2026" says the same thing twice and then runs out of room.
+  final String Function(DateTime start, DateTime end, List<String> months) dateRange;
+
   /// A calendar's two arrows.
   final String previousMonth;
   final String nextMonth;
 
   /// The twelve month names, January first.
   final List<String> months;
+
+  /// The same twelve, short enough for a range to write two of them and still fit a field. In a
+  /// language whose months are already short — a number and a word — these are the same list.
+  final List<String> monthsShort;
 
   /// The seven weekday names as a calendar's header writes them — short — Monday first, the
   /// order [DateTime.monday] counts in.
@@ -115,6 +125,7 @@ class MochiStrings {
       "November",
       "December",
     ],
+    monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     cut: "Cut",
     copy: "Copy",
@@ -135,9 +146,11 @@ class MochiStrings {
     previousMonth: "上個月",
     nextMonth: "下個月",
     months: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
+    monthsShort: ["1 月", "2 月", "3 月", "4 月", "5 月", "6 月", "7 月", "8 月", "9 月", "10 月", "11 月", "12 月"],
     weekdays: ["一", "二", "三", "四", "五", "六", "日"],
     monthYear: _yearThenMonth,
     date: _yearMonthDay,
+    dateRange: _zhRange,
     cut: "剪下",
     copy: "複製",
     paste: "貼上",
@@ -157,9 +170,11 @@ class MochiStrings {
     String? clear,
     String? pickDate,
     String Function(int day, String month, int year)? date,
+    String Function(DateTime start, DateTime end, List<String> months)? dateRange,
     String? previousMonth,
     String? nextMonth,
     List<String>? months,
+    List<String>? monthsShort,
     List<String>? weekdays,
     String Function(String month, int year)? monthYear,
     String? cut,
@@ -177,9 +192,11 @@ class MochiStrings {
     clear: clear ?? this.clear,
     pickDate: pickDate ?? this.pickDate,
     date: date ?? this.date,
+    dateRange: dateRange ?? this.dateRange,
     previousMonth: previousMonth ?? this.previousMonth,
     nextMonth: nextMonth ?? this.nextMonth,
     months: months ?? this.months,
+    monthsShort: monthsShort ?? this.monthsShort,
     weekdays: weekdays ?? this.weekdays,
     monthYear: monthYear ?? this.monthYear,
     cut: cut ?? this.cut,
@@ -202,9 +219,11 @@ class MochiStrings {
           clear == other.clear &&
           pickDate == other.pickDate &&
           date == other.date &&
+          dateRange == other.dateRange &&
           previousMonth == other.previousMonth &&
           nextMonth == other.nextMonth &&
           _sameWords(months, other.months) &&
+          _sameWords(monthsShort, other.monthsShort) &&
           _sameWords(weekdays, other.weekdays) &&
           monthYear == other.monthYear &&
           cut == other.cut &&
@@ -213,7 +232,8 @@ class MochiStrings {
           selectAll == other.selectAll;
 
   @override
-  int get hashCode => Object.hash(
+  // hashAll, not hash: there are more words here than Object.hash takes.
+  int get hashCode => Object.hashAll([
     ok,
     cancel,
     back,
@@ -224,16 +244,18 @@ class MochiStrings {
     clear,
     pickDate,
     date,
+    dateRange,
     previousMonth,
     nextMonth,
     Object.hashAll(months),
+    Object.hashAll(monthsShort),
     Object.hashAll(weekdays),
     monthYear,
     cut,
     copy,
     paste,
     selectAll,
-  );
+  ]);
 }
 
 /// English and most of Europe: the day, the month, the year.
@@ -249,6 +271,39 @@ String _monthThenYear(String month, int year) => "$month $year";
 /// Chinese, Japanese, Korean: the year first, and the month written as a number with a word
 /// after it, which is already how [MochiStrings.months] reads there.
 String _yearThenMonth(String month, int year) => "$year 年 $month";
+
+/// "12 – 18 Jul", "12 Jul – 18 Aug", "12 Jul 2026 – 18 Aug 2027": each part is written once, at
+/// the first end that needs it, and the year only when it isn't this one.
+String _enRange(DateTime start, DateTime end, List<String> months) {
+  final from = months[start.month - 1];
+  final to = months[end.month - 1];
+  final thisYear = start.year == DateTime.now().year && end.year == start.year;
+
+  if (start.year != end.year) {
+    return "${start.day} $from ${start.year} – ${end.day} $to ${end.year}";
+  }
+
+  final year = thisYear ? "" : " ${end.year}";
+  if (start.month != end.month) return "${start.day} $from – ${end.day} $to$year";
+
+  return "${start.day} – ${end.day} $to$year";
+}
+
+/// The same rule the other way up: "7 月 12 – 18 日", "7 月 12 日 – 8 月 18 日".
+String _zhRange(DateTime start, DateTime end, List<String> months) {
+  final from = months[start.month - 1];
+  final to = months[end.month - 1];
+  final thisYear = start.year == DateTime.now().year && end.year == start.year;
+
+  if (start.year != end.year) {
+    return "${start.year} 年 $from ${start.day} 日 – ${end.year} 年 $to ${end.day} 日";
+  }
+
+  final year = thisYear ? "" : "${end.year} 年 ";
+  if (start.month != end.month) return "$year$from ${start.day} 日 – $to ${end.day} 日";
+
+  return "$year$to ${start.day} – ${end.day} 日";
+}
 
 bool _sameWords(List<String> a, List<String> b) {
   if (a.length != b.length) return false;

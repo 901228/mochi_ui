@@ -96,7 +96,9 @@ void main() {
     await click(tester, find.text("14").first);
     expect(find.byType(MochiCalendar), findsNothing);
     expect(range!.complete, isTrue);
-    expect(find.textContaining("→"), findsOneWidget);
+    // Written once: the two ends share their month and year.
+    expect(find.textContaining("–"), findsOneWidget);
+    expect(find.textContaining("10 – 14"), findsOneWidget);
   });
 
   testWidgets("on a phone it comes up as a sheet instead", (tester) async {
@@ -171,5 +173,59 @@ void main() {
         reason: size.name,
       );
     }
+  });
+
+  testWidgets("a range writes what its ends share only once", (tester) async {
+    // Relative to now, since the year is left out when it is this one.
+    final year = DateTime.now().year;
+
+    Future<void> show(MochiDateRange range, {MochiStrings? strings}) async {
+      await tester.pumpWidget(
+        app(
+          MochiDatePicker.range(value: range, onChanged: (_) {}),
+          strings: strings,
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await show(MochiDateRange(DateTime(year, 7, 12), DateTime(year, 7, 18)));
+    expect(find.text("12 – 18 Jul"), findsOneWidget, reason: "one month, one year, this year");
+
+    await show(MochiDateRange(DateTime(year, 7, 12), DateTime(year, 8, 18)));
+    expect(find.text("12 Jul – 18 Aug"), findsOneWidget);
+
+    await show(MochiDateRange(DateTime(year + 1, 7, 12), DateTime(year + 1, 8, 18)));
+    expect(find.text("12 Jul – 18 Aug ${year + 1}"), findsOneWidget, reason: "not this year");
+
+    await show(MochiDateRange(DateTime(year, 7, 12), DateTime(year + 1, 8, 18)));
+    expect(find.text("12 Jul $year – 18 Aug ${year + 1}"), findsOneWidget);
+
+    await show(MochiDateRange(DateTime(year, 7, 12), DateTime(year, 7, 18)), strings: MochiStrings.zhHant);
+    expect(find.text("7 月 12 – 18 日"), findsOneWidget);
+  });
+
+  testWidgets("a range too long for the line wraps rather than trailing off", (tester) async {
+    final year = DateTime.now().year;
+    await tester.pumpWidget(
+      app(
+        MochiDatePicker.range(
+          value: MochiDateRange(DateTime(year, 9, 28), DateTime(year + 1, 12, 30)),
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final text = tester.widget<Text>(find.textContaining("–"));
+    expect(text.maxLines, 2);
+
+    final painter = TextPainter(
+      text: TextSpan(text: text.data, style: text.style),
+      textDirection: TextDirection.ltr,
+      maxLines: text.maxLines,
+    )..layout(maxWidth: tester.getSize(find.textContaining("–")).width);
+    expect(painter.didExceedMaxLines, isFalse, reason: "a date cut in half says nothing");
+    painter.dispose();
   });
 }

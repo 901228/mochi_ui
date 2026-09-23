@@ -129,9 +129,13 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
       if (range == null) return null;
       final end = range.end;
 
-      return end == null
-          ? _say(context, range.start)
-          : "${_say(context, range.start)} → ${_say(context, end)}";
+      // Whatever the two ends share is written once: two full dates side by side don't fit a
+      // field, and an ellipsis in the middle of a date says nothing at all.
+      if (end == null) return _say(context, range.start);
+      if (widget.format case final format?) return "${format(range.start)} – ${format(end)}";
+
+      final strings = context.theme.strings;
+      return strings.dateRange(range.start, end, strings.monthsShort);
     }
 
     return widget._day == null ? null : _say(context, widget._day!);
@@ -202,6 +206,7 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
             ? _Field(
                 text: _text(context),
                 hint: widget.hint,
+                maxLines: widget._isRange ? 2 : 1,
                 metrics: m,
                 open: _open,
                 error: widget.error != null,
@@ -221,6 +226,7 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
                 builder: (context, anchor, _) => _Field(
                   text: _text(context),
                   hint: widget.hint,
+                  maxLines: widget._isRange ? 2 : 1,
                   metrics: m,
                   open: _open,
                   error: widget.error != null,
@@ -240,6 +246,7 @@ class _Field extends StatelessWidget {
   const _Field({
     required this.text,
     required this.hint,
+    required this.maxLines,
     required this.metrics,
     required this.open,
     required this.error,
@@ -251,6 +258,11 @@ class _Field extends StatelessWidget {
 
   final String? text;
   final String? hint;
+
+  /// One line for a day, two for a run of them: a range that spans two years has nothing left to
+  /// shorten, and a date cut off by an ellipsis says nothing at all.
+  final int maxLines;
+
   final MochiButtonMetrics metrics;
   final bool open;
   final bool error;
@@ -308,14 +320,17 @@ class _Field extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: metrics.height),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: metrics.horizontalPadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: metrics.horizontalPadding,
+                  vertical: metrics.gap / 2,
+                ),
                 child: Row(
                   spacing: metrics.gap,
                   children: [
                     Expanded(
                       child: Text(
                         text ?? hint ?? theme.strings.pickDate,
-                        maxLines: 1,
+                        maxLines: maxLines,
                         overflow: TextOverflow.ellipsis,
                         style: metrics
                             .textStyle(theme.typography)
