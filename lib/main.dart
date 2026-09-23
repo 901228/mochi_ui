@@ -22,10 +22,20 @@ class _PreviewAppState extends State<PreviewApp> {
 
   @override
   Widget build(BuildContext context) {
+    final brand = _look.brand;
+
     return MochiApp(
       title: "Mochi UI Preview",
       themeMode: _mode,
       touch: _touch,
+      lightTheme: brand == null
+          ? null
+          : MochiTheme.light.copyWith(colors: MochiColors.branded(primary: brand)),
+      darkTheme: brand == null
+          ? null
+          : MochiTheme.dark.copyWith(
+              colors: MochiColors.branded(brightness: Brightness.dark, primary: brand),
+            ),
       strings: _zh ? MochiStrings.zhHant : MochiStrings.en,
       radius: _look.radius.value,
       density: _look.density,
@@ -1756,18 +1766,35 @@ enum _RadiusPreset {
 /// The three app-wide appearance knobs: corners, density and text size.
 @immutable
 class _Look {
-  const _Look({this.radius = _RadiusPreset.standard, this.density = 1, this.textScale = 1});
+  const _Look({this.radius = _RadiusPreset.standard, this.density = 1, this.textScale = 1, this.brand});
 
   final _RadiusPreset radius;
   final double density;
   final double textScale;
 
-  _Look copyWith({_RadiusPreset? radius, double? density, double? textScale}) => _Look(
+  /// Null keeps the kit's own primary; anything else goes through `MochiColors.branded`.
+  final Color? brand;
+
+  _Look copyWith({
+    _RadiusPreset? radius,
+    double? density,
+    double? textScale,
+    Color? brand,
+    bool clearBrand = false,
+  }) => _Look(
     radius: radius ?? this.radius,
     density: density ?? this.density,
     textScale: textScale ?? this.textScale,
+    brand: clearBrand ? null : brand ?? this.brand,
   );
 }
+
+const _brands = [
+  ("violet", Color(0xFF7C3AED)),
+  ("green", Color(0xFF16A34A)),
+  ("amber", Color(0xFFF59E0B)),
+  ("slate", Color(0xFF64748B)),
+];
 
 class _LookBar extends StatelessWidget {
   const _LookBar({required this.look, required this.onChanged});
@@ -1801,6 +1828,13 @@ class _LookBar extends StatelessWidget {
       const _ThemedText("text", .muted),
       for (final (label, value) in [("0.9×", 0.9), ("1×", 1.0), ("1.2×", 1.2)])
         _choice(label, look.textScale == value, () => onChanged(look.copyWith(textScale: value))),
+      const SizedBox(width: 16),
+      // One colour in, four out: MochiColors.branded works the rest of a tone out and keeps the
+      // neutrals the kit was tuned with.
+      const _ThemedText("brand", .muted),
+      _choice("mochi", look.brand == null, () => onChanged(look.copyWith(clearBrand: true))),
+      for (final (label, value) in _brands)
+        _choice(label, look.brand == value, () => onChanged(look.copyWith(brand: value))),
     ],
   );
 }

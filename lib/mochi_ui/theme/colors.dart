@@ -139,6 +139,94 @@ class MochiColors {
     danger: _darkAccent(MochaPalette.red),
   );
 
+  /// One of the two themes with its accents replaced, which is how an app puts its own colour on
+  /// the kit: the neutrals — page, surface, border, text — are the ones that were tuned against
+  /// each other, and a brand colour is not one of them.
+  ///
+  /// Each accent given is expanded by [MochiTone.from], so what an app hands over is one colour
+  /// per intent rather than four, and the text colours come out at [contrast] against what they
+  /// sit on. The intents left null keep the theme's own.
+  ///
+  /// ```dart
+  /// MochiApp(
+  ///   lightTheme: MochiTheme.light.copyWith(colors: MochiColors.branded(primary: brandPurple)),
+  ///   darkTheme: MochiTheme.dark.copyWith(
+  ///     colors: MochiColors.branded(brightness: .dark, primary: brandPurple),
+  ///   ),
+  /// )
+  /// ```
+  factory MochiColors.branded({
+    Brightness brightness = Brightness.light,
+    required Color primary,
+    Color? info,
+    Color? success,
+    Color? warning,
+    Color? danger,
+    double contrast = 4.5,
+  }) {
+    final base = brightness == Brightness.light ? MochiColors.light : MochiColors.dark;
+    // The two inks an accent's text can be, taken from the theme being branded rather than pure
+    // black and white, which are both a shade sharper than anything else on the page.
+    final (light, dark) = brightness == Brightness.light
+        ? (LattePalette.white, LattePalette.ink)
+        : (MochaPalette.text, MochaPalette.crust);
+
+    MochiTone? tone(Color? accent) => accent == null
+        ? null
+        : MochiTone.from(
+            accent,
+            background: base.background,
+            softAlpha: base.softAlpha,
+            contrast: contrast,
+            light: light,
+            dark: dark,
+          );
+
+    return base.copyWith(
+      primary: tone(primary),
+      info: tone(info),
+      success: tone(success),
+      warning: tone(warning),
+      danger: tone(danger),
+    );
+  }
+
+  MochiColors copyWith({
+    Brightness? brightness,
+    double? softAlpha,
+    Color? background,
+    Color? surface,
+    Color? overlay,
+    Color? border,
+    Color? foreground,
+    Color? mutedForeground,
+    Color? focusRing,
+    Color? shadow,
+    MochiTone? neutral,
+    MochiTone? primary,
+    MochiTone? info,
+    MochiTone? success,
+    MochiTone? warning,
+    MochiTone? danger,
+  }) => MochiColors(
+    brightness: brightness ?? this.brightness,
+    softAlpha: softAlpha ?? this.softAlpha,
+    background: background ?? this.background,
+    surface: surface ?? this.surface,
+    overlay: overlay ?? this.overlay,
+    border: border ?? this.border,
+    foreground: foreground ?? this.foreground,
+    mutedForeground: mutedForeground ?? this.mutedForeground,
+    focusRing: focusRing ?? this.focusRing,
+    shadow: shadow ?? this.shadow,
+    neutral: neutral ?? this.neutral,
+    primary: primary ?? this.primary,
+    info: info ?? this.info,
+    success: success ?? this.success,
+    warning: warning ?? this.warning,
+    danger: danger ?? this.danger,
+  );
+
   static MochiTone _lightAccent(Color base, Color onBase, Color onSoft) => _accent(
     base: base,
     onBase: onBase,

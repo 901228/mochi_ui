@@ -24,7 +24,7 @@
 - [x] 圖示庫決定：Tabler（有 filled variant）。目前元件庫沒有任何內建圖示，換組是零成本
 - [x] `MochiIcons` token：元件自己會畫的 8 個圖示，`copyWith(icons:)` 可整組替換
 - [x] ⭐ 尺寸過渡動畫 — `MochiValueTransition<T>`：只在數值本身改變時才重跑（隱式 `Animated*` 會被主題動畫每幀重啟）。Button / Tile / Switch 已接上，時間為 `motion.sizeDuration`
-- [ ] ⭐ 以 `ColorScheme` 產生主題的 helper（像 forui CLI preset），方便 app 換主色
+- [x] ⭐ 換主色的 helper — `MochiTone.from(base, background:, softAlpha:)` 把一個顏色補成四個（`onBase` 在兩個墨色裡挑對比高的，都不到 4.5:1 就退回純白 / 純黑；`onSoft` 沿著自己的亮度調到對頁面背景 4.5:1，色相不動；`soft` 是既有的疊色公式），`MochiColors.branded({brightness, primary, info?, ...})` 換 accent 但保留中性色，另外補上 `MochiColors.copyWith`。對比計算在 `theme/contrast.dart`（不匯出）。**不接 Material 的 `ColorScheme`**、**不從單一 seed 推語意色**（綠色必須是綠的）。測試對 8 個品牌色 × 明暗兩套斷言每個 tone 的對比都達標；gallery 的 look bar 有換主色的按鈕
 - [x] ⭐ 評估各元件是否需要獨立的 style 類別 — **結論：不要整組加 style，但有 size 軸的元件要有 metrics。** P3 做完後回頭看，實際會想覆寫的是「尺寸」而不是「顏色」：顏色都能從 intent × appearance 推出來，真的要換主色是換 `MochiColors`，要換單一 app 的規則是 `MochiThemeExtension`，兩條路都已經有了。所以規則訂為：
   - **有 size 選項的元件 → 一份 `XxxMetrics`**（像 `MochiButtonMetrics`）：值要有 value equality 才能餵給 `MochiValueTransition`。Badge、Progress 接下來就是照這個做
   - **顏色 → 不開 style 類別**，除非某個元件的配色規則複雜到不是 `(colors, states) → color` 能講完（目前只有 button 是）
