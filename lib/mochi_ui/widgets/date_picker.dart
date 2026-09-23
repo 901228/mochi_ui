@@ -7,11 +7,9 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "calendar.dart";
 import "field_frame.dart";
-import "focus_ring.dart";
+import "picker_field.dart";
 import "popover.dart";
 import "sheet.dart";
-import "state_transition.dart";
-import "tappable.dart";
 import "value_transition.dart";
 
 /// A field that opens a [MochiCalendar]: the date on a solve, the week a statistic covers.
@@ -203,9 +201,10 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
         duration: theme.motion.sizeDuration,
         curve: theme.motion.sizeCurve,
         builder: (context, m, _) => sheet
-            ? _Field(
-                text: _text(context),
-                hint: widget.hint,
+            ? PickerField(
+                text: _text(context) ?? widget.hint ?? theme.strings.pickDate,
+                icon: theme.icons.calendar,
+                empty: _text(context) == null,
                 maxLines: widget._isRange ? 2 : 1,
                 metrics: m,
                 open: _open,
@@ -223,9 +222,10 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
                   width: 300,
                   child: _calendar(close: () => MenuController.maybeOf(context)?.close()),
                 ),
-                builder: (context, anchor, _) => _Field(
-                  text: _text(context),
-                  hint: widget.hint,
+                builder: (context, anchor, _) => PickerField(
+                  text: _text(context) ?? widget.hint ?? theme.strings.pickDate,
+                  icon: theme.icons.calendar,
+                  empty: _text(context) == null,
                   maxLines: widget._isRange ? 2 : 1,
                   metrics: m,
                   open: _open,
@@ -236,114 +236,6 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
                   onPress: anchor.toggle,
                 ),
               ),
-      ),
-    );
-  }
-}
-
-/// The box that opens it: a text field's look, with a calendar at its end.
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.text,
-    required this.hint,
-    required this.maxLines,
-    required this.metrics,
-    required this.open,
-    required this.error,
-    required this.enabled,
-    required this.autofocus,
-    required this.onPress,
-    this.focusNode,
-  });
-
-  final String? text;
-  final String? hint;
-
-  /// One line for a day, two for a run of them: a range that spans two years has nothing left to
-  /// shorten, and a date cut off by an ellipsis says nothing at all.
-  final int maxLines;
-
-  final MochiButtonMetrics metrics;
-  final bool open;
-  final bool error;
-  final bool enabled;
-  final bool autofocus;
-  final VoidCallback onPress;
-  final FocusNode? focusNode;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    final colors = theme.colors;
-    final g = theme.geometry;
-    final primary = colors.of(MochiIntent.primary);
-    final danger = colors.of(MochiIntent.danger);
-    final radius = metrics.radius(g.radius);
-    final text = this.text;
-
-    return MochiTappable(
-      enabled: enabled,
-      focusNode: focusNode,
-      autofocus: autofocus,
-      // A field, not a button: it tints its border rather than growing.
-      scaleOnPress: false,
-      onPress: onPress,
-      semanticLabel: text,
-      builder: (context, states, _) => MochiStateTransition(
-        states: {...states, if (open) WidgetState.selected, if (error) WidgetState.error},
-        duration: theme.motion.stateDuration,
-        builder: (context, blend) => MochiFocusRing(
-          visible: blend.contains(WidgetState.focused),
-          radius: radius,
-          child: DecoratedBox(
-            decoration: ShapeDecoration(
-              color: colors.surface,
-              shape: RoundedSuperellipseBorder(
-                borderRadius: radius,
-                side: BorderSide(
-                  width: g.borderWidth,
-                  color: blend.color(
-                    (st) => switch (st) {
-                      _ when st.contains(WidgetState.error) => danger.base,
-                      _ when st.contains(WidgetState.selected) => primary.base,
-                      _ when st.contains(WidgetState.hovered) => Color.lerp(
-                        colors.border,
-                        colors.mutedForeground,
-                        0.5,
-                      )!,
-                      _ => colors.border,
-                    },
-                  ),
-                ),
-              ),
-            ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: metrics.height),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: metrics.horizontalPadding,
-                  vertical: metrics.gap / 2,
-                ),
-                child: Row(
-                  spacing: metrics.gap,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        text ?? hint ?? theme.strings.pickDate,
-                        maxLines: maxLines,
-                        overflow: TextOverflow.ellipsis,
-                        style: metrics
-                            .textStyle(theme.typography)
-                            .copyWith(color: text == null ? colors.mutedForeground : colors.foreground),
-                      ),
-                    ),
-                    Icon(theme.icons.calendar, size: metrics.iconSize, color: colors.mutedForeground),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
