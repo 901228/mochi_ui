@@ -336,6 +336,37 @@ void main() {
     expect(range, MochiDateRange(DateTime(2026, 7, 6), DateTime(2026, 7, 16)));
   });
 
+  testWidgets("a range drawn backwards grows the same way", (tester) async {
+    // Dragging towards earlier days makes the moving end the range's *start*, so anything that
+    // reads the anchor back out of the range follows the finger and the run never grows.
+    MochiDateRange? range;
+    await tester.pumpWidget(
+      app(
+        StatefulBuilder(
+          builder: (context, setState) => MochiCalendar.range(
+            month: july,
+            value: range,
+            onChanged: (next) => setState(() => range = next),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(tester.getCenter(day("23")));
+    await tester.pump();
+    // Day by day, the way a finger actually travels: a drag that lands in one jump asks the
+    // question only once and any anchor at all would answer it.
+    for (final over in ["22", "21", "20", "16", "11"]) {
+      await gesture.moveTo(tester.getCenter(day(over)));
+      await tester.pumpAndSettle();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(range, MochiDateRange(DateTime(2026, 7, 11), DateTime(2026, 7, 23)));
+  });
+
   testWidgets("gathering days offers to let go of all of them", (tester) async {
     var days = <DateTime>{};
     await tester.pumpWidget(

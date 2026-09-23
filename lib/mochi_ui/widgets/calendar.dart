@@ -182,6 +182,9 @@ class _MochiCalendarState extends State<MochiCalendar> {
 
   /// The day the finger went down on, which is where a dragged run starts.
   DateTime? _pressedDay;
+
+  /// The end of a dragged run that stays put, kept for the whole gesture.
+  DateTime? _dragAnchor;
   bool _focusVisible = false;
 
   /// Where a calendar opens when nothing says otherwise: what is already picked, else today.
@@ -435,24 +438,30 @@ class _MochiCalendarState extends State<MochiCalendar> {
   }
 
   void _dragFrom(DragStartDetails details) {
+    _dragAnchor = null;
+
     final day = _pressedDay ?? _dayAt(details.globalPosition);
     if (day == null || !_canPick(day)) return;
 
     // A drag starts a run rather than continuing one: it is one gesture, so it says both ends.
+    _dragAnchor = _dayOf(day);
     setState(() => _focused = day);
     widget._onRange?.call(MochiDateRange(day));
   }
 
   void _dragTo(DragUpdateDetails details) {
     final day = _dayAt(details.globalPosition);
-    final range = widget._range;
-    if (day == null || range == null || !_canPick(day)) return;
+    final anchor = _dragAnchor;
+    if (day == null || anchor == null || !_canPick(day)) return;
 
-    final start = _dayOf(range.start);
-    if (range.end != null && _sameDay(day, _dayOf(range.end!))) return;
+    // Against the day the gesture started on, not against the range's own start: dragging
+    // backwards makes the dragged end the *start*, so reading the anchor back out of the range
+    // would move it along with the finger and the run would never grow.
+    final next = day.isBefore(anchor) ? MochiDateRange(day, anchor) : MochiDateRange(anchor, day);
+    if (next == widget._range) return;
 
     setState(() => _focused = day);
-    widget._onRange?.call(day.isBefore(start) ? MochiDateRange(day, start) : MochiDateRange(start, day));
+    widget._onRange?.call(next);
   }
 }
 
