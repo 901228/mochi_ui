@@ -239,6 +239,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AvatarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("refresh", .section),
+          const SizedBox(height: 12),
+          const _RefreshSample(),
+          const SizedBox(height: 32),
           const _ThemedText("sortable", .section),
           const SizedBox(height: 12),
           const _SortableSample(),
@@ -3422,6 +3426,46 @@ class _SortableSampleState extends State<_SortableSample> {
         ),
         _ThemedText(_steps.join(" → "), .muted),
       ],
+    );
+  }
+}
+
+class _RefreshSample extends StatefulWidget {
+  const _RefreshSample();
+
+  @override
+  State<_RefreshSample> createState() => _RefreshSampleState();
+}
+
+class _RefreshSampleState extends State<_RefreshSample> {
+  int _round = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return SizedBox(
+      width: 320,
+      height: 260,
+      child: MochiCard(
+        padding: EdgeInsets.zero,
+        child: MochiRefresh(
+          onRefresh: () async {
+            await Future<void>.delayed(const Duration(milliseconds: 1200));
+            if (mounted) setState(() => _round++);
+          },
+          child: ListView(
+            padding: EdgeInsets.all(g.space.sm),
+            children: [
+              for (var i = 0; i < 8; i++)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: g.space.xs2),
+                  child: Text("solve ${_round * 10 + i}"),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
