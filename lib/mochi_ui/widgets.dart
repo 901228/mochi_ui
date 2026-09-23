@@ -39,6 +39,7 @@ export "widgets/sheet.dart";
 export "widgets/sidebar.dart";
 export "widgets/skeleton.dart";
 export "widgets/slider.dart";
+export "widgets/sortable.dart";
 export "widgets/state_transition.dart";
 export "widgets/stepper.dart";
 export "widgets/switch.dart";

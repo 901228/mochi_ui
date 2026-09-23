@@ -18,6 +18,7 @@ class MochiIcons {
     this.chevronLeft = TablerIcons.chevronLeft,
     this.chevronRight = TablerIcons.chevronRight,
     this.more = TablerIcons.dots,
+    this.grip = TablerIcons.gripVertical,
     this.search = TablerIcons.search,
     this.user = TablerIcons.user,
     this.calendar = TablerIcons.calendar,
@@ -42,6 +43,9 @@ class MochiIcons {
   final IconData chevronLeft;
   final IconData chevronRight;
   final IconData more;
+
+  /// What a sortable row is dragged by.
+  final IconData grip;
 
   /// A search field's leading icon.
   final IconData search;
@@ -88,6 +92,7 @@ class MochiIcons {
           chevronLeft == other.chevronLeft &&
           chevronRight == other.chevronRight &&
           more == other.more &&
+          grip == other.grip &&
           search == other.search &&
           user == other.user &&
           calendar == other.calendar &&
@@ -109,6 +114,7 @@ class MochiIcons {
     chevronLeft,
     chevronRight,
     more,
+    grip,
     search,
     user,
     calendar,

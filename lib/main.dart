@@ -239,6 +239,10 @@ class _Gallery extends StatelessWidget {
           const SizedBox(height: 12),
           const _AvatarSample(),
           const SizedBox(height: 32),
+          const _ThemedText("sortable", .section),
+          const SizedBox(height: 12),
+          const _SortableSample(),
+          const SizedBox(height: 32),
           const _ThemedText("skeleton", .section),
           const SizedBox(height: 12),
           const _SkeletonSample(),
@@ -3374,6 +3378,49 @@ class _SkeletonSample extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _SortableSample extends StatefulWidget {
+  const _SortableSample();
+
+  @override
+  State<_SortableSample> createState() => _SortableSampleState();
+}
+
+class _SortableSampleState extends State<_SortableSample> {
+  final _steps = ["Cross", "F2L", "OLL", "PLL", "Inspection"];
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Row(
+      spacing: g.space.md,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 320,
+          height: 5 * 52,
+          child: MochiSortable(
+            itemCount: _steps.length,
+            spacing: g.space.xs2,
+            onReorder: (from, to) => setState(() => _steps.insert(to, _steps.removeAt(from))),
+            itemBuilder: (context, index) => MochiCard(
+              key: ValueKey(_steps[index]),
+              padding: EdgeInsets.symmetric(horizontal: g.space.md, vertical: g.space.sm),
+              child: Row(
+                children: [
+                  Expanded(child: Text(_steps[index])),
+                  MochiSortableHandle(index: index),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _ThemedText(_steps.join(" → "), .muted),
       ],
     );
   }

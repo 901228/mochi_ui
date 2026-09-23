@@ -23,6 +23,7 @@ class MochiStrings {
     required this.close,
     required this.dismiss,
     required this.remove,
+    required this.reorder,
     required this.search,
     required this.clear,
     required this.pickDate,
@@ -60,6 +61,9 @@ class MochiStrings {
 
   /// Takes one item out of a set, such as the × on a badge.
   final String remove;
+
+  /// The grip a sortable row is dragged by, which has no words of its own.
+  final String reorder;
 
   /// A search field's own hint, when it is given none.
   final String search;
@@ -116,6 +120,7 @@ class MochiStrings {
     close: "Close",
     dismiss: "Dismiss",
     remove: "Remove",
+    reorder: "Reorder",
     search: "Search",
     clear: "Clear",
     pickDate: "Pick a date",
@@ -153,6 +158,7 @@ class MochiStrings {
     close: "關閉",
     dismiss: "關閉",
     remove: "移除",
+    reorder: "重新排序",
     search: "搜尋",
     clear: "清除",
     pickDate: "選擇日期",
@@ -182,6 +188,7 @@ class MochiStrings {
     String? close,
     String? dismiss,
     String? remove,
+    String? reorder,
     String? search,
     String? clear,
     String? pickDate,
@@ -207,6 +214,7 @@ class MochiStrings {
     close: close ?? this.close,
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
+    reorder: reorder ?? this.reorder,
     search: search ?? this.search,
     clear: clear ?? this.clear,
     pickDate: pickDate ?? this.pickDate,
@@ -237,6 +245,7 @@ class MochiStrings {
           close == other.close &&
           dismiss == other.dismiss &&
           remove == other.remove &&
+          reorder == other.reorder &&
           search == other.search &&
           clear == other.clear &&
           pickDate == other.pickDate &&
@@ -265,6 +274,7 @@ class MochiStrings {
     close,
     dismiss,
     remove,
+    reorder,
     search,
     clear,
     pickDate,
