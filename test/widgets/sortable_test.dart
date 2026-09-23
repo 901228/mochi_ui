@@ -156,11 +156,17 @@ void main() {
     await gesture.moveBy(const Offset(0, 30));
     await tester.pumpAndSettle();
 
-    final lifted = tester.widgetList<DecoratedBox>(find.byType(DecoratedBox)).where((box) {
-      final decoration = box.decoration;
-      return decoration is BoxDecoration && decoration.boxShadow?.isNotEmpty == true;
-    });
+    final lifted = tester
+        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+        .map((box) => box.decoration)
+        .whereType<ShapeDecoration>()
+        .where((decoration) => decoration.shadows?.isNotEmpty == true);
     expect(lifted, isNotEmpty, reason: "the row being carried casts a shadow");
+    expect(
+      lifted.every((decoration) => decoration.shape is RoundedSuperellipseBorder),
+      isTrue,
+      reason: "a square shadow under a rounded row is a grey box nobody drew",
+    );
 
     await gesture.up();
     await tester.pumpAndSettle();

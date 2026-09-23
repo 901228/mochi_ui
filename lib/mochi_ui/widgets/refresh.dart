@@ -1,5 +1,6 @@
 import "dart:math" as math;
 
+import "package:flutter/gestures.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
@@ -36,6 +37,7 @@ class MochiRefresh extends StatefulWidget {
     this.triggerDistance = 88,
     this.intent = MochiIntent.primary,
     this.enabled = true,
+    this.mouseDrags = true,
   }) : assert(triggerDistance > 0);
 
   /// Run when the pull is let go past [triggerDistance]. The indicator turns and the list is held
@@ -49,6 +51,11 @@ class MochiRefresh extends StatefulWidget {
 
   final MochiIntent intent;
   final bool enabled;
+
+  /// Whether a mouse may drag the list, and so pull it. On a desktop platform a scrollable
+  /// refuses a mouse drag unless it is told otherwise, and a wheel at the top of a list reports
+  /// no overscroll at all — so without this there is nothing on a desktop that can pull.
+  final bool mouseDrags;
 
   @override
   State<MochiRefresh> createState() => _MochiRefreshState();
@@ -187,7 +194,15 @@ class _MochiRefreshState extends State<MochiRefresh> with SingleTickerProviderSt
       onNotification: _onNotification,
       child: Stack(
         children: [
-          widget.child,
+          if (widget.mouseDrags)
+            ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {...ScrollConfiguration.of(context).dragDevices, PointerDeviceKind.mouse},
+              ),
+              child: widget.child,
+            )
+          else
+            widget.child,
           Positioned(
             top: 0,
             left: 0,

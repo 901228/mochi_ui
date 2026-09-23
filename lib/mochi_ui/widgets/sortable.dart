@@ -44,6 +44,7 @@ class MochiSortable extends StatelessWidget {
     this.onReorderStart,
     this.onReorderEnd,
     this.wholeItemDrags,
+    this.liftRadius,
   }) : assert(itemCount >= 0);
 
   final int itemCount;
@@ -71,6 +72,11 @@ class MochiSortable extends StatelessWidget {
   /// Defaults to the theme's `touch`.
   final bool? wholeItemDrags;
 
+  /// The corners the carried row's shadow is drawn with. Defaults to `radius.md`, a card's: the
+  /// list cannot ask a row what shape it is, and a square shadow under a rounded row is a grey
+  /// box with corners of its own.
+  final BorderRadius? liftRadius;
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -92,7 +98,8 @@ class MochiSortable extends StatelessWidget {
       // The framework's newer callback, which has already counted the row out of the list: the
       // adjustment everyone writes by hand under the old one is exactly the bug it caused.
       onReorderItem: onReorder,
-      proxyDecorator: (child, index, animation) => _Carried(animation: animation, child: child),
+      proxyDecorator: (child, index, animation) =>
+          _Carried(animation: animation, radius: liftRadius, child: child),
       itemBuilder: (context, index) {
         final item = itemBuilder(context, index);
         assert(item.key != null, "Every row of a MochiSortable needs a key of its own.");
@@ -112,9 +119,10 @@ class MochiSortable extends StatelessWidget {
 
 /// The row being carried: lifted off the page, and grown the way a press grows it.
 class _Carried extends StatelessWidget {
-  const _Carried({required this.animation, required this.child});
+  const _Carried({required this.animation, required this.radius, required this.child});
 
   final Animation<double> animation;
+  final BorderRadius? radius;
   final Widget child;
 
   @override
@@ -133,7 +141,12 @@ class _Carried extends StatelessWidget {
         return Transform.scale(
           scale: 1 + 0.03 * t,
           child: DecoratedBox(
-            decoration: BoxDecoration(boxShadow: [for (final shadow in shadows) shadow.scale(t)]),
+            // A shape, not a plain box: a shadow cast off a rectangle behind a row with rounded
+            // corners is a grey square nobody drew.
+            decoration: ShapeDecoration(
+              shape: RoundedSuperellipseBorder(borderRadius: radius ?? theme.geometry.radius.md),
+              shadows: [for (final shadow in shadows) shadow.scale(t)],
+            ),
             child: child,
           ),
         );
