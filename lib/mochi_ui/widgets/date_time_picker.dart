@@ -10,8 +10,8 @@ import "calendar.dart";
 import "divider.dart";
 import "field_frame.dart";
 import "picker_field.dart";
+import "picker_sheet.dart";
 import "popover.dart";
-import "sheet.dart";
 import "time_picker.dart";
 import "value_transition.dart";
 
@@ -100,9 +100,9 @@ class _MochiDateTimePickerState extends State<MochiDateTimePicker> {
   /// doesn't quietly change which day it is talking about.
   late final DateTime _today = DateTime.now();
 
-  DateTime get _day => widget.value ?? _today;
-  MochiTime get _time =>
-      MochiTime.fromDateTime(widget.value ?? _today.copyWith(hour: 9, minute: 0, second: 0));
+  /// The moment a panel opens on: what is already set, or today at the top of the working
+  /// morning when nothing is.
+  DateTime get _start => widget.value ?? _today.copyWith(hour: 9, minute: 0, second: 0);
 
   void _emit(DateTime at) => widget.onChanged?.call(at);
 
@@ -123,15 +123,17 @@ class _MochiDateTimePickerState extends State<MochiDateTimePicker> {
     return "$day $time";
   }
 
-  Widget _panel({required VoidCallback close}) {
-    final theme = context.theme;
-    final g = theme.geometry;
+  /// The calendar over the wheels, taking the moment it shows and where a change goes: a popover
+  /// reports straight back, a sheet writes to its draft.
+  Widget _body(DateTime value, ValueChanged<DateTime> onChanged) {
+    final g = context.theme.geometry;
+    final time = MochiTime.fromDateTime(value);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         MochiCalendar.single(
-          value: widget.value,
+          value: value,
           first: widget.first,
           last: widget.last,
           enabledDay: widget.enabledDay,
@@ -139,22 +141,36 @@ class _MochiDateTimePickerState extends State<MochiDateTimePicker> {
           intent: widget.intent,
           autofocus: true,
           // The time it already has, on the day just pressed.
-          onChanged: (day) => _emit(_time.onDay(day)),
+          onChanged: (day) => onChanged(time.onDay(day)),
         ),
         MochiDivider(indent: g.space.sm, endIndent: g.space.sm),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
           child: MochiTimeWheel(
-            value: _time,
+            value: time,
             showSeconds: widget.showSeconds,
             use24HourFormat: widget.use24HourFormat,
             minuteStep: widget.minuteStep,
             intent: widget.intent,
-            onChanged: (time) => _emit(time.onDay(_day)),
+            onChanged: (next) => onChanged(next.onDay(value)),
           ),
         ),
+      ],
+    );
+  }
+
+  /// The popover's panel: the same body, plus the button that shuts it. A day is not an answer
+  /// and neither is a time, so nothing here closes of its own accord.
+  Widget _panel(VoidCallback close) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _body(_start, _emit),
         Padding(
-          padding: EdgeInsets.fromLTRB(g.space.sm, 0, g.space.sm, g.space.sm),
+          padding: EdgeInsets.fromLTRB(g.space.sm, g.space.xs, g.space.sm, g.space.sm),
           child: SizedBox(
             width: double.infinity,
             child: MochiButton(intent: widget.intent, onPress: close, child: Text(theme.strings.ok)),
@@ -166,18 +182,14 @@ class _MochiDateTimePickerState extends State<MochiDateTimePicker> {
 
   Future<void> _openSheet() async {
     setState(() => _open = true);
-    await showMochiSheet(
+    // A sheet keeps its own draft and hands it back on OK; see showPickerSheet.
+    final picked = await showPickerSheet<DateTime>(
       context,
-      builder: (context) => MochiSheet(
-        // A sheet stops at half the screen by default, which a calendar and a set of wheels one
-        // above the other are taller than; this one is allowed most of it.
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
-        padding: EdgeInsets.only(top: context.theme.geometry.space.sm),
-        // A calendar and a set of wheels one above the other are taller than a short phone in
-        // landscape: the panel scrolls rather than running off the bottom of the sheet.
-        child: SingleChildScrollView(child: _panel(close: () => Navigator.of(context).pop())),
-      ),
+      initial: _start,
+      intent: widget.intent,
+      body: (context, at, set) => _body(at, set),
     );
+    if (picked != null) _emit(picked);
     if (mounted) setState(() => _open = false);
   }
 
@@ -215,10 +227,8 @@ class _MochiDateTimePickerState extends State<MochiDateTimePicker> {
                 align: MochiPopoverAlign.start,
                 onOpen: () => setState(() => _open = true),
                 onClose: () => setState(() => _open = false),
-                popoverBuilder: (context) => SizedBox(
-                  width: 300,
-                  child: _panel(close: () => MenuController.maybeOf(context)?.close()),
-                ),
+                popoverBuilder: (context) =>
+                    SizedBox(width: 300, child: _panel(() => MenuController.maybeOf(context)?.close())),
                 builder: (context, anchor, _) => PickerField(
                   text: _say(context),
                   icon: theme.icons.calendar,

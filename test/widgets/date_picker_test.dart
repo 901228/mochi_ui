@@ -20,6 +20,14 @@ void main() {
     ),
   );
 
+  /// The surface itself, not a MediaQuery over it: a sheet is as tall as its contents, and a
+  /// screen that only says it is 900 tall has nowhere to put them.
+  void screen(WidgetTester tester, Size size) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
+
   Future<void> click(WidgetTester tester, Finder finder) async {
     await tester.tap(finder, kind: PointerDeviceKind.mouse);
     await tester.pumpAndSettle();
@@ -101,8 +109,9 @@ void main() {
     expect(find.textContaining("10 – 14"), findsOneWidget);
   });
 
-  testWidgets("on a phone it comes up as a sheet instead", (tester) async {
+  testWidgets("on a phone it comes up as a sheet, which is answered and then confirmed", (tester) async {
     DateTime? value;
+    screen(tester, const Size(420, 900));
     await tester.pumpWidget(
       app(
         StatefulBuilder(
@@ -121,8 +130,49 @@ void main() {
 
     await tester.tap(find.text("15").first);
     await tester.pumpAndSettle();
+    expect(value, isNull, reason: "a sheet keeps its draft until the button says otherwise");
+    expect(find.byType(MochiSheet), findsOneWidget);
+
+    await tester.tap(find.text("OK"));
+    await tester.pumpAndSettle();
     expect(value!.day, 15);
     expect(find.byType(MochiSheet), findsNothing);
+  });
+
+  testWidgets("a range in a sheet is given its second end", (tester) async {
+    // The sheet is a route, so nothing the picker rebuilds reaches inside it: the draft the
+    // calendar is drawn from has to be the sheet's own, or a range could never be finished.
+    MochiDateRange? range;
+    screen(tester, const Size(420, 900));
+    await tester.pumpWidget(
+      app(
+        StatefulBuilder(
+          builder: (context, setState) =>
+              MochiDatePicker.range(value: range, onChanged: (next) => setState(() => range = next)),
+        ),
+        size: const Size(420, 900),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(MochiIcons.standard.calendar));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("10").first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("OK"), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(MochiSheet), findsOneWidget, reason: "half a range is not an answer");
+
+    await tester.tap(find.text("14").first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("OK"));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MochiSheet), findsNothing);
+    expect(range!.complete, isTrue);
+    expect(range!.start.day, 10);
+    expect(range!.end!.day, 14);
   });
 
   testWidgets("the label, description and error go where a field's do", (tester) async {

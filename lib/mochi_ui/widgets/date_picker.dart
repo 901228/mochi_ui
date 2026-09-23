@@ -8,8 +8,8 @@ import "../theme/tone.dart";
 import "calendar.dart";
 import "field_frame.dart";
 import "picker_field.dart";
+import "picker_sheet.dart";
 import "popover.dart";
-import "sheet.dart";
 import "value_transition.dart";
 
 /// A field that opens a [MochiCalendar]: the date on a solve, the week a statistic covers.
@@ -139,46 +139,74 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
     return widget._day == null ? null : _say(context, widget._day!);
   }
 
-  Widget _calendar({required VoidCallback close}) => widget._isRange
+  /// The calendar, taking the value it shows and where a press goes as parameters: a popover
+  /// shows the picker's own value and reports straight back, a sheet shows its draft.
+  Widget _calendar({
+    required DateTime? day,
+    required MochiDateRange? range,
+    required ValueChanged<DateTime> onDay,
+    required ValueChanged<MochiDateRange> onRange,
+  }) => widget._isRange
       ? MochiCalendar.range(
-          value: widget._range,
+          value: range,
           first: widget.first,
           last: widget.last,
           enabledDay: widget.enabledDay,
           firstDayOfWeek: widget.firstDayOfWeek,
           intent: widget.intent,
-          onChanged: (range) {
-            widget._onRange?.call(range);
-            // A half-made range stays open for its second end; a finished one has said all it
-            // has to say.
-            if (range.complete) close();
-          },
+          onChanged: onRange,
         )
       : MochiCalendar.single(
-          value: widget._day,
+          value: day,
           first: widget.first,
           last: widget.last,
           enabledDay: widget.enabledDay,
           firstDayOfWeek: widget.firstDayOfWeek,
           intent: widget.intent,
           autofocus: true,
-          onChanged: (day) {
-            widget._onDay?.call(day);
-            close();
-          },
+          onChanged: onDay,
         );
+
+  /// What a popover does with a press: report it, and close once there is nothing left to pick.
+  Widget _livePopoverCalendar(VoidCallback close) => _calendar(
+    day: widget._day,
+    range: widget._range,
+    onDay: (day) {
+      widget._onDay?.call(day);
+      close();
+    },
+    onRange: (range) {
+      widget._onRange?.call(range);
+      // A half-made range stays open for its second end; a finished one has said all it has to
+      // say.
+      if (range.complete) close();
+    },
+  );
 
   Future<void> _openSheet() async {
     setState(() => _open = true);
-    await showMochiSheet(
-      context,
-      // The route carries a sheet the same way a dialog route carries a dialog: the panel is the
-      // builder's to return.
-      builder: (context) => MochiSheet(
-        padding: EdgeInsets.all(context.theme.geometry.space.md),
-        child: _calendar(close: () => Navigator.of(context).pop()),
-      ),
-    );
+
+    // A sheet keeps its own draft and hands it back on OK; see showPickerSheet.
+    if (widget._isRange) {
+      final picked = await showPickerSheet<MochiDateRange?>(
+        context,
+        initial: widget._range,
+        intent: widget.intent,
+        answered: (range) => range?.complete ?? false,
+        body: (context, range, set) => _calendar(day: null, range: range, onDay: (_) {}, onRange: set),
+      );
+      if (picked != null) widget._onRange?.call(picked);
+    } else {
+      final picked = await showPickerSheet<DateTime?>(
+        context,
+        initial: widget._day,
+        intent: widget.intent,
+        answered: (day) => day != null,
+        body: (context, day, set) => _calendar(day: day, range: null, onDay: set, onRange: (_) {}),
+      );
+      if (picked != null) widget._onDay?.call(picked);
+    }
+
     if (mounted) setState(() => _open = false);
   }
 
@@ -220,7 +248,7 @@ class _MochiDatePickerState extends State<MochiDatePicker> {
                 onClose: () => setState(() => _open = false),
                 popoverBuilder: (context) => SizedBox(
                   width: 300,
-                  child: _calendar(close: () => MenuController.maybeOf(context)?.close()),
+                  child: _livePopoverCalendar(() => MenuController.maybeOf(context)?.close()),
                 ),
                 builder: (context, anchor, _) => PickerField(
                   text: _text(context) ?? widget.hint ?? theme.strings.pickDate,

@@ -8,8 +8,8 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "field_frame.dart";
 import "picker_field.dart";
+import "picker_sheet.dart";
 import "popover.dart";
-import "sheet.dart";
 import "value_transition.dart";
 
 /// A time of day, to the second.
@@ -436,21 +436,28 @@ class _MochiTimePickerState extends State<MochiTimePicker> {
     return "${value.hourOf12}:$minute$seconds ${value.isAfternoon ? strings.pm : strings.am}";
   }
 
-  Widget get _wheel => Padding(
+  Widget _wheel(MochiTime value, ValueChanged<MochiTime> onChanged) => Padding(
     padding: EdgeInsets.all(context.theme.geometry.space.sm),
     child: MochiTimeWheel(
-      value: _value,
+      value: value,
       showSeconds: widget.showSeconds,
       use24HourFormat: widget.use24HourFormat,
       minuteStep: widget.minuteStep,
       intent: widget.intent,
-      onChanged: (time) => widget.onChanged?.call(time),
+      onChanged: onChanged,
     ),
   );
 
   Future<void> _openSheet() async {
     setState(() => _open = true);
-    await showMochiSheet(context, builder: (context) => MochiSheet(child: _wheel));
+    // A sheet keeps its own draft and hands it back on OK; see showPickerSheet.
+    final picked = await showPickerSheet<MochiTime>(
+      context,
+      initial: _value,
+      intent: widget.intent,
+      body: (context, time, set) => _wheel(time, set),
+    );
+    if (picked != null) widget.onChanged?.call(picked);
     if (mounted) setState(() => _open = false);
   }
 
@@ -488,7 +495,10 @@ class _MochiTimePickerState extends State<MochiTimePicker> {
                 align: MochiPopoverAlign.start,
                 onOpen: () => setState(() => _open = true),
                 onClose: () => setState(() => _open = false),
-                popoverBuilder: (context) => SizedBox(width: widget.showSeconds ? 240 : 180, child: _wheel),
+                popoverBuilder: (context) => SizedBox(
+                  width: widget.showSeconds ? 240 : 180,
+                  child: _wheel(_value, (time) => widget.onChanged?.call(time)),
+                ),
                 builder: (context, anchor, _) => PickerField(
                   text: _say(context),
                   icon: theme.icons.clock,
