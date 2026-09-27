@@ -138,6 +138,8 @@
 
 - [x] ⭐ Action / ActionBar — `MochiAction`（值型別：icon + label + onPress + intent + `showLabel` + `selected`，另有 `.back` / `.close` 兩個內建，圖示和文字都從 theme 拿）和 `MochiActionBar`（放不下就把最後幾個折進 `…` 的 `MochiPopoverMenu`，最後一格固定是 `…`，所以整排寬度不變）。label 是 `String` 不是 `Widget`，因為同一筆資料要能畫成按鈕（label 當 tooltip 和語意名）也要能畫成選單的一列——跟 `MochiSelectOption` 同一個理由。上限是「格數」不是量出來的寬度：這排通常在一列的尾端、中間那個才是彈性的（header 的標題），它拿到的是無界寬度，沒東西可量；預設看 breakpoint（手機 2 格、平板以上 4 格），`maxVisible` 可蓋。`MochiHeader` 的 `prefixes` / `suffixes` 改吃 `List<MochiAction>`，`MochiHeaderAction` 移除。`MochiDialog` / `showMochiModal` 新增 `titleSuffix`（標題那一行的尾端，放不是「答案」的東西：關閉鈕、或一排 action）。新增 `MochiStrings.more`
 
+- [x] ⭐ 等待中的按鈕 — `MochiButton(loading:)` 和 `MochiButton.async(onPress:)`：**不是新元件，是按鈕的一個狀態**（跟 tabs 是 segmented control 的 appearance 同一條規則）。轉圈疊在 label 上、label 留在原地只是透明，所以按鈕前後寬度一樣、旁邊的東西不會位移；等待中不算 disabled，所以不會套那層 40% 的淡化（淡掉的轉圈看起來像壞掉）。`loading` 是 app 自己管狀態（表單要一次 disable 好幾個、或那個動作別的地方也能發起）；`.async` 是按鈕自己管：跑的時候不接第二次按、例外走 `FlutterError.reportError`、`finally` 一定把 label 放回來
+
 ## 10. 決定不做的（免得再繞回來）
 
 - **Chart** — 圖表是一整個領域（scale、tick、legend、hit test、動畫、a11y），做一半比沒有更糟。也不建議 `fl_chart`：它 import `package:flutter/material.dart`，會把這個專案唯一的硬規則破掉。cube timer 統計頁真正要的是「一條 solve time 折線 + ao5 / ao12 疊上去」，那是一個 `CustomPainter`，約 150 行、顏色直接讀 `context.colors`，**寫在 app 裡**。等出現第二種圖表再回來談

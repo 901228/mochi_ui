@@ -171,6 +171,7 @@ class _GalleryState extends State<_Gallery> {
       sections: [
         ("knobs", const _ButtonKnobs()),
         ("sizes", const _SizeSample()),
+        ("waiting", const _WaitingSample()),
         ("playground", const _Playground()),
         for (final appearance in MochiButtonAppearance.values)
           ("button · ${appearance.name}", _Wide(child: _AppearanceTable(appearance: appearance))),

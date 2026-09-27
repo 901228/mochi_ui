@@ -1,5 +1,63 @@
 part of "../main.dart";
 
+/// The two ways a button waits: the app holding the state, and the button holding it.
+class _WaitingSample extends StatefulWidget {
+  const _WaitingSample();
+
+  @override
+  State<_WaitingSample> createState() => _WaitingSampleState();
+}
+
+class _WaitingSampleState extends State<_WaitingSample> {
+  bool _saving = false;
+
+  Future<void> _work() => Future<void>.delayed(const Duration(milliseconds: 1200));
+
+  @override
+  Widget build(BuildContext context) {
+    final knobs = _Knobs.of(context);
+    final g = context.theme.geometry;
+
+    return Wrap(
+      spacing: g.space.md,
+      runSpacing: g.space.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        MochiButton(
+          size: knobs.size,
+          intent: knobs.intent,
+          enabled: knobs.enabled,
+          loading: _saving,
+          onPress: () async {
+            setState(() => _saving = true);
+            await _work();
+            if (mounted) setState(() => _saving = false);
+          },
+          child: const Text("app holds it"),
+        ),
+        MochiButton.async(
+          size: knobs.size,
+          intent: knobs.intent,
+          enabled: knobs.enabled,
+          onPress: _work,
+          child: const Text("button holds it"),
+        ),
+        MochiButton.async(
+          size: knobs.size,
+          intent: MochiIntent.danger,
+          enabled: knobs.enabled,
+          onPress: () async {
+            await _work();
+            throw StateError("the errand failed");
+          },
+          child: const Text("one that fails"),
+        ),
+        const _ThemedText("the label stays put underneath, so nothing shuffles", .muted),
+      ],
+    );
+  }
+}
+
 class _SizeSample extends StatelessWidget {
   const _SizeSample();
 
