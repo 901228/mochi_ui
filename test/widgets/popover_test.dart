@@ -188,6 +188,49 @@ void main() {
       expect(find.text("from the button"), findsNothing);
     });
 
+    testWidgets("the press that puts a panel away does nothing else", (tester) async {
+      var pressed = 0;
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: false,
+            home: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                MochiPopover(
+                  popoverBuilder: (context) => const Text("panel"),
+                  builder: (context, anchor, _) => MochiButton(
+                    focusNode: anchor.focusNode,
+                    onPress: anchor.toggle,
+                    child: const Text("open"),
+                  ),
+                ),
+                MochiButton(onPress: () => pressed++, child: const Text("elsewhere")),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text("open"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      expect(find.text("panel"), findsOneWidget);
+
+      await tester.tap(find.text("elsewhere"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+
+      // Aimed at "away", and that is all it did: the button under it was not pressed as well.
+      expect(find.text("panel"), findsNothing);
+      expect(pressed, 0);
+
+      await tester.tap(find.text("elsewhere"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      expect(pressed, 1);
+    });
+
     testWidgets("a submenu leaves the menu it came out of standing", (tester) async {
       await tester.pumpWidget(
         MediaQuery(

@@ -64,7 +64,7 @@ class MochiPopover extends StatefulWidget {
     this.padding,
     this.surface = true,
     this.scrim,
-    this.consumeOutsideTaps = false,
+    this.consumeOutsideTaps = true,
     this.closeOnAnchorPress = false,
     this.autofocus = true,
     this.onOpen,
@@ -112,8 +112,11 @@ class MochiPopover extends StatefulWidget {
 
   /// Whether the tap that closes the popover is also delivered to whatever is underneath.
   ///
-  /// False by default, so moving from one row's menu to the next row's is one press rather than
-  /// two. A [scrim] swallows it anyway, since a finger has no cursor to aim with.
+  /// It is not: the press that puts a panel away has said what it is for, and doing a second
+  /// thing with it — choosing a row, following a link — is not what anybody aiming at "away"
+  /// meant. Both desktop toolkits swallow it too. The cost is that moving from one row's menu to
+  /// the next takes two presses rather than one, which is the right way round: one of those
+  /// presses is a mistake far more often than it is a shortcut.
   final bool consumeOutsideTaps;
 
   /// Whether pressing the anchor while the popover is open puts it away.
