@@ -216,29 +216,47 @@ void main() {
     expect(find.text("Rename"), findsOneWidget);
   });
 
-  testWidgets("pressing the child again puts the context menu away", (tester) async {
-    await tester.pumpWidget(
-      app(
-        MochiContextMenu(
-          menuBuilder: items,
-          child: MochiTile(title: const Text("row"), onPress: () => events.add("open row")),
+  // The child is inside the menu's tap region, so pressing it is not an outside tap; the row it
+  // belongs to has to put the menu away itself. What that press *also* does depends on whether
+  // there is a scrim over it, which is the next test.
+  for (final touch in [false, true]) {
+    testWidgets("pressing the child again puts the context menu away (touch: $touch)", (tester) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: touch,
+            home: Center(
+              child: MochiContextMenu(
+                menuBuilder: items,
+                child: MochiTile(title: const Text("row"), onPress: () => events.add("open row")),
+              ),
+            ),
+          ),
         ),
-      ),
-    );
+      );
 
-    final target = tester.getCenter(find.text("row"));
-    final mouse = await tester.startGesture(target, kind: PointerDeviceKind.mouse, buttons: kSecondaryButton);
-    await mouse.up();
-    await tester.pumpAndSettle();
-    expect(find.text("Rename"), findsOneWidget);
+      final target = tester.getCenter(find.text("row"));
+      final mouse = await tester.startGesture(
+        target,
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryButton,
+      );
+      await mouse.up();
+      await tester.pumpAndSettle();
+      expect(find.text("Rename"), findsOneWidget);
 
-    // The child is inside the menu's tap region, so this is not an outside tap; pressing the row
-    // the menu belongs to should still close it, and still do what the row does.
-    await tester.tap(find.text("row"));
-    await tester.pumpAndSettle();
-    expect(find.text("Rename"), findsNothing);
-    expect(events, ["open row"]);
-  });
+      await tester.tapAt(target);
+      await tester.pumpAndSettle();
+      expect(find.text("Rename"), findsNothing);
+
+      // On touch the panel comes with a scrim, and the press that dismisses it does nothing else:
+      // a finger has no cursor to say what it is about to land on. With a pointer there is no
+      // scrim, and the row does its own job as well as putting the menu away.
+      expect(events, touch ? isEmpty : ["open row"]);
+    });
+  }
 
   testWidgets("a long press on the child wins over the context menu", (tester) async {
     await tester.pumpWidget(

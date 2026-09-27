@@ -63,6 +63,7 @@ class MochiPopover extends StatefulWidget {
     this.matchAnchorWidth = false,
     this.padding,
     this.surface = true,
+    this.scrim,
     this.consumeOutsideTaps = false,
     this.closeOnAnchorPress = false,
     this.autofocus = true,
@@ -100,7 +101,19 @@ class MochiPopover extends StatefulWidget {
   /// brings its own surface.
   final bool surface;
 
+  /// Whether the page behind is dimmed while the panel is open. Defaults to `theme.touch`.
+  ///
+  /// A phone is small and busy, and a panel floating over a dense list with nothing between them
+  /// reads as part of it; a pointer has a cursor to say where it is and a screen with room to
+  /// spare. The dimming also swallows the tap that dismisses it, which is what a touch screen
+  /// wants — there is nothing under a finger to aim at by accident. Only the outermost popover
+  /// draws one: a submenu dimming its own parent would be dimming the row it came from.
+  final bool? scrim;
+
   /// Whether the tap that closes the popover is also delivered to whatever is underneath.
+  ///
+  /// False by default, so moving from one row's menu to the next row's is one press rather than
+  /// two. A [scrim] swallows it anyway, since a finger has no cursor to aim with.
   final bool consumeOutsideTaps;
 
   /// Whether pressing the anchor while the popover is open puts it away.
@@ -122,16 +135,49 @@ class MochiPopover extends StatefulWidget {
   State<MochiPopover> createState() => _MochiPopoverState();
 }
 
+/// The popover a panel belongs to, so a popover opened from inside one knows it is its child.
+///
+/// [RawMenuAnchor] puts a panel beside its anchor in the element tree rather than under it, so
+/// this is what a submenu has instead of an ancestor to look up: its own anchor is built inside
+/// the parent's panel, which is where the scope sits.
+class _PopoverScope extends InheritedWidget {
+  const _PopoverScope({required this.state, required super.child});
+
+  final _MochiPopoverState state;
+
+  static _MochiPopoverState? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_PopoverScope>()?.state;
+
+  @override
+  bool updateShouldNotify(_PopoverScope old) => old.state != state;
+}
+
 class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderStateMixin {
+  /// Every popover that is open, so opening one can put away the ones it is not part of. Two
+  /// panels at once is almost never meant — a row with both a context menu and a ⋮ had one of
+  /// each standing — and the app should not have to keep a controller per row to prevent it.
+  static final _open = <_MochiPopoverState>{};
+
   late final AnimationController _animation = AnimationController(vsync: this);
   MenuController? _ownController;
   final _focusNode = FocusNode(debugLabel: "MochiPopover anchor");
 
+  /// The popover this one was opened from, if any: a submenu's parent, a menu inside a menu.
+  _MochiPopoverState? _parent;
+
   MenuController get _controller => widget.controller ?? (_ownController ??= MenuController());
+
+  /// This popover and everything it was opened from, which is what a new one may leave standing.
+  Iterable<_MochiPopoverState> get _chain sync* {
+    for (_MochiPopoverState? at = this; at != null; at = at._parent) {
+      yield at;
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _parent = _PopoverScope.of(context);
     final motion = context.theme.motion;
     _animation
       ..duration = motion.transitionDuration
@@ -140,6 +186,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
 
   @override
   void dispose() {
+    _open.remove(this);
     _animation.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -148,6 +195,14 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
   bool get _animationsOff => MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
   void _handleOpenRequest(Offset? position, VoidCallback showOverlay) {
+    // Anything this one did not come out of is put away first: a submenu leaves its parent
+    // standing, a second menu does not.
+    final keep = _chain.toSet();
+    for (final other in _open.toList()) {
+      if (!keep.contains(other)) other._controller.close();
+    }
+    _open.add(this);
+
     showOverlay();
     if (_animationsOff) {
       _animation.value = 1;
@@ -157,6 +212,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
   }
 
   void _handleClose() {
+    _open.remove(this);
     // Not every close goes through the exit animation: closing a parent menu's children, a
     // scroll, or the view changing size all hide the overlay outright. Put the animation back to
     // the start so the next open runs from there rather than appearing fully grown.
@@ -226,7 +282,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
       );
     }
 
-    return CustomSingleChildLayout(
+    final panelAt = CustomSingleChildLayout(
       delegate: _PopoverLayout(
         // A position given to open() is relative to the anchor's top left corner, and replaces
         // the anchor entirely: a context menu opens at the pointer, not against an edge.
@@ -255,6 +311,36 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
           ),
         ),
       ),
+    );
+
+    // Only the outermost one dims: a submenu drawing its own would be dimming the menu it came
+    // out of. The scope goes around the panel, which is where a popover opened from inside this
+    // one finds out whose child it is.
+    final scrim = widget.scrim ?? theme.touch;
+
+    return _PopoverScope(
+      state: this,
+      child: scrim && _parent == null
+          ? Stack(
+              children: [
+                Positioned.fill(
+                  child: FadeTransition(
+                    opacity: _animation,
+                    child: GestureDetector(
+                      // Opaque, so the tap that puts the panel away does not also press whatever
+                      // it landed on: a finger has no cursor to aim with.
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _controller.close,
+                      child: ColoredBox(
+                        color: theme.colors.shadow.withValues(alpha: theme.colors.shadow.a * 0.25),
+                      ),
+                    ),
+                  ),
+                ),
+                panelAt,
+              ],
+            )
+          : panelAt,
     );
   }
 

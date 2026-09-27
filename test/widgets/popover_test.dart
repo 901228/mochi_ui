@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart";
 import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -116,5 +117,137 @@ void main() {
     controller.close();
     await tester.pumpAndSettle();
     expect(find.text("panel"), findsNothing);
+  });
+
+  group("one panel at a time", () {
+    Widget two({bool touch = false}) => MediaQuery(
+      data: const MediaQueryData(size: Size(800, 600)),
+      child: MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: touch,
+        home: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final name in ["first", "second"])
+                MochiPopover(
+                  popoverBuilder: (context) => Text("$name panel"),
+                  builder: (context, anchor, _) =>
+                      MochiButton(focusNode: anchor.focusNode, onPress: anchor.toggle, child: Text(name)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("a right click on a row whose menu is open leaves one panel, not two", (tester) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: false,
+            home: Center(
+              child: MochiContextMenu(
+                menuBuilder: (context) => [const MochiMenuItem(title: Text("from the row"))],
+                child: MochiTile(
+                  title: const Text("row"),
+                  onPress: () {},
+                  suffix: MochiPopoverMenu(
+                    menuBuilder: (context) => [const MochiMenuItem(title: Text("from the button"))],
+                    builder: (context, anchor, _) => MochiButton.icon(
+                      focusNode: anchor.focusNode,
+                      onPress: anchor.toggle,
+                      icon: Icon(MochiIcons.standard.more),
+                      semanticLabel: "more",
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.bySemanticsLabel("more"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      expect(find.text("from the button"), findsOneWidget);
+
+      // A secondary tap is not an outside tap, so nothing else puts the first panel away: this is
+      // the row with both a context menu and a ⋮ that had one of each standing.
+      final mouse = await tester.startGesture(
+        tester.getCenter(find.text("row")),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryButton,
+      );
+      await mouse.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text("from the row"), findsOneWidget);
+      expect(find.text("from the button"), findsNothing);
+    });
+
+    testWidgets("a submenu leaves the menu it came out of standing", (tester) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: false,
+            home: Center(
+              child: MochiPopoverMenu(
+                menuBuilder: (context) => [
+                  const MochiMenuItem(title: Text("Rename")),
+                  MochiSubmenu(
+                    title: const Text("Move to"),
+                    menuBuilder: (context) => [const MochiMenuItem(title: Text("Archive"))],
+                  ),
+                ],
+                builder: (context, anchor, _) => MochiButton(
+                  focusNode: anchor.focusNode,
+                  onPress: anchor.toggle,
+                  child: const Text("open"),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text("open"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Move to"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+
+      // The child is opened from inside the parent's panel, so the parent is not "another menu".
+      expect(find.text("Archive"), findsOneWidget);
+      expect(find.text("Rename"), findsOneWidget);
+    });
+
+    testWidgets("a phone dims the page behind the panel, a pointer's screen does not", (tester) async {
+      Finder scrim() => find.descendant(of: find.byType(FadeTransition), matching: find.byType(ColoredBox));
+
+      await tester.pumpWidget(two());
+      await tester.tap(find.text("first"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      expect(scrim(), findsNothing);
+
+      // Closed before the scale changes: the tree is the same one, so a panel left open would
+      // still be open and the press below would be the one that shuts it.
+      await tester.tapAt(const Offset(20, 20), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(two(touch: true));
+      await tester.tap(find.text("first"));
+      await tester.pumpAndSettle();
+      expect(find.text("first panel"), findsOneWidget);
+      expect(scrim(), findsOneWidget);
+
+      // The dimming is what the dismissing tap lands on, so it puts the panel away.
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.text("first panel"), findsNothing);
+    });
   });
 }
