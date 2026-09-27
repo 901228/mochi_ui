@@ -1,4 +1,4 @@
 {
   "cmake.sourceDirectory": "/home/harry/things/project/mochi_ui/linux",
-  "dart.flutterSdkPath": ".fvm/versions/master"
+  "dart.flutterSdkPath": ".fvm/versions/3.47.4"
 }
