@@ -58,11 +58,16 @@ class MochiSheet extends StatelessWidget {
     final view = MediaQuery.sizeOf(context);
     final showHandle = handle ?? (_vertical && theme.touch);
 
+    // As tall as its content needs, up to nine tenths of the screen: the cap only bites when the
+    // content is taller than it, so raising it never makes a short sheet taller — it only decides
+    // whether a tall one is scrolled through or simply shown. What the last tenth is for is the
+    // strip of page behind, which is what says this is a sheet and where to press to be rid of
+    // it. A side sheet keeps to half the width, since one covering the screen is a page.
     final limits =
         constraints ??
         BoxConstraints(
           maxWidth: _vertical ? double.infinity : view.width / 2,
-          maxHeight: _vertical ? view.height / 2 : double.infinity,
+          maxHeight: _vertical ? view.height * 0.9 : double.infinity,
         );
 
     return Semantics(

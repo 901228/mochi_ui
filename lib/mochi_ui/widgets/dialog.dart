@@ -273,8 +273,8 @@ enum MochiModalForm {
 /// either way, or call [showMochiDialog] / [showMochiSheet] directly when the answer is never in
 /// doubt.
 ///
-/// [sheetConstraints] is handed to the [MochiSheet] on a phone, where the default cap is half the
-/// screen — enough for a question, not for a panel. [titleSuffix] puts something at the end of the
+/// [sheetConstraints] is handed to the [MochiSheet] on a phone, which is how a modal asks for a
+/// shorter cap than the default nine tenths of the screen. [titleSuffix] puts something at the end of the
 /// title's line, which is where anything that isn't an answer belongs.
 ///
 /// This takes the parts of the question rather than a built widget on purpose: the two containers
@@ -310,8 +310,8 @@ Future<T?> showMochiModal<T>(
       useRootNavigator: useRootNavigator,
       settings: settings,
       builder: (context) => MochiSheet(
-        // A sheet stops at half the screen, which is right for a question and short for a panel:
-        // a modal carrying a picker says how much room it needs, and then nothing has to scroll.
+        // A sheet is as tall as its content up to nine tenths of the screen; this is how a modal
+        // asks for less than that.
         constraints: sheetConstraints,
         child: _ModalColumn(
           title: title,

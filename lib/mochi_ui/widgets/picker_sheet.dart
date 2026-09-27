@@ -56,9 +56,6 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
     final done = widget.answered?.call(_draft) ?? true;
 
     return MochiSheet(
-      // A sheet stops at half the screen by default, which a calendar — let alone a calendar over
-      // a set of wheels — is taller than.
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
       padding: EdgeInsets.all(g.space.md),
       child: Column(
         mainAxisSize: MainAxisSize.min,

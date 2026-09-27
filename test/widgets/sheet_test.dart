@@ -166,6 +166,47 @@ void main() {
     expect(find.byType(MochiSheet), findsOneWidget);
   });
 
+  testWidgets("it is as tall as its content, up to nine tenths of the screen", (tester) async {
+    Future<void> open(double content) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            home: Builder(
+              builder: (context) => Center(
+                child: MochiButton(
+                  onPress: () => showMochiSheet<void>(
+                    context,
+                    builder: (context) => MochiSheet(
+                      child: SingleChildScrollView(child: SizedBox(height: content)),
+                    ),
+                  ),
+                  child: const Text("open"),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+    }
+
+    // Short content is left alone: the cap only decides whether a tall sheet is shown or scrolled
+    // through, and the last tenth is the strip of page that says this is a sheet.
+    await open(120);
+    // Its own padding and handle are on top of the content, so this is "not capped" rather than
+    // an exact number.
+    expect(tester.getSize(find.byType(MochiSheet)).height, lessThan(300));
+
+    await tester.tapAt(const Offset(400, 20));
+    await tester.pumpAndSettle();
+
+    await open(5000);
+    expect(tester.getSize(find.byType(MochiSheet)).height, closeTo(540, 1));
+  });
+
   group("a sheet that refuses to go", () {
     Widget guarded({required bool canPop, required List<bool> refused}) => MediaQuery(
       data: const MediaQueryData(size: Size(800, 600)),

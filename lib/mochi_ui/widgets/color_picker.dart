@@ -765,9 +765,6 @@ Future<Color?> showMochiColorPicker(
     context,
     form: form,
     barrierDismissible: barrierDismissible,
-    // A picker is a panel, not a question: on a phone it gets nine tenths of the screen, which is
-    // enough for the whole of it to stand still rather than be scrolled through.
-    sheetConstraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
     title: Text(title ?? strings.pickColor),
     body: _ColorPickerBody(
       draft: draft,
