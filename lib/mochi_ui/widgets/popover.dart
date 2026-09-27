@@ -168,6 +168,10 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
   /// The popover this one was opened from, if any: a submenu's parent, a menu inside a menu.
   _MochiPopoverState? _parent;
 
+  /// Whether the panel is up, for the anchor to draw itself out of the way. A notifier rather
+  /// than `setState`, so opening rebuilds one box instead of the whole anchor.
+  final _isOpen = ValueNotifier(false);
+
   MenuController get _controller => widget.controller ?? (_ownController ??= MenuController());
 
   /// This popover and everything it was opened from, which is what a new one may leave standing.
@@ -190,6 +194,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
   @override
   void dispose() {
     _open.remove(this);
+    _isOpen.dispose();
     _animation.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -205,6 +210,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
       if (!keep.contains(other)) other._controller.close();
     }
     _open.add(this);
+    _isOpen.value = true;
 
     showOverlay();
     if (_animationsOff) {
@@ -216,6 +222,7 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
 
   void _handleClose() {
     _open.remove(this);
+    _isOpen.value = false;
     // Not every close goes through the exit animation: closing a parent menu's children, a
     // scroll, or the view changing size all hide the overlay outright. Put the animation back to
     // the start so the next open runs from there rather than appearing fully grown.
@@ -259,7 +266,16 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
           onPointerDown: (_) {
             if (controller.isOpen) controller.close();
           },
-          child: built,
+          // While the panel is up, that press is the one that puts it away and nothing else: the
+          // row a context menu belongs to does not also do its own job, which would be choosing
+          // something with the press that was aimed at "away". The Listener above still hears it,
+          // since only the subtree is absorbed. It also means a second right click closes rather
+          // than moving the panel — the same press doing one thing.
+          child: ValueListenableBuilder(
+            valueListenable: _isOpen,
+            builder: (context, open, child) => AbsorbPointer(absorbing: open, child: child),
+            child: built,
+          ),
         );
       },
       child: widget.child,

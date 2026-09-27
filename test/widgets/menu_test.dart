@@ -217,8 +217,9 @@ void main() {
   });
 
   // The child is inside the menu's tap region, so pressing it is not an outside tap; the row it
-  // belongs to has to put the menu away itself. What that press *also* does depends on whether
-  // there is a scrim over it, which is the next test.
+  // belongs to has to put the menu away itself — and that is all that press does, on either
+  // scale. A touch screen has the scrim over it, a pointer's has the anchor absorbing while the
+  // panel is up, and either way choosing the row with the press aimed at "away" is not meant.
   for (final touch in [false, true]) {
     testWidgets("pressing the child again puts the context menu away (touch: $touch)", (tester) async {
       await tester.pumpWidget(
@@ -251,10 +252,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text("Rename"), findsNothing);
 
-      // On touch the panel comes with a scrim, and the press that dismisses it does nothing else:
-      // a finger has no cursor to say what it is about to land on. With a pointer there is no
-      // scrim, and the row does its own job as well as putting the menu away.
-      expect(events, touch ? isEmpty : ["open row"]);
+      expect(events, isEmpty);
     });
   }
 
