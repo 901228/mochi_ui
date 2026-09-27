@@ -237,4 +237,25 @@ void main() {
       expect(copied, isNotNull);
     }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
   });
+
+  testWidgets("text capitalization reaches the keyboard, and prose asks for sentences", (tester) async {
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: const Column(
+          children: [
+            MochiTextField(textCapitalization: TextCapitalization.characters),
+            MochiTextField.multiline(),
+            MochiTextField(),
+          ],
+        ),
+      ),
+    );
+
+    final fields = tester.widgetList<EditableText>(find.byType(EditableText)).toList();
+    expect(fields[0].textCapitalization, TextCapitalization.characters);
+    // A multiline field is prose; a single line is anything at all, so it asks for nothing.
+    expect(fields[1].textCapitalization, TextCapitalization.sentences);
+    expect(fields[2].textCapitalization, TextCapitalization.none);
+  });
 }

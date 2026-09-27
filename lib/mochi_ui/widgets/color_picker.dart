@@ -206,6 +206,7 @@ class _MochiColorPickerState extends State<MochiColorPicker> {
             size: MochiSize.sm,
             enabled: _enabled,
             label: Text(strings.hex),
+            textCapitalization: TextCapitalization.characters,
             // The colour as it stands, in the box, before the digits that say what it is.
             prefix: Row(
               mainAxisSize: MainAxisSize.min,

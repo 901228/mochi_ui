@@ -49,6 +49,7 @@ class MochiTextField extends StatefulWidget {
     this.maxLines = 1,
     this.size = MochiSize.md,
     this.textAlign = TextAlign.start,
+    this.textCapitalization = TextCapitalization.none,
     this.autofillHints,
     this.onChanged,
     this.onSubmitted,
@@ -76,6 +77,7 @@ class MochiTextField extends StatefulWidget {
     this.maxLines,
     this.size = MochiSize.md,
     this.textAlign = TextAlign.start,
+    this.textCapitalization = TextCapitalization.sentences,
     this.autofillHints,
     this.onChanged,
     this.onEditingComplete,
@@ -135,6 +137,14 @@ class MochiTextField extends StatefulWidget {
   final MochiSize size;
 
   final TextAlign textAlign;
+
+  /// What the on-screen keyboard offers to capitalise as you type — words, sentences, every
+  /// letter. The platform's keyboard is what honours it, so it changes nothing on a desktop and
+  /// nothing about text that is pasted or set in code: a field that only takes capitals wants an
+  /// `inputFormatter` as well. Defaults to sentences on the multiline constructor, which is
+  /// prose, and to none everywhere else.
+  final TextCapitalization textCapitalization;
+
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -290,6 +300,7 @@ class _MochiTextFieldState extends State<MochiTextField>
       minLines: widget.minLines,
       maxLines: widget.maxLines,
       textAlign: widget.textAlign,
+      textCapitalization: widget.textCapitalization,
       autofillHints: widget.autofillHints,
       onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
