@@ -149,4 +149,48 @@ void main() {
       expect(rings(tester), 1);
     }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
   });
+
+  testWidgets("a press on something inside a row does not tint the row", (tester) async {
+    final seen = <Set<WidgetState>>[];
+    var inner = 0;
+    var outer = 0;
+
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Center(
+          child: MochiTappable(
+            onPress: () => outer++,
+            builder: (context, states, child) {
+              seen.add({...states});
+              return child!;
+            },
+            child: SizedBox(
+              width: 300,
+              height: 60,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: MochiButton(onPress: () => inner++, child: const Text("more")),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final press = await tester.startGesture(tester.getCenter(find.text("more")));
+    // Past kPressTimeout: both recognizers are still in the arena, and both are told the press
+    // began — which is where the row used to flash.
+    await tester.pump(const Duration(milliseconds: 200));
+    await press.up();
+    await tester.pumpAndSettle();
+
+    expect(inner, 1);
+    expect(outer, 0);
+    expect(
+      seen.any((states) => states.contains(WidgetState.pressed)),
+      isFalse,
+      reason: "the row tinted for a press that belonged to the button in it",
+    );
+  });
 }

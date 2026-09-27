@@ -196,7 +196,36 @@ class _MochiTappableState extends State<MochiTappable> {
     if (widget.interactive) widget.onPress?.call();
   }
 
-  void _setPressed(bool value) => _states.update(WidgetState.pressed, value);
+  /// A press that a tappable inside this one has already claimed, which this one must not tint
+  /// for. Both recognizers are in the arena until the finger lifts, and both are told `onTapDown`
+  /// once the press passes `kPressTimeout` — so without this, pressing a button in a row makes
+  /// the whole row flash, and only the release takes it back.
+  int? _declined;
+
+  /// Every pointer a tappable has claimed. A pointer-down is dispatched along the hit path from
+  /// the innermost out, so the deepest tappable claims first and the ones above it stand down.
+  static final _claimed = <int>{};
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_claimed.contains(event.pointer)) {
+      _declined = event.pointer;
+      return;
+    }
+
+    _declined = null;
+    if (widget.interactive) _claimed.add(event.pointer);
+  }
+
+  void _handlePointerEnd(PointerEvent event) {
+    _claimed.remove(event.pointer);
+    if (_declined == event.pointer) _declined = null;
+  }
+
+  void _setPressed(bool value) {
+    // Let go of a press whoever owns it, but only take one on that is this one's.
+    if (value && _declined != null) return;
+    _states.update(WidgetState.pressed, value);
+  }
 
   Widget _scaled(Widget child) =>
       widget.scaleOnPress ? MochiPressScale(states: _states, child: child) : child;
@@ -256,11 +285,16 @@ class _MochiTappableState extends State<MochiTappable> {
           onSecondaryLongPressCancel: secondary && widget.onSecondaryLongPress != null
               ? () => _setPressed(false)
               : null,
-          child: _scaled(
-            ValueListenableBuilder(
-              valueListenable: _states,
-              builder: (context, states, child) => widget.builder(context, states, child),
-              child: widget.child,
+          child: Listener(
+            onPointerDown: _handlePointerDown,
+            onPointerUp: _handlePointerEnd,
+            onPointerCancel: _handlePointerEnd,
+            child: _scaled(
+              ValueListenableBuilder(
+                valueListenable: _states,
+                builder: (context, states, child) => widget.builder(context, states, child),
+                child: widget.child,
+              ),
             ),
           ),
         ),
