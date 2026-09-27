@@ -237,6 +237,9 @@ enum MochiModalForm {
 /// either way, or call [showMochiDialog] / [showMochiSheet] directly when the answer is never in
 /// doubt.
 ///
+/// [sheetConstraints] is handed to the [MochiSheet] on a phone, where the default cap is half the
+/// screen — enough for a question, not for a panel.
+///
 /// This takes the parts of the question rather than a built widget on purpose: the two containers
 /// lay their actions out differently, so there is no one subtree that suits both.
 Future<T?> showMochiModal<T>(
@@ -245,6 +248,7 @@ Future<T?> showMochiModal<T>(
   Widget? body,
   List<Widget> actions = const [],
   MochiModalForm? form,
+  BoxConstraints? sheetConstraints,
   bool barrierDismissible = true,
   String? barrierLabel,
   bool useRootNavigator = true,
@@ -268,6 +272,9 @@ Future<T?> showMochiModal<T>(
       useRootNavigator: useRootNavigator,
       settings: settings,
       builder: (context) => MochiSheet(
+        // A sheet stops at half the screen, which is right for a question and short for a panel:
+        // a modal carrying a picker says how much room it needs, and then nothing has to scroll.
+        constraints: sheetConstraints,
         child: _ModalColumn(title: title, body: body, actions: actions, actionsAxis: Axis.vertical),
       ),
     ),

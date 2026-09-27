@@ -192,6 +192,7 @@ class _GalleryState extends State<_Gallery> {
         ("search bar", _SearchSample()),
         ("slider", _SliderSample()),
         ("segmented control", _SegmentedSample()),
+        ("colour picker", _ColorPickerSample()),
       ],
     ),
     _Page(

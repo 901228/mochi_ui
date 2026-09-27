@@ -27,8 +27,14 @@ class MochiStrings {
     required this.goToPage,
     required this.search,
     required this.clear,
+    required this.reset,
     required this.pickDate,
     required this.pickTime,
+    required this.pickColor,
+    required this.hue,
+    required this.opacity,
+    required this.shade,
+    required this.hex,
     required this.am,
     required this.pm,
     this.date = _dayMonthYear,
@@ -81,11 +87,27 @@ class MochiStrings {
   /// Lets go of everything that was picked: a calendar gathering days, a filter.
   final String clear;
 
+  /// Puts a value back to the one the app would have used anyway, such as a colour picker's
+  /// default colour.
+  final String reset;
+
   /// What a date field says while it is empty.
   final String pickDate;
 
   /// What a time field says while it is empty.
   final String pickTime;
+
+  /// The title of the modal a colour is picked in.
+  final String pickColor;
+
+  /// A colour picker's three parts: the bar of hues, the bar of opacity, and the square where
+  /// saturation runs across and brightness runs down.
+  final String hue;
+  final String opacity;
+  final String shade;
+
+  /// The field a colour can be typed into as digits.
+  final String hex;
 
   /// The two halves of a twelve-hour clock.
   final String am;
@@ -146,8 +168,14 @@ class MochiStrings {
     goToPage: "Go to page",
     search: "Search",
     clear: "Clear",
+    reset: "Reset",
     pickDate: "Pick a date",
     pickTime: "Pick a time",
+    pickColor: "Pick a colour",
+    hue: "Hue",
+    opacity: "Opacity",
+    shade: "Saturation and brightness",
+    hex: "Hex",
     am: "AM",
     pm: "PM",
     previousMonth: "Previous month",
@@ -190,8 +218,14 @@ class MochiStrings {
     goToPage: "跳至頁數",
     search: "搜尋",
     clear: "清除",
+    reset: "重設",
     pickDate: "選擇日期",
     pickTime: "選擇時間",
+    pickColor: "選擇顏色",
+    hue: "色相",
+    opacity: "不透明度",
+    shade: "飽和度與明度",
+    hex: "色碼",
     am: "上午",
     pm: "下午",
     previousMonth: "上個月",
@@ -227,8 +261,14 @@ class MochiStrings {
     String? goToPage,
     String? search,
     String? clear,
+    String? reset,
     String? pickDate,
     String? pickTime,
+    String? pickColor,
+    String? hue,
+    String? opacity,
+    String? shade,
+    String? hex,
     String? am,
     String? pm,
     String Function(int day, String month, int year)? date,
@@ -260,8 +300,14 @@ class MochiStrings {
     goToPage: goToPage ?? this.goToPage,
     search: search ?? this.search,
     clear: clear ?? this.clear,
+    reset: reset ?? this.reset,
     pickDate: pickDate ?? this.pickDate,
     pickTime: pickTime ?? this.pickTime,
+    pickColor: pickColor ?? this.pickColor,
+    hue: hue ?? this.hue,
+    opacity: opacity ?? this.opacity,
+    shade: shade ?? this.shade,
+    hex: hex ?? this.hex,
     am: am ?? this.am,
     pm: pm ?? this.pm,
     date: date ?? this.date,
@@ -298,8 +344,14 @@ class MochiStrings {
           goToPage == other.goToPage &&
           search == other.search &&
           clear == other.clear &&
+          reset == other.reset &&
           pickDate == other.pickDate &&
           pickTime == other.pickTime &&
+          pickColor == other.pickColor &&
+          hue == other.hue &&
+          opacity == other.opacity &&
+          shade == other.shade &&
+          hex == other.hex &&
           am == other.am &&
           pm == other.pm &&
           date == other.date &&
@@ -334,8 +386,14 @@ class MochiStrings {
     goToPage,
     search,
     clear,
+    reset,
     pickDate,
     pickTime,
+    pickColor,
+    hue,
+    opacity,
+    shade,
+    hex,
     am,
     pm,
     date,

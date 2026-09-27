@@ -872,3 +872,124 @@ class _InputKnobsState extends State<_InputKnobs> {
     );
   }
 }
+
+class _ColorPickerSample extends StatefulWidget {
+  const _ColorPickerSample();
+
+  @override
+  State<_ColorPickerSample> createState() => _ColorPickerSampleState();
+}
+
+class _ColorPickerSampleState extends State<_ColorPickerSample> {
+  Color _plain = const Color(0xFF7C3AED);
+  Color _translucent = const Color(0x8016A34A);
+  Color _asked = const Color(0xFFF59E0B);
+
+  @override
+  Widget build(BuildContext context) {
+    final knobs = _Knobs.of(context);
+    final g = context.theme.geometry;
+
+    Widget column(String label, Widget child) => SizedBox(
+      width: 240,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: g.space.xs2,
+        children: [_ThemedText(label, .muted), child],
+      ),
+    );
+
+    return Wrap(
+      spacing: g.space.lg,
+      runSpacing: g.space.lg,
+      crossAxisAlignment: WrapCrossAlignment.start,
+      children: [
+        column(
+          "plain",
+          MochiColorPicker(
+            value: _plain,
+            enabled: knobs.enabled,
+            onChanged: (next) => setState(() => _plain = next),
+          ),
+        ),
+        column(
+          "with opacity",
+          MochiColorPicker(
+            value: _translucent,
+            alpha: true,
+            enabled: knobs.enabled,
+            onChanged: (next) => setState(() => _translucent = next),
+          ),
+        ),
+        column(
+          "in a modal",
+          _ColorModalSample(value: _asked, onChanged: (next) => setState(() => _asked = next)),
+        ),
+      ],
+    );
+  }
+}
+
+/// The picker where it is usually asked for: behind a button, in a dialog or a sheet.
+class _ColorModalSample extends StatelessWidget {
+  const _ColorModalSample({required this.value, required this.onChanged});
+
+  final Color value;
+  final ValueChanged<Color> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: g.space.sm,
+      children: [
+        MochiButton(
+          appearance: MochiButtonAppearance.outlined,
+          intent: MochiIntent.neutral,
+          prefix: _ColorDot(color: value),
+          onPress: () async {
+            final picked = await showMochiColorPicker(
+              context,
+              initial: value,
+              // What the app would have used anyway, offered as one press inside the modal.
+              defaultColor: const Color(0xFFF59E0B),
+            );
+            if (picked != null) onChanged(picked);
+          },
+          // The colour it is set to, rather than a sentence about what pressing it does: the
+          // swatch beside it has said that already, and a button's label doesn't ellipsize.
+          child: Text("#${value.toARGB32().toRadixString(16).substring(2).toUpperCase()}"),
+        ),
+        // The viewport switch decides which one opens: a dialog from tablet up, a sheet on mobile.
+        const _ThemedText("dialog on desktop, sheet on a phone", .muted),
+      ],
+    );
+  }
+}
+
+/// A colour as a button's prefix: the swatch that says what the button is about to change.
+class _ColorDot extends StatelessWidget {
+  const _ColorDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+
+    return SizedBox.square(
+      dimension: 14,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: color,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: theme.geometry.radius.xs,
+            side: BorderSide(color: theme.colors.border, width: theme.geometry.borderWidth),
+          ),
+        ),
+      ),
+    );
+  }
+}

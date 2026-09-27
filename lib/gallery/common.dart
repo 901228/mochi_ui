@@ -168,6 +168,15 @@ class _LookBar extends StatelessWidget {
       _choice("mochi", look.brand == null, () => onChanged(look.copyWith(clearBrand: true))),
       for (final (label, value) in _brands)
         _choice(label, look.brand == value, () => onChanged(look.copyWith(brand: value))),
+      // Anything else comes out of the picker, which is the gallery using its own component to
+      // set the colour the whole gallery is then drawn in.
+      _choice("custom…", look.brand != null && !_brands.any((brand) => brand.$2 == look.brand), () async {
+        final picked = await showMochiColorPicker(
+          context,
+          initial: look.brand ?? context.colors.of(MochiIntent.primary).base,
+        );
+        if (picked != null) onChanged(look.copyWith(brand: picked));
+      }),
     ],
   );
 }

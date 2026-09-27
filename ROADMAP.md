@@ -132,7 +132,11 @@
 - [x] ⭐ RefreshIndicator — `MochiRefresh`：包住一個 scrollable，聽 `OverscrollNotification`（clamping）和捲過頭的 `ScrollUpdateNotification`（bouncing），拉的距離打五折才是指示器下來的距離。指示器就是現成的 `MochiCircularProgress`：拉的時候是 determinate（還差多少才會觸發），放手觸發之後變 indeterminate 並把清單頂住，直到 `onRefresh` 的 future 結束；丟例外也會還原，例外走 `FlutterError.reportError` 而不是吞掉或留一個沒人接的 future。滑鼠也拉得動（`mouseDrags`，預設開：桌面平台的 scrollable 預設不吃滑鼠拖曳，滾輪到頂也不會報 overscroll，不開就等於桌面完全沒有這個手勢）。**沒有併進 toast**，理由寫在元件註解裡
 - [x] ⭐ Resizable — `MochiResizable` + `MochiResizablePane`：尺寸存的是比例，所以視窗變大變小時分割不會全部倒向某一邊；拖曳線只在相鄰兩個 pane 之間搬空間，兩邊的 `minSize` / `maxSize` 誰先到底誰決定停在哪。每條線自己是一個 tab stop，方向鍵一次走 `keyboardStep`（只能用拖的等於不能用鍵盤設定）。可以巢狀，橫的裡面包直的。handle 桌面 8px / 觸控 16px，hover 和拖曳時線會變成 primary
 
-## 9. 決定不做的（免得再繞回來）
+## 9. 追加的元件
+
+- [x] ⭐ ColorPicker — `MochiColorPicker`（明暗方塊 + 色相條 + 可選的不透明度條 + 色碼欄位 + 一排色票）和 `showMochiColorPicker`（桌面 dialog、手機 sheet，草稿只能從確定鈕出來，跟 date picker 的 sheet 同一套；確定鈕不能用 `MochiModalAction`，它的值在 build 的時候就固定了）。開著的時候存的是 `HSVColor` 不是 `Color`：黑色同時是所有的色相，只存 `Color` 拖到方塊底部就會忘記原本是什麼顏色、指標會跳回紅色。方塊聽的是 `onHorizontalDrag*` + `onVerticalDrag*` 而不是 `onPanUpdate`：modal 的 body 會捲動，而 pan 的 slop 是 drag 的兩倍，捲動會在 pan 接手之前就把手勢搶走（測試要把螢幕縮短讓 body 真的捲得動，而且要小步拖，不然測不出來）。棋盤格、漸層和裁切它們的超橢圓是同一個 `CustomPainter`。色碼開了不透明度是 `AARRGGBB`、否則是 `RRGGBB`（就是 `Color(0xFF7C3AED)` 的順序），六碼會保留目前的不透明度，打一半不會有任何事，離開欄位會把顏色寫回去。色票預設是主題自己的六個 intent（打勾的顏色用 `mostReadable` 挑），按色票不會動到不透明度。兩條和方塊各自是一個 tab stop，方向鍵可以調。`showMochiColorPicker(defaultColor:)` 會在取色器下面多一顆「重設」（不是放在 actions 那排：回到預設值不是一個答案，它只改草稿、modal 不會關），草稿已經是預設值時 disable。新增 `MochiStrings.pickColor` / `hue` / `opacity` / `shade` / `hex` / `reset`
+
+## 10. 決定不做的（免得再繞回來）
 
 - **Chart** — 圖表是一整個領域（scale、tick、legend、hit test、動畫、a11y），做一半比沒有更糟。也不建議 `fl_chart`：它 import `package:flutter/material.dart`，會把這個專案唯一的硬規則破掉。cube timer 統計頁真正要的是「一條 solve time 折線 + ao5 / ao12 疊上去」，那是一個 `CustomPainter`，約 150 行、顏色直接讀 `context.colors`，**寫在 app 裡**。等出現第二種圖表再回來談
 - **Steps（精靈步驟）/ Timeline** — 是內容排版，不是互動原語。要用的時候在 app 裡用 Divider + Tile 拼出來就好
