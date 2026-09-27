@@ -465,4 +465,40 @@ void main() {
       expect(find.text("body"), findsNothing, reason: "$form");
     }
   });
+
+  testWidgets("a modal with a field in it stands on top of the keyboard", (tester) async {
+    const height = 800.0;
+    const keyboard = 320.0;
+    tester.view.physicalSize = const Size(400, height);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: keyboard);
+    addTearDown(tester.view.reset);
+
+    for (final form in MochiModalForm.values) {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          touch: true,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () => showMochiPrompt(context, title: "Name", form: form),
+                child: const Text("open"),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      // Above the keys, where it can be typed into: a sheet used to sit at the bottom of the
+      // screen with the keyboard drawn over the whole of it.
+      final field = tester.getRect(find.byType(MochiTextField));
+      expect(field.bottom, lessThan(height - keyboard), reason: "$form");
+
+      await tester.tapAt(const Offset(200, 10));
+      await tester.pumpAndSettle();
+    }
+  });
 }

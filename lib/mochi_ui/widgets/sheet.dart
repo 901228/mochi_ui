@@ -232,15 +232,21 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => Align(
-    alignment: _alignment,
-    child: MochiSurfaceTransition(
-      animation: animation,
-      transition: MochiTransition.slide,
-      slideFrom: _from,
-      // The barrier dims the screen; the sheet brings its own shadow.
-      scrim: false,
-      child: child,
+  ) => Padding(
+    // The keyboard takes the bottom of the screen, so the sheet stands on top of it rather than
+    // under it: without this a bottom sheet with a field in it is entirely behind the keys, and
+    // the cap on its height is measured against room it does not have.
+    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    child: Align(
+      alignment: _alignment,
+      child: MochiSurfaceTransition(
+        animation: animation,
+        transition: MochiTransition.slide,
+        slideFrom: _from,
+        // The barrier dims the screen; the sheet brings its own shadow.
+        scrim: false,
+        child: child,
+      ),
     ),
   );
 }

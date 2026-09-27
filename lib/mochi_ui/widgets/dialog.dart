@@ -210,9 +210,15 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondary) {
     final g = context.theme.geometry;
+    // The keyboard is padding, not a thing to be covered by: the box centres in the room that is
+    // left rather than behind the keys, which is where a dialog with a field in it would sit.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
     return Center(
-      child: Padding(padding: EdgeInsets.all(g.space.lg), child: builder(context)),
+      child: Padding(
+        padding: EdgeInsets.all(g.space.lg) + EdgeInsets.only(bottom: keyboard),
+        child: builder(context),
+      ),
     );
   }
 
