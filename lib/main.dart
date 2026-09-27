@@ -1,7 +1,6 @@
 import "package:flutter/rendering.dart";
 import "package:flutter/scheduler.dart";
 import "package:flutter/widgets.dart";
-import "package:tabler_icons_plus/tabler_icons_plus.dart";
 
 import "mochi_ui.dart";
 
