@@ -222,8 +222,22 @@ class MochiSheetRoute<T> extends PopupRoute<T> {
     // fraction of that child's own size, and the drag measures it the same way, so both have to
     // see the sheet rather than a box the size of the screen.
     return dragToDismiss
-        ? _SheetDrag(side: side, controller: _controller, onDismiss: () => navigator?.pop(), child: sheet)
+        ? _SheetDrag(side: side, controller: _controller, onDismiss: _dismissByDrag, child: sheet)
         : sheet;
+  }
+
+  /// Goes through [NavigatorState.maybePop], so a [PopScope] inside the sheet can refuse the drag
+  /// the same way it refuses the barrier or the back button — and hears about it either way,
+  /// which is how an app asks "discard this?" before the sheet goes. Returns whether the sheet is
+  /// on its way out, so a refused drag can settle back where it came from.
+  ///
+  /// Only [RoutePopDisposition.pop] counts as going: `doNotPop` is a refusal, and `bubble` hands
+  /// the gesture to the platform without this route closing, so both leave the sheet standing.
+  bool _dismissByDrag() {
+    final leaving = popDisposition == RoutePopDisposition.pop;
+    navigator?.maybePop();
+
+    return leaving;
   }
 
   @override
@@ -263,7 +277,9 @@ class _SheetDrag extends StatefulWidget {
 
   final MochiSheetSide side;
   final AnimationController? controller;
-  final VoidCallback onDismiss;
+
+  /// Returns false when the route refuses to close, and the sheet settles back.
+  final bool Function() onDismiss;
   final Widget child;
 
   @override
@@ -314,10 +330,7 @@ class _SheetDragState extends State<_SheetDrag> {
     final travelled = (1 - controller.value) * _extent;
     final dragged = controller.value < _closeBelow && travelled >= _minTravel;
 
-    if (_sign * velocity > _flingVelocity || dragged) {
-      widget.onDismiss();
-      return;
-    }
+    if ((_sign * velocity > _flingVelocity || dragged) && widget.onDismiss()) return;
     controller.forward();
   }
 

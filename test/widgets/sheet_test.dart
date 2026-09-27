@@ -165,4 +165,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(MochiSheet), findsOneWidget);
   });
+
+  group("a sheet that refuses to go", () {
+    Widget guarded({required bool canPop, required List<bool> refused}) => MediaQuery(
+      data: const MediaQueryData(size: Size(800, 600)),
+      child: MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Builder(
+          builder: (context) => Center(
+            child: MochiButton(
+              onPress: () => showMochiSheet<void>(
+                context,
+                builder: (context) => PopScope(
+                  canPop: canPop,
+                  onPopInvokedWithResult: (didPop, _) => refused.add(didPop),
+                  child: const MochiSheet(
+                    child: SizedBox(height: 200, child: Center(child: Text("form"))),
+                  ),
+                ),
+              ),
+              child: const Text("open"),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("a drag it refuses settles back, and it hears about it", (tester) async {
+      final refused = <bool>[];
+      await tester.pumpWidget(guarded(canPop: false, refused: refused));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final resting = tester.getRect(find.byType(MochiSheet));
+      await tester.drag(find.byType(MochiSheet), const Offset(0, 400));
+      await tester.pumpAndSettle();
+
+      // Still there, back where it was, and the PopScope was told the gesture happened: that is
+      // where an app asks whether to discard what is in the sheet.
+      expect(find.text("form"), findsOneWidget);
+      expect(tester.getRect(find.byType(MochiSheet)), resting);
+      expect(refused, [false]);
+    });
+
+    testWidgets("one it allows goes, the same as the barrier", (tester) async {
+      final refused = <bool>[];
+      await tester.pumpWidget(guarded(canPop: true, refused: refused));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.byType(MochiSheet), const Offset(0, 400));
+      await tester.pumpAndSettle();
+
+      expect(find.text("form"), findsNothing);
+      expect(refused, [true]);
+    });
+  });
 }
