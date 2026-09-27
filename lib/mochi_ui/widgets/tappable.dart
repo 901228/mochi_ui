@@ -1,3 +1,5 @@
+import "package:flutter/gestures.dart";
+import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 
 import "press_scale.dart";
@@ -68,14 +70,65 @@ class MochiTappable extends StatefulWidget {
   State<MochiTappable> createState() => _MochiTappableState();
 }
 
+/// Which kind of thing the app last heard from, a pointer or a key.
+///
+/// This is the difference between a ring nobody asked for and one a keyboard user cannot do
+/// without, and Flutter's own highlight mode cannot tell them apart: on a desktop a mouse and a
+/// keyboard are both [FocusHighlightMode.traditional]. The web draws exactly this line with
+/// `:focus-visible`. It starts as a keyboard, so focus taken in code — an autofocused field, a
+/// test — shows its ring.
+abstract final class _LastInput {
+  /// True while the last thing heard from was a pointer. A notifier rather than a flag because
+  /// the thing that is focused has to be told when it changes: the framework only reports a
+  /// *change* of highlight, so a widget focused by a mouse and then reached by a key would
+  /// otherwise never hear that it should be wearing a ring after all.
+  static final pointer = ValueNotifier(false);
+
+  /// How many tappables are on screen. The routes are counted rather than registered once and
+  /// left: a test binding clears the keyboard's handlers between tests, so a registration that
+  /// happened in the first test would be gone — and silently — by the tenth.
+  static int _watchers = 0;
+
+  static void _onPointer(PointerEvent event) {
+    if (event is PointerDownEvent) pointer.value = true;
+  }
+
+  static bool _onKey(KeyEvent event) {
+    if (event is KeyDownEvent) pointer.value = false;
+    return false;
+  }
+
+  static void watch() {
+    if (_watchers++ > 0) return;
+
+    GestureBinding.instance.pointerRouter.addGlobalRoute(_onPointer);
+    HardwareKeyboard.instance.addHandler(_onKey);
+  }
+
+  static void unwatch() {
+    if (--_watchers > 0) return;
+
+    GestureBinding.instance.pointerRouter.removeGlobalRoute(_onPointer);
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    // Nothing is listening, so the next thing to arrive starts the question again.
+    pointer.value = false;
+  }
+}
+
 class _MochiTappableState extends State<MochiTappable> {
   WidgetStatesController? _internal;
   WidgetStatesController get _states => widget.statesController ?? (_internal ??= WidgetStatesController());
+
+  FocusNode? _ownNode;
+  FocusNode get _focusNode => widget.focusNode ?? (_ownNode ??= FocusNode());
 
   @override
   void initState() {
     super.initState();
 
+    _LastInput.watch();
+    _LastInput.pointer.addListener(_applyFocus);
+    _focusNode.addListener(_applyFocus);
     _states.update(WidgetState.disabled, !widget.interactive);
     _states.update(WidgetState.selected, widget.selected);
   }
@@ -83,6 +136,12 @@ class _MochiTappableState extends State<MochiTappable> {
   @override
   void didUpdateWidget(MochiTappable old) {
     super.didUpdateWidget(old);
+
+    if (widget.focusNode != old.focusNode) {
+      (old.focusNode ?? _ownNode)?.removeListener(_applyFocus);
+      _focusNode.addListener(_applyFocus);
+      _applyFocus();
+    }
 
     if (widget.interactive != old.interactive) {
       _states.update(WidgetState.disabled, !widget.interactive);
@@ -98,9 +157,33 @@ class _MochiTappableState extends State<MochiTappable> {
 
   @override
   void dispose() {
+    _LastInput.pointer.removeListener(_applyFocus);
+    _LastInput.unwatch();
+    _focusNode.removeListener(_applyFocus);
     _internal?.dispose();
+    _ownNode?.dispose();
 
     super.dispose();
+  }
+
+  /// What the framework last said about the highlight, which it only reports when it changes.
+  bool _highlight = false;
+
+  void _handleFocusHighlight(bool visible) {
+    _highlight = visible;
+    _applyFocus();
+  }
+
+  /// A ring is for the keyboard. Three things have to hold, and any of them can change without
+  /// the others: the framework wants a highlight, *this* is the thing that is focused rather than
+  /// something inside it (a row whose button is focused wears no ring — the button has one), and
+  /// the focus was not taken by a pointer, which asks for no ring at all.
+  void _applyFocus() {
+    if (!mounted) return;
+    _states.update(
+      WidgetState.focused,
+      _highlight && _focusNode.hasPrimaryFocus && !_LastInput.pointer.value,
+    );
   }
 
   // Created once so rebuilds (e.g. every frame of a theme animation) don't notify Actions dependents.
@@ -133,7 +216,7 @@ class _MochiTappableState extends State<MochiTappable> {
       onLongPress: interactive ? widget.onLongPress : null,
       child: FocusableActionDetector(
         enabled: interactive,
-        focusNode: widget.focusNode,
+        focusNode: _focusNode,
         autofocus: widget.autofocus,
         mouseCursor:
             widget.mouseCursor ?? (interactive ? SystemMouseCursors.click : SystemMouseCursors.basic),
@@ -141,7 +224,7 @@ class _MochiTappableState extends State<MochiTappable> {
           _states.update(WidgetState.hovered, v);
           widget.onHoverChange?.call(v);
         },
-        onShowFocusHighlight: (v) => _states.update(WidgetState.focused, v),
+        onShowFocusHighlight: _handleFocusHighlight,
         onFocusChange: widget.onFocusChange,
         actions: _actions,
         child: GestureDetector(
