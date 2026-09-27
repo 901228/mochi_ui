@@ -1,4 +1,5 @@
 export "widgets/accordion.dart";
+export "widgets/action.dart";
 export "widgets/animated_theme.dart";
 export "widgets/app.dart";
 export "widgets/autocomplete.dart";

@@ -438,9 +438,18 @@ class _ScaffoldSample extends StatelessWidget {
             header: MochiHeader(
               variant: MochiHeaderVariant.bordered,
               title: const Text("Records"),
+              // More than the bar has slots for, so the last ones fold into the …: on a phone
+              // that is two, from tablet width up four.
               suffixes: [
-                MochiHeaderAction(icon: const Icon(TablerIcons.search), onPress: () {}, tooltip: "Search"),
-                MochiHeaderAction(icon: const Icon(TablerIcons.dots), onPress: () {}, tooltip: "More"),
+                MochiAction(icon: TablerIcons.search, label: "Search", onPress: () {}),
+                MochiAction(icon: TablerIcons.filter, label: "Filter", onPress: () {}),
+                MochiAction(icon: TablerIcons.download, label: "Export", onPress: () {}),
+                MochiAction(
+                  icon: TablerIcons.trash,
+                  label: "Delete",
+                  intent: MochiIntent.danger,
+                  onPress: () {},
+                ),
               ],
             ),
             footer: Padding(
@@ -458,7 +467,7 @@ class _ScaffoldSample extends StatelessWidget {
             header: MochiHeader(
               variant: MochiHeaderVariant.floating,
               title: const Text("Sessions"),
-              suffixes: [MochiHeaderAction(icon: const Icon(TablerIcons.plus), onPress: () {})],
+              suffixes: [MochiAction(icon: TablerIcons.plus, label: "Add", onPress: () {})],
             ),
             child: const Align(alignment: .topLeft, child: Text("content")),
           ),
@@ -471,8 +480,8 @@ class _ScaffoldSample extends StatelessWidget {
             header: MochiHeader(
               alignment: MochiHeaderAlignment.center,
               title: const Text("Settings"),
-              prefixes: [MochiHeaderAction.back(onPress: () {})],
-              suffixes: [MochiHeaderAction.close(onPress: () {})],
+              prefixes: [MochiAction.back(onPress: () {})],
+              suffixes: [MochiAction.close(onPress: () {})],
             ),
             child: const Align(alignment: .topLeft, child: Text("content")),
           ),

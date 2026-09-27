@@ -1,0 +1,102 @@
+import "package:flutter/widgets.dart";
+import "package:flutter_test/flutter_test.dart";
+import "package:mochi_ui/mochi_ui.dart";
+
+void main() {
+  Widget app(Widget child, {MochiScreenSize size = MochiScreenSize.desktop}) => MochiApp(
+    themeMode: MochiThemeMode.light,
+    touch: false,
+    home: ResponsiveScope(
+      size: size,
+      child: Align(alignment: Alignment.topLeft, child: child),
+    ),
+  );
+
+  List<MochiAction> actions(int count, {List<String>? pressed}) => [
+    for (var at = 1; at <= count; at++)
+      MochiAction(
+        icon: MochiIcons.standard.search,
+        label: "Action $at",
+        onPress: () => pressed?.add("Action $at"),
+      ),
+  ];
+
+  testWidgets("a row that fits is all buttons and no …", (tester) async {
+    await tester.pumpWidget(app(MochiActionBar(actions(4))));
+
+    expect(find.byType(MochiButton), findsNWidgets(4));
+    expect(find.byIcon(MochiIcons.standard.more), findsNothing);
+  });
+
+  testWidgets("one too many folds the last ones into the …", (tester) async {
+    final pressed = <String>[];
+    await tester.pumpWidget(app(MochiActionBar(actions(6, pressed: pressed))));
+
+    // Four slots on the desktop scale: three buttons and the … in the last one.
+    expect(find.byType(MochiButton), findsNWidgets(4));
+    expect(find.byIcon(MochiIcons.standard.more), findsOneWidget);
+
+    await tester.tap(find.byIcon(MochiIcons.standard.more));
+    await tester.pumpAndSettle();
+
+    // The ones that did not fit, in the order they were given, and they still work.
+    expect(find.text("Action 4"), findsOneWidget);
+    expect(find.text("Action 6"), findsOneWidget);
+    expect(find.text("Action 3"), findsNothing, reason: "a written-out action is not in the menu too");
+
+    await tester.tap(find.text("Action 5"));
+    await tester.pumpAndSettle();
+    expect(pressed, ["Action 5"]);
+  });
+
+  testWidgets("a phone keeps two slots, a tablet four", (tester) async {
+    await tester.pumpWidget(app(MochiActionBar(actions(5)), size: MochiScreenSize.mobile));
+    expect(find.byType(MochiButton), findsNWidgets(2), reason: "one action and the …");
+
+    await tester.pumpWidget(app(MochiActionBar(actions(5)), size: MochiScreenSize.tablet));
+    await tester.pumpAndSettle();
+    expect(find.byType(MochiButton), findsNWidgets(4));
+  });
+
+  testWidgets("maxVisible says so itself", (tester) async {
+    await tester.pumpWidget(app(MochiActionBar(actions(5), maxVisible: 2)));
+
+    expect(find.byType(MochiButton), findsNWidgets(2));
+    expect(find.byIcon(MochiIcons.standard.more), findsOneWidget);
+  });
+
+  testWidgets("an icon action is named by its label, one that shows it writes it out", (tester) async {
+    await tester.pumpWidget(
+      app(
+        MochiActionBar([
+          MochiAction(icon: MochiIcons.standard.search, label: "Search", onPress: () {}),
+          MochiAction(icon: MochiIcons.standard.check, label: "Done", showLabel: true, onPress: () {}),
+          const MochiAction(label: "Words only", showLabel: true, onPress: null),
+        ]),
+      ),
+    );
+
+    // The icon-only one says what it is through its tooltip; the others have said it already.
+    final buttons = tester.widgetList<MochiButton>(find.byType(MochiButton)).toList();
+    expect(buttons[0].tooltip, "Search");
+    expect(find.text("Search"), findsNothing);
+    expect(find.text("Done"), findsOneWidget);
+    // Null onPress disables it, the same rule as everywhere else.
+    expect(buttons[2].enabled, isFalse);
+  });
+
+  testWidgets("the built-in actions take their icon and their words from the theme", (tester) async {
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        strings: MochiStrings.zhHant,
+        home: MochiActionBar([MochiAction.back(onPress: () {}), MochiAction.close(onPress: () {})]),
+      ),
+    );
+
+    final buttons = tester.widgetList<MochiButton>(find.byType(MochiButton)).toList();
+    expect(buttons.map((button) => button.tooltip), ["返回", "關閉"]);
+    expect(find.byIcon(MochiIcons.standard.back), findsOneWidget);
+    expect(find.byIcon(MochiIcons.standard.close), findsOneWidget);
+  });
+}

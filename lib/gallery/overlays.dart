@@ -22,7 +22,7 @@ class _TransitionSample extends StatelessWidget {
                   header: MochiHeader(
                     variant: MochiHeaderVariant.bordered,
                     title: Text("Pushed with ${transition.name}"),
-                    prefixes: [MochiHeaderAction.back(onPress: () => Navigator.of(context).pop())],
+                    prefixes: [MochiAction.back(onPress: () => Navigator.of(context).pop())],
                   ),
                   child: const Center(child: Text("Press back to return")),
                 ),
@@ -248,6 +248,8 @@ class _DialogSampleState extends State<_DialogSample> {
     final answer = await showMochiModal<bool>(
       context,
       title: const Text("Move to session?"),
+      // On the title's own line, where what isn't an answer belongs.
+      titleSuffix: MochiCloseButton(onPress: () => Navigator.of(context).pop()),
       body: const Text("Narrow the window to a phone width and this becomes a sheet."),
       actions: [
         MochiButton(

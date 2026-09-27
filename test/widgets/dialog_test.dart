@@ -421,4 +421,48 @@ void main() {
       });
     });
   });
+
+  testWidgets("a title suffix sits on the title's own line, in both forms", (tester) async {
+    for (final form in MochiModalForm.values) {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: false,
+            home: Builder(
+              builder: (context) => Center(
+                child: MochiButton(
+                  onPress: () => showMochiModal<void>(
+                    context,
+                    form: form,
+                    title: const Text("Pick a colour"),
+                    titleSuffix: MochiCloseButton(onPress: () => Navigator.of(context).pop()),
+                    body: const Text("body"),
+                    actions: const [MochiModalAction<void>(label: "OK")],
+                  ),
+                  child: const Text("open"),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final title = tester.getRect(find.text("Pick a colour"));
+      final suffix = tester.getRect(find.byType(MochiCloseButton));
+
+      // The same line, and at the end of it: not stacked above or below the title, and not down
+      // among the answers.
+      expect(suffix.center.dy, closeTo(title.center.dy, title.height), reason: "$form");
+      expect(suffix.left, greaterThan(title.right), reason: "$form");
+      expect(suffix.top, lessThan(tester.getRect(find.text("body")).top), reason: "$form");
+
+      await tester.tap(find.byType(MochiCloseButton));
+      await tester.pumpAndSettle();
+      expect(find.text("body"), findsNothing, reason: "$form");
+    }
+  });
 }

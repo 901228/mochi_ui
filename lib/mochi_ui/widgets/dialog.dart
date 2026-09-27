@@ -22,6 +22,7 @@ class MochiDialog extends StatelessWidget {
   const MochiDialog({
     super.key,
     required this.title,
+    this.titleSuffix,
     this.body,
     this.actions = const [],
     this.actionsAxis,
@@ -31,6 +32,13 @@ class MochiDialog extends StatelessWidget {
   });
 
   final Widget title;
+
+  /// At the end of the title's own line: a close button, or an action that belongs to the panel
+  /// rather than to the answer — one that changes what is in the modal instead of ending it.
+  ///
+  /// The actions below are the answers, and a button among them says "this closes the modal";
+  /// a phone stacks them full width, where anything else reads as a third way out.
+  final Widget? titleSuffix;
 
   /// The question or detail under the title. Scrolls when it outgrows the screen.
   final Widget? body;
@@ -73,7 +81,13 @@ class MochiDialog extends StatelessWidget {
               side: BorderSide(color: colors.border, width: g.borderWidth),
             ),
           ),
-          child: _ModalColumn(title: title, body: body, actions: actions, actionsAxis: axis),
+          child: _ModalColumn(
+            title: title,
+            titleSuffix: titleSuffix,
+            body: body,
+            actions: actions,
+            actionsAxis: axis,
+          ),
         ),
       ),
     );
@@ -84,12 +98,14 @@ class MochiDialog extends StatelessWidget {
 class _ModalColumn extends StatelessWidget {
   const _ModalColumn({
     required this.title,
+    required this.titleSuffix,
     required this.body,
     required this.actions,
     required this.actionsAxis,
   });
 
   final Widget title;
+  final Widget? titleSuffix;
   final Widget? body;
   final List<Widget> actions;
   final Axis actionsAxis;
@@ -104,10 +120,24 @@ class _ModalColumn extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DefaultTextStyle(
-          style: theme.typography.title.md.copyWith(color: colors.foreground),
-          child: title,
-        ),
+        if (titleSuffix case final suffix?)
+          Row(
+            spacing: g.space.sm,
+            children: [
+              Expanded(
+                child: DefaultTextStyle(
+                  style: theme.typography.title.md.copyWith(color: colors.foreground),
+                  child: title,
+                ),
+              ),
+              suffix,
+            ],
+          )
+        else
+          DefaultTextStyle(
+            style: theme.typography.title.md.copyWith(color: colors.foreground),
+            child: title,
+          ),
         if (body case final body?) ...[
           SizedBox(height: g.space.xs),
           Flexible(
@@ -238,13 +268,15 @@ enum MochiModalForm {
 /// doubt.
 ///
 /// [sheetConstraints] is handed to the [MochiSheet] on a phone, where the default cap is half the
-/// screen — enough for a question, not for a panel.
+/// screen — enough for a question, not for a panel. [titleSuffix] puts something at the end of the
+/// title's line, which is where anything that isn't an answer belongs.
 ///
 /// This takes the parts of the question rather than a built widget on purpose: the two containers
 /// lay their actions out differently, so there is no one subtree that suits both.
 Future<T?> showMochiModal<T>(
   BuildContext context, {
   required Widget title,
+  Widget? titleSuffix,
   Widget? body,
   List<Widget> actions = const [],
   MochiModalForm? form,
@@ -263,7 +295,7 @@ Future<T?> showMochiModal<T>(
       barrierLabel: barrierLabel,
       useRootNavigator: useRootNavigator,
       settings: settings,
-      builder: (context) => MochiDialog(title: title, body: body, actions: actions),
+      builder: (context) => MochiDialog(title: title, titleSuffix: titleSuffix, body: body, actions: actions),
     ),
     MochiModalForm.sheet => showMochiSheet<T>(
       context,
@@ -275,7 +307,13 @@ Future<T?> showMochiModal<T>(
         // A sheet stops at half the screen, which is right for a question and short for a panel:
         // a modal carrying a picker says how much room it needs, and then nothing has to scroll.
         constraints: sheetConstraints,
-        child: _ModalColumn(title: title, body: body, actions: actions, actionsAxis: Axis.vertical),
+        child: _ModalColumn(
+          title: title,
+          titleSuffix: titleSuffix,
+          body: body,
+          actions: actions,
+          actionsAxis: Axis.vertical,
+        ),
       ),
     ),
   };

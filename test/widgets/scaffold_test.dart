@@ -33,8 +33,8 @@ void main() {
         MochiScaffold(
           header: MochiHeader(
             title: const Text("Settings"),
-            prefixes: [MochiHeaderAction.back(onPress: () => back++)],
-            suffixes: [MochiHeaderAction.close(onPress: () {})],
+            prefixes: [MochiAction.back(onPress: () => back++)],
+            suffixes: [MochiAction.close(onPress: () {})],
           ),
           child: const SizedBox(),
         ),
@@ -42,12 +42,12 @@ void main() {
     );
 
     final title = tester.getRect(find.text("Settings"));
-    final actions = tester.widgetList(find.byType(MochiHeaderAction)).toList();
-    expect(actions, hasLength(2));
-    expect(tester.getRect(find.byType(MochiHeaderAction).first).right, lessThan(title.left));
-    expect(tester.getRect(find.byType(MochiHeaderAction).last).left, greaterThan(title.right));
+    // One bar either side of the title, each with its own button in it.
+    expect(find.byType(MochiActionBar), findsNWidgets(2));
+    expect(tester.getRect(find.byType(MochiActionBar).first).right, lessThan(title.left));
+    expect(tester.getRect(find.byType(MochiActionBar).last).left, greaterThan(title.right));
 
-    await tester.tap(find.byType(MochiHeaderAction).first);
+    await tester.tap(find.byType(MochiActionBar).first);
     expect(back, 1);
   });
 
@@ -58,7 +58,7 @@ void main() {
           header: MochiHeader(
             alignment: MochiHeaderAlignment.center,
             title: const Text("Settings"),
-            prefixes: [MochiHeaderAction.back(onPress: () {})],
+            prefixes: [MochiAction.back(onPress: () {})],
           ),
           child: const SizedBox(),
         ),

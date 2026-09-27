@@ -1,11 +1,7 @@
 import "package:flutter/widgets.dart";
 
-import "../theme/strings.dart";
-import "../theme/styles/button_style.dart";
-import "../theme/size.dart";
 import "../theme/theme.dart";
-import "../theme/tone.dart";
-import "button.dart";
+import "action.dart";
 
 /// Where a header's title sits between its two groups of actions.
 enum MochiHeaderAlignment { start, center }
@@ -25,23 +21,29 @@ enum MochiHeaderVariant {
 
 /// The bar at the top of a [MochiScaffold]: a title with actions on either side.
 ///
-/// A pushed page puts [MochiHeaderAction.back] in [prefixes]; there is no separate nested
-/// variant, since that was the only difference.
+/// A pushed page puts [MochiAction.back] in [prefixes]; there is no separate nested variant,
+/// since that was the only difference. Each group is a [MochiActionBar], so a group with more
+/// actions than the breakpoint has room for folds its last ones into a … rather than squeezing
+/// the title out.
 class MochiHeader extends StatelessWidget {
   const MochiHeader({
     super.key,
     required this.title,
     this.prefixes = const [],
     this.suffixes = const [],
+    this.maxVisibleActions,
     this.alignment = MochiHeaderAlignment.start,
     this.variant = MochiHeaderVariant.plain,
   });
 
   final Widget title;
 
-  /// Leading actions, usually [MochiHeaderAction.back].
-  final List<Widget> prefixes;
-  final List<Widget> suffixes;
+  /// Leading actions, usually [MochiAction.back].
+  final List<MochiAction> prefixes;
+  final List<MochiAction> suffixes;
+
+  /// How many slots each group has, the … included. Defaults to the breakpoint's own count.
+  final int? maxVisibleActions;
 
   /// Where the title sits between the two action groups.
   final MochiHeaderAlignment alignment;
@@ -75,7 +77,7 @@ class MochiHeader extends StatelessWidget {
       child: Row(
         spacing: g.space.xs,
         children: [
-          ...prefixes,
+          if (prefixes.isNotEmpty) MochiActionBar(prefixes, maxVisible: maxVisibleActions),
           Expanded(
             child: Align(
               alignment: switch (alignment) {
@@ -90,80 +92,9 @@ class MochiHeader extends StatelessWidget {
               ),
             ),
           ),
-          ...suffixes,
+          if (suffixes.isNotEmpty) MochiActionBar(suffixes, maxVisible: maxVisibleActions),
         ],
       ),
     );
   }
 }
-
-/// An icon button sized for [MochiHeader].
-class MochiHeaderAction extends StatelessWidget {
-  const MochiHeaderAction({
-    super.key,
-    required this.icon,
-    required this.onPress,
-    this.intent = MochiIntent.neutral,
-    this.tooltip,
-    this.enabled = true,
-  }) : _icon = null;
-
-  /// Navigates back, using [MochiIcons.back].
-  const MochiHeaderAction.back({
-    super.key,
-    required this.onPress,
-    this.intent = MochiIntent.neutral,
-    this.tooltip,
-    this.enabled = true,
-  }) : icon = null,
-       _icon = _Builtin.back;
-
-  /// Dismisses the page, using [MochiIcons.close].
-  const MochiHeaderAction.close({
-    super.key,
-    required this.onPress,
-    this.intent = MochiIntent.neutral,
-    this.tooltip,
-    this.enabled = true,
-  }) : icon = null,
-       _icon = _Builtin.close;
-
-  final Widget? icon;
-  final VoidCallback? onPress;
-  final MochiIntent intent;
-
-  /// Defaults to [MochiStrings.back] / [MochiStrings.close] for the two built-in actions.
-  final String? tooltip;
-  final bool enabled;
-
-  final _Builtin? _icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    final icons = theme.icons;
-
-    return MochiButton.icon(
-      intent: intent,
-      appearance: MochiButtonAppearance.ghost,
-      size: MochiSize.sm,
-      enabled: enabled,
-      tooltip:
-          tooltip ??
-          switch (_icon) {
-            .back => theme.strings.back,
-            .close => theme.strings.close,
-            null => null,
-          },
-      onPress: onPress,
-      icon:
-          icon ??
-          Icon(switch (_icon!) {
-            .back => icons.back,
-            .close => icons.close,
-          }),
-    );
-  }
-}
-
-enum _Builtin { back, close }

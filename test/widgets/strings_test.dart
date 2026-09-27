@@ -103,7 +103,7 @@ void main() {
       MochiApp(
         themeMode: MochiThemeMode.light,
         strings: MochiStrings.zhHant,
-        home: MochiHeaderAction.back(onPress: () {}),
+        home: MochiActionBar([MochiAction.back(onPress: () {})]),
       ),
     );
 

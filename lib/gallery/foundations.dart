@@ -359,32 +359,32 @@ class _SizingPage extends StatelessWidget {
       header: MochiHeader(
         variant: MochiHeaderVariant.bordered,
         title: const Text("sizing"),
-        prefixes: [MochiHeaderAction.back(onPress: () => Navigator.of(context).pop())],
+        prefixes: [MochiAction.back(onPress: () => Navigator.of(context).pop())],
+        // Two actions that write their labels out: an icon alone would not say which way the
+        // switch is about to go.
         suffixes: [
-          MochiButton(
-            appearance: MochiButtonAppearance.ghost,
-            size: MochiSize.sm,
+          MochiAction(
+            icon: TablerIcons.handFinger,
+            label: "touch",
+            showLabel: true,
             selected: theme.touch,
             onPress: () => onTouchChanged(!theme.touch),
-            prefix: const Icon(TablerIcons.handFinger),
-            child: const Text("touch"),
           ),
           // Both animations are worth watching on a page this quiet: the scale eases, the colors
           // fade, and neither has the rest of the gallery rebuilding alongside it.
-          MochiButton(
-            appearance: MochiButtonAppearance.ghost,
-            size: MochiSize.sm,
+          MochiAction(
+            icon: switch (theme.colors.brightness) {
+              .light => TablerIcons.moon,
+              .dark => TablerIcons.sun,
+            },
+            label: switch (theme.colors.brightness) {
+              .light => "dark",
+              .dark => "light",
+            },
+            showLabel: true,
             onPress: () => onModeChanged(switch (theme.colors.brightness) {
               .light => MochiThemeMode.dark,
               .dark => MochiThemeMode.light,
-            }),
-            prefix: Icon(switch (theme.colors.brightness) {
-              .light => TablerIcons.moon,
-              .dark => TablerIcons.sun,
-            }),
-            child: Text(switch (theme.colors.brightness) {
-              .light => "dark",
-              .dark => "light",
             }),
           ),
         ],

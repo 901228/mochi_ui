@@ -28,6 +28,7 @@ class MochiStrings {
     required this.search,
     required this.clear,
     required this.reset,
+    required this.more,
     required this.pickDate,
     required this.pickTime,
     required this.pickColor,
@@ -90,6 +91,9 @@ class MochiStrings {
   /// Puts a value back to the one the app would have used anyway, such as a colour picker's
   /// default colour.
   final String reset;
+
+  /// The … a row of actions folds into when there are more of them than it has room for.
+  final String more;
 
   /// What a date field says while it is empty.
   final String pickDate;
@@ -169,6 +173,7 @@ class MochiStrings {
     search: "Search",
     clear: "Clear",
     reset: "Reset",
+    more: "More",
     pickDate: "Pick a date",
     pickTime: "Pick a time",
     pickColor: "Pick a colour",
@@ -219,6 +224,7 @@ class MochiStrings {
     search: "搜尋",
     clear: "清除",
     reset: "重設",
+    more: "更多",
     pickDate: "選擇日期",
     pickTime: "選擇時間",
     pickColor: "選擇顏色",
@@ -262,6 +268,7 @@ class MochiStrings {
     String? search,
     String? clear,
     String? reset,
+    String? more,
     String? pickDate,
     String? pickTime,
     String? pickColor,
@@ -301,6 +308,7 @@ class MochiStrings {
     search: search ?? this.search,
     clear: clear ?? this.clear,
     reset: reset ?? this.reset,
+    more: more ?? this.more,
     pickDate: pickDate ?? this.pickDate,
     pickTime: pickTime ?? this.pickTime,
     pickColor: pickColor ?? this.pickColor,
@@ -345,6 +353,7 @@ class MochiStrings {
           search == other.search &&
           clear == other.clear &&
           reset == other.reset &&
+          more == other.more &&
           pickDate == other.pickDate &&
           pickTime == other.pickTime &&
           pickColor == other.pickColor &&
@@ -387,6 +396,7 @@ class MochiStrings {
     search,
     clear,
     reset,
+    more,
     pickDate,
     pickTime,
     pickColor,

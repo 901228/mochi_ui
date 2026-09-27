@@ -1,0 +1,246 @@
+import "package:flutter/widgets.dart";
+
+import "../theme/responsive.dart";
+import "../theme/size.dart";
+import "../theme/styles/button_style.dart";
+import "../theme/theme.dart";
+import "../theme/tone.dart";
+import "button.dart";
+import "menu.dart";
+
+/// One thing a bar of actions can do: an icon, the words for it, and what pressing it does.
+///
+/// A value rather than a widget, because the same action is drawn two ways — as an icon button
+/// while there is room for it, and as a row in a menu once there isn't — and only a value can be
+/// drawn twice. That is also why [label] is a `String` and not a `Widget`: it is the menu row's
+/// text as well as the button's tooltip and its name to a screen reader, the same bargain
+/// `MochiSelectOption` makes.
+///
+/// ```dart
+/// MochiHeader(
+///   title: const Text("Session"),
+///   prefixes: [MochiAction.back(onPress: () => Navigator.of(context).pop())],
+///   suffixes: [
+///     MochiAction(icon: TablerIcons.share, label: "Share", onPress: share),
+///     MochiAction(icon: TablerIcons.trash, label: "Delete", intent: .danger, onPress: delete),
+///   ],
+/// )
+/// ```
+@immutable
+class MochiAction {
+  const MochiAction({
+    this.icon,
+    required String this.label,
+    required this.onPress,
+    this.showLabel = false,
+    this.selected = false,
+    this.intent = MochiIntent.neutral,
+    this.enabled = true,
+  }) : _builtin = null,
+       assert(icon != null || showLabel, "An action with no icon has to show its label.");
+
+  /// Goes back, with [MochiIcons.back] and [MochiStrings.back].
+  const MochiAction.back({required this.onPress, this.intent = MochiIntent.neutral, this.enabled = true})
+    : icon = null,
+      label = null,
+      showLabel = false,
+      selected = false,
+      _builtin = _Builtin.back;
+
+  /// Closes what it is in, with [MochiIcons.close] and [MochiStrings.close].
+  const MochiAction.close({required this.onPress, this.intent = MochiIntent.neutral, this.enabled = true})
+    : icon = null,
+      label = null,
+      showLabel = false,
+      selected = false,
+      _builtin = _Builtin.close;
+
+  /// Null only for the two built-in actions, which take theirs from the theme.
+  final IconData? icon;
+
+  /// What it says: the menu row's text, the button's tooltip, and its name in semantics. Null
+  /// only for the two built-in actions.
+  final String? label;
+
+  /// Null disables the action, the same rule as everywhere else.
+  final VoidCallback? onPress;
+
+  /// Whether the label is written out beside the icon rather than kept for the tooltip. An action
+  /// with no icon shows it whatever this says, since otherwise there would be nothing to press.
+  final bool showLabel;
+
+  /// For an action that is a switch rather than an errand — a view that is on, a mode that is
+  /// chosen. It tints the button and ticks the menu row.
+  final bool selected;
+
+  final MochiIntent intent;
+  final bool enabled;
+
+  final _Builtin? _builtin;
+
+  bool get _enabled => enabled && onPress != null;
+
+  /// The built-ins have no `icon` of their own — theirs comes from the theme — so an action is
+  /// only words when it is neither.
+  bool get _showsLabel => showLabel || (icon == null && _builtin == null);
+
+  /// The icon to draw, which for the two built-ins comes from the theme. Null for an action that
+  /// is only words.
+  IconData? iconOf(MochiTheme theme) =>
+      icon ??
+      switch (_builtin) {
+        _Builtin.back => theme.icons.back,
+        _Builtin.close => theme.icons.close,
+        null => null,
+      };
+
+  String labelOf(MochiTheme theme) =>
+      label ??
+      switch (_builtin!) {
+        _Builtin.back => theme.strings.back,
+        _Builtin.close => theme.strings.close,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MochiAction &&
+          icon == other.icon &&
+          label == other.label &&
+          onPress == other.onPress &&
+          showLabel == other.showLabel &&
+          selected == other.selected &&
+          intent == other.intent &&
+          enabled == other.enabled &&
+          _builtin == other._builtin;
+
+  @override
+  int get hashCode => Object.hash(icon, label, onPress, showLabel, selected, intent, enabled, _builtin);
+}
+
+enum _Builtin { back, close }
+
+/// A row of [MochiAction]s that folds into a … once there are more of them than [maxVisible].
+///
+/// The last slot is the …, so a row of four with a cap of three shows two buttons and a menu
+/// holding the other two — the row is [maxVisible] slots wide whatever it is given, which is the
+/// same bargain [MochiPagination] makes.
+///
+/// The cap is a count rather than a measurement on purpose. The bar usually sits at one end of a
+/// row whose middle is the flexible part (a header's title), so it is offered an unbounded width
+/// and has nothing to measure against; and a count is what an app can reason about while it is
+/// deciding which actions matter. It defaults by breakpoint — two on a phone, four from tablet
+/// width up — since that is what the rest of the kit uses to decide how much fits.
+class MochiActionBar extends StatelessWidget {
+  const MochiActionBar(
+    this.actions, {
+    super.key,
+    this.maxVisible,
+    this.size = MochiSize.sm,
+    this.appearance = MochiButtonAppearance.ghost,
+    this.menuLabel,
+  }) : assert(maxVisible == null || maxVisible > 0);
+
+  final List<MochiAction> actions;
+
+  /// How many slots the row has, the … included. Defaults to two on a phone and four above it.
+  final int? maxVisible;
+
+  final MochiSize size;
+  final MochiButtonAppearance appearance;
+
+  /// Names the … for a screen reader. Defaults to `strings.more`.
+  final String? menuLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+    final slots = maxVisible ?? context.responsive<int>(mobile: 2, tablet: 4);
+    final folded = actions.length > slots;
+    // The … takes the last slot, so what is written out is one fewer.
+    final shown = folded ? actions.take(slots - 1).toList() : actions;
+    final hidden = folded ? actions.skip(slots - 1).toList() : const <MochiAction>[];
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: g.space.xs3,
+      children: [
+        for (final action in shown) _ActionButton(action: action, size: size, appearance: appearance),
+        if (hidden.isNotEmpty)
+          MochiPopoverMenu(
+            menuBuilder: (context) => [
+              for (final action in hidden)
+                MochiMenuItem(
+                  title: Text(action.labelOf(theme)),
+                  prefix: switch (action.iconOf(theme)) {
+                    final icon? => Icon(icon),
+                    null => null,
+                  },
+                  intent: action.intent,
+                  enabled: action._enabled,
+                  selected: action.selected,
+                  onPress: action.onPress,
+                ),
+            ],
+            builder: (context, anchor, _) => MochiButton.icon(
+              size: size,
+              appearance: appearance,
+              intent: MochiIntent.neutral,
+              focusNode: anchor.focusNode,
+              onPress: anchor.toggle,
+              semanticLabel: menuLabel ?? theme.strings.more,
+              icon: Icon(theme.icons.more),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One action as a button. Its label is the tooltip as well as its name, since an icon on its own
+/// says nothing to a screen reader.
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.action, required this.size, required this.appearance});
+
+  final MochiAction action;
+  final MochiSize size;
+  final MochiButtonAppearance appearance;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+
+    final icon = action.iconOf(theme);
+    final label = action.labelOf(theme);
+
+    // An icon on its own says nothing to a screen reader, so its label becomes the tooltip; one
+    // that writes its label out has said it already.
+    if (!action._showsLabel) {
+      return MochiButton.icon(
+        size: size,
+        appearance: appearance,
+        intent: action.intent,
+        enabled: action._enabled,
+        selected: action.selected,
+        tooltip: label,
+        onPress: action.onPress,
+        icon: Icon(icon),
+      );
+    }
+
+    return MochiButton(
+      size: size,
+      appearance: appearance,
+      intent: action.intent,
+      enabled: action._enabled,
+      selected: action.selected,
+      onPress: action.onPress,
+      prefix: switch (icon) {
+        final icon? => Icon(icon),
+        null => null,
+      },
+      child: Text(label),
+    );
+  }
+}
