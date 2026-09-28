@@ -126,19 +126,33 @@ class _CardSurface extends StatelessWidget {
     return MochiStateTransition(
       states: states,
       duration: theme.motion.stateDuration,
-      builder: (context, blend) => Container(
-        padding: padding ?? EdgeInsets.all(g.space.md),
-        decoration: ShapeDecoration(
+      builder: (context, blend) {
+        final decoration = ShapeDecoration(
           color: blend.color((st) => MochiColors.stateLayer(base, colors.foreground, st)),
           shadows: g.shadows.of(elevation, colors.shadow),
           shape: RoundedSuperellipseBorder(
             borderRadius: g.radius.md,
             side: BorderSide(color: colors.border, width: g.borderWidth),
           ),
-        ),
-        // Clipped so content (rows, scrollbars) stays inside the rounded corners.
-        child: ClipRSuperellipse(borderRadius: g.radius.md, child: child),
-      ),
+        );
+
+        return DecoratedBox(
+          decoration: decoration,
+          // The clip is the card's own outline, with the padding inside it: a row's hover fill and
+          // a scrollbar's thumb still stop at the corners, and the padded content is never reached
+          // by the clip at all. Inside the padding it would round the *content's* corners by the
+          // card's radius instead, which bites a piece out of anything in one of them.
+          child: ClipRSuperellipse(
+            borderRadius: g.radius.md,
+            child: Padding(
+              // The border's width is added the way a Container adds a decoration's own padding,
+              // so the content sits inside the line rather than under it.
+              padding: (padding ?? EdgeInsets.all(g.space.md)).add(decoration.padding),
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

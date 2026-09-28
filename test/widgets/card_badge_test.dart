@@ -11,11 +11,38 @@ void main() {
 
   ShapeDecoration decoration(WidgetTester tester, Type of) =>
       tester
-              .widget<Container>(find.descendant(of: find.byType(of), matching: find.byType(Container)).first)
-              .decoration!
+              .widget<DecoratedBox>(
+                find.descendant(of: find.byType(of), matching: find.byType(DecoratedBox)).first,
+              )
+              .decoration
           as ShapeDecoration;
 
   group("card", () {
+    testWidgets("the clip is the card's own outline, not the content's", (tester) async {
+      await tester.pumpWidget(
+        app(
+          const MochiCard(
+            padding: EdgeInsets.all(10),
+            child: SizedBox(
+              width: 200,
+              height: 80,
+              child: Align(alignment: Alignment.topLeft, child: Text("9 / 28")),
+            ),
+          ),
+        ),
+      );
+
+      final card = tester.getRect(find.byType(MochiCard));
+      final clip = tester.getRect(
+        find.descendant(of: find.byType(MochiCard), matching: find.byType(ClipRSuperellipse)).first,
+      );
+
+      // Inside the padding, the clip would round the *content's* corners by the card's radius and
+      // bite a piece out of anything in one of them — a date in the top left corner, say.
+      expect(clip, card);
+      expect(tester.getRect(find.text("9 / 28")).left - card.left, greaterThanOrEqualTo(10));
+    });
+
     testWidgets("uses the surface color and an elevation shadow", (tester) async {
       await tester.pumpWidget(app(const MochiCard(child: Text("Body"))));
 

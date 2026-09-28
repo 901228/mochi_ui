@@ -182,4 +182,57 @@ void main() {
     expect(route, isA<MochiPageRoute<void>>());
     expect((route as MochiPageRoute<void>).transition, MochiTransition.slide);
   });
+
+  group("defaults.transition", () {
+    Widget app({MochiTransition? defaults, MochiTransition? route}) => MochiApp(
+      themeMode: MochiThemeMode.light,
+      lightTheme: defaults == null
+          ? null
+          : MochiTheme.light.copyWith(defaults: MochiDefaults(transition: defaults)),
+      home: Builder(
+        builder: (context) => Center(
+          child: MochiButton(
+            onPress: () => showMochiDialog<void>(
+              context,
+              transition: route,
+              builder: (context) => const MochiDialog(title: Text("pushed")),
+            ),
+            child: const Text("open"),
+          ),
+        ),
+      ),
+    );
+
+    /// Whether the surface is being scaled as well as faded, halfway through its entrance.
+    Future<bool> scales(WidgetTester tester, Widget host) async {
+      await tester.pumpWidget(host);
+      await tester.tap(find.text("open"));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final scaled = find.ancestor(of: find.text("pushed"), matching: find.byType(ScaleTransition));
+      final answer = scaled.evaluate().isNotEmpty;
+
+      // Put it away before the next case: a standing dialog's barrier swallows the tap that
+      // would open the next one, and the old panel would be measured twice.
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      expect(find.text("pushed"), findsNothing);
+
+      return answer;
+    }
+
+    testWidgets("is what a dialog takes when it is not told otherwise", (tester) async {
+      expect(await scales(tester, app()), isTrue, reason: "scaleFade out of the box");
+      expect(await scales(tester, app(defaults: MochiTransition.fade)), isFalse);
+    });
+
+    testWidgets("gives way to the one a route was given", (tester) async {
+      expect(
+        await scales(tester, app(defaults: MochiTransition.fade, route: MochiTransition.scaleFade)),
+        isTrue,
+      );
+    });
+  });
 }

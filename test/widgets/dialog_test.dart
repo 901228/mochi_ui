@@ -542,4 +542,59 @@ void main() {
     await tester.pumpAndSettle();
     expect(answer, "one\ntwo");
   });
+
+  group("a modal without a title", () {
+    Widget host(Widget dialog) => MediaQuery(
+      data: const MediaQueryData(size: Size(800, 600)),
+      child: MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: Builder(
+          builder: (context) => Center(
+            child: MochiButton(
+              onPress: () => showMochiDialog<void>(context, builder: (context) => dialog),
+              child: const Text("open"),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("puts its body where the heading would have been", (tester) async {
+      await tester.pumpWidget(host(const MochiDialog(semanticLabel: "Scramble", body: Text("R U R'"))));
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final dialog = tester.getRect(find.byType(MochiDialog));
+      final body = tester.getRect(find.text("R U R'"));
+      // Only the dialog's own border and padding above it: no heading, and no gap left where one
+      // was.
+      final g = MochiTheme.light.geometry;
+      expect(body.top - dialog.top, closeTo(g.space.md + g.borderWidth, 0.5));
+    });
+
+    testWidgets("keeps the line for a suffix of its own, at its end", (tester) async {
+      await tester.pumpWidget(
+        host(
+          MochiDialog(
+            semanticLabel: "Scramble",
+            titleSuffix: MochiCloseButton(onPress: () {}),
+            body: const Text("R U R'"),
+          ),
+        ),
+      );
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final dialog = tester.getRect(find.byType(MochiDialog));
+      final close = tester.getRect(find.byType(MochiCloseButton));
+      expect(close.top, lessThan(tester.getRect(find.text("R U R'")).top));
+      final g = MochiTheme.light.geometry;
+      expect(dialog.right - close.right, closeTo(g.space.md + g.borderWidth, 0.5));
+    });
+
+    testWidgets("has to be named some other way", (tester) async {
+      expect(() => MochiDialog(body: const Text("R U R'")), throwsAssertionError);
+    });
+  });
 }

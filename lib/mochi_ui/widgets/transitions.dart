@@ -4,19 +4,6 @@ import "../theme/geometry.dart";
 import "../theme/motion.dart";
 import "../theme/theme.dart";
 
-/// How a surface enters and leaves.
-enum MochiTransition {
-  /// Fades and scales up slightly from [MochiSurfaceTransition.alignment]. Pages, dialogs,
-  /// popovers and toasts.
-  scaleFade,
-
-  /// Fades only, for surfaces whose size would make a scale look heavy.
-  fade,
-
-  /// Slides in from an edge, for sheets.
-  slide,
-}
-
 /// Applies the theme's entering and leaving motion to [child].
 ///
 /// Pages and overlays share this, so a dialog, a popover and a pushed page move alike. Honors
@@ -214,22 +201,20 @@ class _EdgeShadow extends StatelessWidget {
 
 /// A route that enters with [MochiSurfaceTransition] and takes its durations from the theme.
 class MochiPageRoute<T> extends PageRoute<T> {
-  MochiPageRoute({
-    required this.builder,
-    this.transition = MochiTransition.scaleFade,
-    super.settings,
-    super.fullscreenDialog,
-  });
+  MochiPageRoute({required this.builder, this.transition, super.settings, super.fullscreenDialog});
 
   final WidgetBuilder builder;
-  final MochiTransition transition;
+
+  /// Null takes `defaults.transition` from the navigator's theme.
+  final MochiTransition? transition;
 
   // The navigator asks for the durations before buildPage runs, so they are read from the
   // navigator's own context. No dependency is registered: a route cannot change duration midway.
-  MochiMotion get _motion {
-    final scope = navigator?.context.getInheritedWidgetOfExactType<MochiThemeScope>();
-    return scope?.theme.motion ?? MochiMotion.standard;
-  }
+  MochiTheme? get _theme => navigator?.context.getInheritedWidgetOfExactType<MochiThemeScope>()?.theme;
+
+  MochiMotion get _motion => _theme?.motion ?? MochiMotion.standard;
+
+  MochiTransition get _defaults => _theme?.defaults.transition ?? MochiTransition.scaleFade;
 
   @override
   Duration get transitionDuration => _motion.transitionDuration;
@@ -262,7 +247,7 @@ class MochiPageRoute<T> extends PageRoute<T> {
   ) => MochiSurfaceTransition(
     animation: animation,
     secondaryAnimation: secondaryAnimation,
-    transition: transition,
+    transition: transition ?? _defaults,
     child: child,
   );
 }
@@ -271,7 +256,7 @@ class MochiPageRoute<T> extends PageRoute<T> {
 class MochiPage<T> extends Page<T> {
   const MochiPage({
     required this.child,
-    this.transition = MochiTransition.scaleFade,
+    this.transition,
     super.key,
     super.name,
     super.arguments,
@@ -279,7 +264,9 @@ class MochiPage<T> extends Page<T> {
   });
 
   final Widget child;
-  final MochiTransition transition;
+
+  /// Null takes `defaults.transition` from the theme.
+  final MochiTransition? transition;
 
   @override
   Route<T> createRoute(BuildContext context) =>

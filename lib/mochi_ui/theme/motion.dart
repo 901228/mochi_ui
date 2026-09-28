@@ -1,5 +1,21 @@
 import "package:flutter/widgets.dart";
 
+/// How a surface enters and leaves.
+///
+/// A token rather than a route's own business: an app that wants every page and dialog to fade
+/// says so once, through `MochiDefaults.transition`. It lives here beside the durations it is
+/// played at, and `MochiSurfaceTransition` is what draws it.
+enum MochiTransition {
+  /// Fades and scales up slightly from the surface's alignment. Pages, dialogs, popovers, toasts.
+  scaleFade,
+
+  /// Fades only, for surfaces whose size would make a scale look heavy.
+  fade,
+
+  /// Slides in from an edge, for sheets.
+  slide,
+}
+
 /// Motion tokens: durations and springs shared by components.
 @immutable
 class MochiMotion {

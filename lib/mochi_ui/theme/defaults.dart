@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "motion.dart";
 import "size.dart";
 import "styles/button_style.dart";
 import "tone.dart";
@@ -20,6 +21,7 @@ class MochiDefaults {
     this.buttonAppearance = MochiButtonAppearance.solid,
     this.iconButtonAppearance = MochiButtonAppearance.ghost,
     this.buttonSize = MochiSize.md,
+    this.transition = MochiTransition.scaleFade,
   });
 
   final MochiIntent buttonIntent;
@@ -28,6 +30,11 @@ class MochiDefaults {
   /// Used by [MochiButton.icon], which usually sits in toolbars rather than as a main action.
   final MochiButtonAppearance iconButtonAppearance;
   final MochiSize buttonSize;
+
+  /// How pages and dialogs enter and leave, for the ones that are not told otherwise. A sheet
+  /// always slides and a popover always grows out of its anchor: that is what makes them those
+  /// things rather than a setting.
+  final MochiTransition transition;
 
   static const standard = MochiDefaults();
 
@@ -38,8 +45,10 @@ class MochiDefaults {
           buttonIntent == other.buttonIntent &&
           buttonAppearance == other.buttonAppearance &&
           iconButtonAppearance == other.iconButtonAppearance &&
-          buttonSize == other.buttonSize;
+          buttonSize == other.buttonSize &&
+          transition == other.transition;
 
   @override
-  int get hashCode => Object.hash(buttonIntent, buttonAppearance, iconButtonAppearance, buttonSize);
+  int get hashCode =>
+      Object.hash(buttonIntent, buttonAppearance, iconButtonAppearance, buttonSize, transition);
 }

@@ -21,7 +21,7 @@ import "transitions.dart";
 class MochiDialog extends StatelessWidget {
   const MochiDialog({
     super.key,
-    required this.title,
+    this.title,
     this.titleSuffix,
     this.body,
     this.actions = const [],
@@ -29,9 +29,14 @@ class MochiDialog extends StatelessWidget {
     this.constraints = const BoxConstraints(minWidth: 280, maxWidth: 560),
     this.padding,
     this.semanticLabel,
-  });
+  }) : assert(
+         title != null || semanticLabel != null,
+         "A modal names its route: give it a title, or a semanticLabel when it has none to show.",
+       );
 
-  final Widget title;
+  /// The heading, or null for a panel that is not a question — a viewer, a picker. A modal with
+  /// no title has to carry a [semanticLabel] instead, since a route still announces itself.
+  final Widget? title;
 
   /// At the end of the title's own line: a close button, or an action that belongs to the panel
   /// rather than to the answer — one that changes what is in the modal instead of ending it.
@@ -104,7 +109,7 @@ class _ModalColumn extends StatelessWidget {
     required this.actionsAxis,
   });
 
-  final Widget title;
+  final Widget? title;
   final Widget? titleSuffix;
   final Widget? body;
   final List<Widget> actions;
@@ -120,26 +125,26 @@ class _ModalColumn extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (titleSuffix case final suffix?)
+        // No line at all when there is nothing to put in it: a panel that is not a question has a
+        // body and nothing to call it. A suffix on its own — a lone close button — keeps the line
+        // and sits at its end.
+        if (title != null || titleSuffix != null)
           Row(
             spacing: g.space.sm,
             children: [
               Expanded(
                 child: DefaultTextStyle(
                   style: theme.typography.title.md.copyWith(color: colors.foreground),
-                  child: title,
+                  child: title ?? const SizedBox.shrink(),
                 ),
               ),
-              suffix,
+              ?titleSuffix,
             ],
-          )
-        else
-          DefaultTextStyle(
-            style: theme.typography.title.md.copyWith(color: colors.foreground),
-            child: title,
           ),
         if (body case final body?) ...[
-          SizedBox(height: g.space.xs),
+          // The gap belongs to the heading above it, not to the body: without one the body starts
+          // at the padding like any other panel's content.
+          if (title != null || titleSuffix != null) SizedBox(height: g.space.xs),
           Flexible(
             child: SingleChildScrollView(
               child: DefaultTextStyle(
@@ -174,12 +179,14 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
     required this.builder,
     this.barrierDismissible = true,
     this._barrierLabel,
-    this.transition = MochiTransition.scaleFade,
+    this.transition,
     super.settings,
   });
 
   final WidgetBuilder builder;
-  final MochiTransition transition;
+
+  /// Null takes `defaults.transition` from the navigator's theme.
+  final MochiTransition? transition;
 
   @override
   final bool barrierDismissible;
@@ -230,7 +237,7 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
     Widget child,
   ) => MochiSurfaceTransition(
     animation: animation,
-    transition: transition,
+    transition: transition ?? _theme?.defaults.transition ?? MochiTransition.scaleFade,
     // The barrier does the dimming, over the whole screen rather than the dialog's own box.
     scrim: false,
     child: child,
@@ -246,6 +253,7 @@ Future<T?> showMochiDialog<T>(
   required WidgetBuilder builder,
   bool barrierDismissible = true,
   String? barrierLabel,
+  MochiTransition? transition,
   bool useRootNavigator = true,
   RouteSettings? settings,
 }) => Navigator.of(context, rootNavigator: useRootNavigator).push<T>(
@@ -253,6 +261,8 @@ Future<T?> showMochiDialog<T>(
     builder: builder,
     barrierDismissible: barrierDismissible,
     barrierLabel: barrierLabel,
+    // Null is not "no transition": the route then takes the theme's own.
+    transition: transition,
     settings: settings,
   ),
 );
@@ -281,7 +291,7 @@ enum MochiModalForm {
 /// lay their actions out differently, so there is no one subtree that suits both.
 Future<T?> showMochiModal<T>(
   BuildContext context, {
-  required Widget title,
+  Widget? title,
   Widget? titleSuffix,
   Widget? body,
   List<Widget> actions = const [],
@@ -289,9 +299,14 @@ Future<T?> showMochiModal<T>(
   BoxConstraints? sheetConstraints,
   bool barrierDismissible = true,
   String? barrierLabel,
+  String? semanticLabel,
   bool useRootNavigator = true,
   RouteSettings? settings,
 }) {
+  assert(
+    title != null || semanticLabel != null,
+    "A modal names its route: give it a title, or a semanticLabel when it has none to show.",
+  );
   final resolved = form ?? context.responsive<MochiModalForm>(mobile: .sheet, tablet: .dialog);
 
   return switch (resolved) {
@@ -301,7 +316,13 @@ Future<T?> showMochiModal<T>(
       barrierLabel: barrierLabel,
       useRootNavigator: useRootNavigator,
       settings: settings,
-      builder: (context) => MochiDialog(title: title, titleSuffix: titleSuffix, body: body, actions: actions),
+      builder: (context) => MochiDialog(
+        title: title,
+        titleSuffix: titleSuffix,
+        body: body,
+        actions: actions,
+        semanticLabel: semanticLabel,
+      ),
     ),
     MochiModalForm.sheet => showMochiSheet<T>(
       context,
@@ -313,6 +334,7 @@ Future<T?> showMochiModal<T>(
         // A sheet is as tall as its content up to nine tenths of the screen; this is how a modal
         // asks for less than that.
         constraints: sheetConstraints,
+        semanticLabel: semanticLabel,
         child: _ModalColumn(
           title: title,
           titleSuffix: titleSuffix,
