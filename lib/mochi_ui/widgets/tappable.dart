@@ -19,6 +19,9 @@ class MochiTappable extends StatefulWidget {
     this.selected = false,
     this.scaleOnPress = true,
     this.onPress,
+    this.onPressDown,
+    this.onPressUp,
+    this.onPressCancel,
     this.onLongPress,
     this.onDoublePress,
     this.onSecondaryPress,
@@ -44,6 +47,21 @@ class MochiTappable extends StatefulWidget {
   final bool scaleOnPress;
 
   final VoidCallback? onPress;
+
+  /// The two ends of a press, and the press that was called off — a finger that slid away, or a
+  /// gesture something else won.
+  ///
+  /// These are the *tap recognizer's* edges, not the pointer's: with anything else competing for
+  /// the gesture (a scrolling page, most often) they wait for the arena to settle, which can be
+  /// 100ms or as long as the press itself. Anything measuring the press — a stopwatch started by
+  /// touching the screen — wants a `Listener` and its raw `onPointerDown`, not these.
+  ///
+  /// They do not make a tappable interactive on their own: something has to be there to press,
+  /// which is [onPress] or one of the other presses below.
+  final VoidCallback? onPressDown;
+  final VoidCallback? onPressUp;
+  final VoidCallback? onPressCancel;
+
   final VoidCallback? onLongPress;
 
   /// Registering this delays [onPress] by the double-tap timeout (~300ms), since a
@@ -260,9 +278,24 @@ class _MochiTappableState extends State<MochiTappable> {
           behavior: HitTestBehavior.opaque,
           // Pressed feedback is only wired for buttons that have a matching callback,
           // so e.g. a right-click on a button without secondary callbacks does nothing.
-          onTapDown: primary ? (_) => _setPressed(true) : null,
-          onTapUp: primary ? (_) => _setPressed(false) : null,
-          onTapCancel: primary ? () => _setPressed(false) : null,
+          onTapDown: primary
+              ? (_) {
+                  _setPressed(true);
+                  widget.onPressDown?.call();
+                }
+              : null,
+          onTapUp: primary
+              ? (_) {
+                  _setPressed(false);
+                  widget.onPressUp?.call();
+                }
+              : null,
+          onTapCancel: primary
+              ? () {
+                  _setPressed(false);
+                  widget.onPressCancel?.call();
+                }
+              : null,
           onTap: primary && widget.onPress != null ? _press : null,
           // Null unless provided: any double-tap recognizer delays single taps.
           onDoubleTap: primary ? widget.onDoublePress : null,

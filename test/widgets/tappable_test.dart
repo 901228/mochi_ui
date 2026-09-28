@@ -193,4 +193,39 @@ void main() {
       reason: "the row tinted for a press that belonged to the button in it",
     );
   });
+
+  testWidgets("the two ends of a press, and the one that was called off", (tester) async {
+    final seen = <String>[];
+
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Center(
+          child: MochiTappable(
+            onPressDown: () => seen.add("down"),
+            onPressUp: () => seen.add("up"),
+            onPressCancel: () => seen.add("cancel"),
+            onPress: () => seen.add("press"),
+            builder: (context, states, child) => child!,
+            child: const SizedBox.square(dimension: 80),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(MochiTappable));
+    await tester.pumpAndSettle();
+    // Up comes before the press itself: the press is what the recognizer concludes from the two.
+    expect(seen, ["down", "up", "press"]);
+
+    seen.clear();
+    final slid = await tester.startGesture(tester.getCenter(find.byType(MochiTappable)));
+    await tester.pump(const Duration(milliseconds: 200));
+    await slid.moveBy(const Offset(0, 400));
+    await slid.up();
+    await tester.pumpAndSettle();
+
+    // A finger that slid away: the press began and was called off, and nothing was pressed.
+    expect(seen, ["down", "cancel"]);
+  });
 }

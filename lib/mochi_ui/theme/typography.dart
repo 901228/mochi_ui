@@ -4,26 +4,31 @@ import "package:flutter/widgets.dart";
 /// with `md` as the 16px base. Styles carry no color; it comes from [DefaultTextStyle].
 @immutable
 class MochiTypeface {
-  MochiTypeface({required this.fontFamily, this.fontFamilyFallback = const [], this.weight = FontWeight.w400})
-    : xs3 = _style(fontFamily, fontFamilyFallback, weight, 10, 14),
-      xs2 = _style(fontFamily, fontFamilyFallback, weight, 11, 16),
-      xs = _style(fontFamily, fontFamilyFallback, weight, 12, 16),
-      sm = _style(fontFamily, fontFamilyFallback, weight, 14, 20),
-      md = _style(fontFamily, fontFamilyFallback, weight, 16, 24),
-      lg = _style(fontFamily, fontFamilyFallback, weight, 18, 28),
-      xl = _style(fontFamily, fontFamilyFallback, weight, 20, 28),
-      xl2 = _style(fontFamily, fontFamilyFallback, weight, 24, 32),
-      xl3 = _style(fontFamily, fontFamilyFallback, weight, 30, 36),
-      xl4 = _style(fontFamily, fontFamilyFallback, weight, 36, 40),
-      xl5 = _style(fontFamily, fontFamilyFallback, weight, 48, 48),
-      xl6 = _style(fontFamily, fontFamilyFallback, weight, 60, 60),
-      xl7 = _style(fontFamily, fontFamilyFallback, weight, 72, 72),
-      xl8 = _style(fontFamily, fontFamilyFallback, weight, 96, 96);
+  MochiTypeface({
+    required this.fontFamily,
+    this.fontFamilyFallback = const [],
+    this.weight = FontWeight.w400,
+    this.fontFeatures = const [],
+  }) : xs3 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 10, 14),
+       xs2 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 11, 16),
+       xs = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 12, 16),
+       sm = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 14, 20),
+       md = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 16, 24),
+       lg = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 18, 28),
+       xl = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 20, 28),
+       xl2 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 24, 32),
+       xl3 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 30, 36),
+       xl4 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 36, 40),
+       xl5 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 48, 48),
+       xl6 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 60, 60),
+       xl7 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 72, 72),
+       xl8 = _style(fontFamily, fontFamilyFallback, weight, fontFeatures, 96, 96);
 
   const MochiTypeface.raw({
     required this.fontFamily,
     required this.fontFamilyFallback,
     required this.weight,
+    this.fontFeatures = const [],
     required this.xs3,
     required this.xs2,
     required this.xs,
@@ -46,6 +51,13 @@ class MochiTypeface {
   /// Default weight of every style in this typeface.
   final FontWeight weight;
 
+  /// OpenType features every style in this typeface carries.
+  ///
+  /// This is where a readout gets `FontFeature.tabularFigures()`: most families space their
+  /// digits proportionally, so a timer set in one shuffles sideways as it counts, and changing
+  /// the family alone does not stop it.
+  final List<FontFeature> fontFeatures;
+
   final TextStyle xs3;
   final TextStyle xs2;
   final TextStyle xs;
@@ -65,11 +77,13 @@ class MochiTypeface {
     String family,
     List<String> fallback,
     FontWeight weight,
+    List<FontFeature> features,
     double size,
     double lineHeight,
   ) => TextStyle(
     fontFamily: family,
     fontFamilyFallback: fallback,
+    fontFeatures: features.isEmpty ? null : features,
     fontSize: size,
     height: lineHeight / size,
     leadingDistribution: TextLeadingDistribution.even,
@@ -81,6 +95,7 @@ class MochiTypeface {
       fontFamily: fontFamily,
       fontFamilyFallback: fontFamilyFallback,
       weight: weight,
+      fontFeatures: fontFeatures,
       xs3: s(xs3),
       xs2: s(xs2),
       xs: s(xs),
