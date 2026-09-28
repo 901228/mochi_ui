@@ -501,4 +501,45 @@ void main() {
       await tester.pumpAndSettle();
     }
   });
+
+  testWidgets("a prompt can ask for a paragraph, where Enter is a new line", (tester) async {
+    String? answer;
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(800, 600)),
+        child: MochiApp(
+          themeMode: MochiThemeMode.light,
+          home: Builder(
+            builder: (context) => Center(
+              child: MochiButton(
+                onPress: () async =>
+                    answer = await showMochiPrompt(context, title: "Comment", multiline: true, minLines: 4),
+                child: const Text("open"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text("open"));
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<EditableText>(find.byType(EditableText));
+    expect(field.minLines, 4);
+    expect(field.maxLines, isNull, reason: "it grows with what is typed");
+
+    await tester.enterText(find.byType(MochiTextField), "one");
+    await tester.testTextInput.receiveAction(TextInputAction.newline);
+    await tester.pumpAndSettle();
+
+    // Enter made a line rather than answering, so the modal is still standing.
+    expect(find.text("Comment"), findsOneWidget);
+    expect(answer, isNull);
+
+    await tester.enterText(find.byType(MochiTextField), "one\ntwo");
+    await tester.tap(find.text("OK"));
+    await tester.pumpAndSettle();
+    expect(answer, "one\ntwo");
+  });
 }

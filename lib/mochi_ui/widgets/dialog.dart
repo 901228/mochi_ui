@@ -383,6 +383,13 @@ Future<bool> showMochiConfirm(
 /// confirms, not on every keystroke, and the modal stays open until it passes. The field starts
 /// focused with its text selected, so a rename can be typed straight over.
 ///
+/// [multiline] asks for a paragraph rather than a line — a comment, a note — growing from
+/// [minLines]. Enter then makes a new line instead of confirming, and the button is the only way
+/// out; everything else about the question is the same, which is why it is a flag here rather
+/// than a helper of its own. The controller belongs to the field's [State] either way: the
+/// returned future completes when the modal is popped, while the exit animation is still drawing
+/// the field, so an app composing its own prompt has that to get right.
+///
 /// ```dart
 /// final name = await showMochiPrompt(
 ///   context,
@@ -401,6 +408,8 @@ Future<String?> showMochiPrompt(
   String? cancelLabel,
   String? Function(String value)? validate,
   int? maxLength,
+  bool multiline = false,
+  int minLines = 3,
   MochiModalForm? form,
   bool barrierDismissible = true,
 }) {
@@ -412,7 +421,14 @@ Future<String?> showMochiPrompt(
     form: form,
     barrierDismissible: barrierDismissible,
     title: Text(title),
-    body: _PromptField(prompt: prompt, message: message, hint: hint, maxLength: maxLength),
+    body: _PromptField(
+      prompt: prompt,
+      message: message,
+      hint: hint,
+      maxLength: maxLength,
+      multiline: multiline,
+      minLines: minLines,
+    ),
     actions: [
       MochiModalAction<String>(
         label: cancelLabel ?? strings.cancel,
@@ -450,12 +466,16 @@ class _PromptField extends StatefulWidget {
     required this.message,
     required this.hint,
     required this.maxLength,
+    required this.multiline,
+    required this.minLines,
   });
 
   final _Prompt prompt;
   final String? message;
   final String? hint;
   final int? maxLength;
+  final bool multiline;
+  final int minLines;
 
   @override
   State<_PromptField> createState() => _PromptFieldState();
@@ -498,17 +518,30 @@ class _PromptFieldState extends State<_PromptField> {
           if (widget.message case final message?) Text(message),
           ValueListenableBuilder(
             valueListenable: error,
-            builder: (context, problem, _) => MochiTextField(
-              controller: controller,
-              hint: widget.hint,
-              error: problem,
-              maxLength: widget.maxLength,
-              autofocus: true,
-              textInputAction: TextInputAction.done,
-              // A fresh keystroke clears the complaint about the old text.
-              onChanged: (_) => error.value = null,
-              onSubmitted: (_) => widget.prompt.confirm(context),
-            ),
+            // Several lines answer Enter with a new line, so the button is the only way out of
+            // one — which it already was, and is why the two forms are the same field with a
+            // different shape rather than two questions.
+            builder: (context, problem, _) => widget.multiline
+                ? MochiTextField.multiline(
+                    controller: controller,
+                    hint: widget.hint,
+                    error: problem,
+                    maxLength: widget.maxLength,
+                    minLines: widget.minLines,
+                    autofocus: true,
+                    onChanged: (_) => error.value = null,
+                  )
+                : MochiTextField(
+                    controller: controller,
+                    hint: widget.hint,
+                    error: problem,
+                    maxLength: widget.maxLength,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    // A fresh keystroke clears the complaint about the old text.
+                    onChanged: (_) => error.value = null,
+                    onSubmitted: (_) => widget.prompt.confirm(context),
+                  ),
           ),
         ],
       ),
