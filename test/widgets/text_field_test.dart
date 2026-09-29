@@ -259,6 +259,56 @@ void main() {
     expect(fields[2].textCapitalization, TextCapitalization.none);
   });
 
+  testWidgets("the pointer resting on the chrome does not tint the box", (tester) async {
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            child: MochiTextField(
+              suffix: MochiActionBar([
+                MochiAction(icon: MochiIcons.standard.close, label: "Clear it", onPress: () {}),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Color border() =>
+        ((tester
+                        .widgetList<DecoratedBox>(
+                          find.descendant(
+                            of: find.byType(MochiTextField),
+                            matching: find.byType(DecoratedBox),
+                          ),
+                        )
+                        .map((box) => box.decoration)
+                        .whereType<ShapeDecoration>()
+                        .firstWhere((decoration) => decoration.shape is RoundedSuperellipseBorder)
+                        .shape
+                    as RoundedSuperellipseBorder)
+                .side)
+            .color;
+
+    final resting = border();
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+
+    // The field's own region covers the whole box, the suffix included, so without being told it
+    // lights up for a pointer that is aiming at a button rather than at the text.
+    await mouse.moveTo(tester.getCenter(find.byIcon(MochiIcons.standard.close)));
+    await tester.pumpAndSettle();
+    expect(border(), resting);
+
+    await mouse.moveTo(tester.getRect(find.byType(MochiTextField)).centerLeft + const Offset(40, 0));
+    await tester.pumpAndSettle();
+    expect(border(), isNot(resting), reason: "over the text it still tints");
+  });
+
   testWidgets("a press on the field's chrome never becomes a selection drag", (tester) async {
     await tester.pumpWidget(
       MochiApp(

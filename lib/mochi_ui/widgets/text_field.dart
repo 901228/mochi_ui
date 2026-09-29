@@ -165,6 +165,12 @@ class _MochiTextFieldState extends State<MochiTextField>
   late final _gestures = _GestureBuilder(this);
 
   bool _hovered = false;
+
+  /// Whether the pointer is over the field's own chrome — an icon, the clear button, a bar of
+  /// actions — rather than over the text. The box tints for a pointer that could be aiming at the
+  /// text; one resting on a button in the suffix is aiming at the button.
+  bool _chromeHovered = false;
+
   bool _showHandles = false;
 
   @override
@@ -223,6 +229,10 @@ class _MochiTextFieldState extends State<MochiTextField>
 
   void _handleFocus() => setState(() {});
 
+  void _handleChromeHover(bool hovered) {
+    if (_chromeHovered != hovered) setState(() => _chromeHovered = hovered);
+  }
+
   EditableTextState? get _editable => editableTextKey.currentState;
 
   // Follows TextField: handles appear for a touch selection that has something in it, never for
@@ -245,7 +255,7 @@ class _MochiTextFieldState extends State<MochiTextField>
   }
 
   Set<WidgetState> get _states => {
-    if (_hovered) WidgetState.hovered,
+    if (_hovered && !_chromeHovered) WidgetState.hovered,
     if (_focusNode.hasFocus) WidgetState.focused,
     if (!widget.enabled) WidgetState.disabled,
     if (widget.error != null) WidgetState.error,
@@ -387,10 +397,12 @@ class _MochiTextFieldState extends State<MochiTextField>
                         ? CrossAxisAlignment.center
                         : CrossAxisAlignment.start,
                     children: [
-                      if (widget.prefix case final prefix?) _Chrome(child: prefix),
+                      if (widget.prefix case final prefix?)
+                        _Chrome(onHoverChange: _handleChromeHover, child: prefix),
                       Expanded(child: field),
                       if (widget.clearable && text.isNotEmpty && widget.enabled && !widget.readOnly)
                         _Chrome(
+                          onHoverChange: _handleChromeHover,
                           child: MochiCloseButton(
                             // Grows with the field, a little inside its height, so it stays an
                             // easy target rather than a speck beside the text.
@@ -398,7 +410,8 @@ class _MochiTextFieldState extends State<MochiTextField>
                             onPress: _clear,
                           ),
                         ),
-                      if (widget.suffix case final suffix?) _Chrome(child: suffix),
+                      if (widget.suffix case final suffix?)
+                        _Chrome(onHoverChange: _handleChromeHover, child: suffix),
                     ],
                   ),
                 ),
@@ -446,19 +459,26 @@ class _MochiTextFieldState extends State<MochiTextField>
 /// lit the field's ring. Taps are left alone, so a tap on the magnifier still focuses the field
 /// the way a tap on the padding does.
 class _Chrome extends StatelessWidget {
-  const _Chrome({required this.child});
+  const _Chrome({required this.onHoverChange, required this.child});
 
+  final ValueChanged<bool> onHoverChange;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onHorizontalDragStart: (_) {},
-    onHorizontalDragUpdate: (_) {},
-    onHorizontalDragEnd: (_) {},
-    onVerticalDragStart: (_) {},
-    onVerticalDragUpdate: (_) {},
-    onVerticalDragEnd: (_) {},
-    child: child,
+  Widget build(BuildContext context) => MouseRegion(
+    // The field's own region covers the whole box, ancestors included, so the only way it can
+    // know the pointer is on a button rather than on the text is to be told.
+    onEnter: (_) => onHoverChange(true),
+    onExit: (_) => onHoverChange(false),
+    child: GestureDetector(
+      onHorizontalDragStart: (_) {},
+      onHorizontalDragUpdate: (_) {},
+      onHorizontalDragEnd: (_) {},
+      onVerticalDragStart: (_) {},
+      onVerticalDragUpdate: (_) {},
+      onVerticalDragEnd: (_) {},
+      child: child,
+    ),
   );
 }
 
