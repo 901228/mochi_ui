@@ -407,13 +407,19 @@ class _MochiTextFieldState extends State<MochiTextField>
       ),
     );
 
-    final interactive = MouseRegion(
-      cursor: widget.enabled ? SystemMouseCursors.text : SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: IgnorePointer(
-        ignoring: !widget.enabled,
-        child: _gestures.buildGestureDetector(behavior: HitTestBehavior.translucent, child: box),
+    // The whole box is the field's own region, prefix and suffix included: `EditableText` blurs
+    // itself on a tap outside, and a button standing in the field's own chrome — a clear ×, a bar
+    // of actions in the suffix — is not outside. Without this, pressing one took the focus away
+    // and the caret and the ring went with it.
+    final interactive = TextFieldTapRegion(
+      child: MouseRegion(
+        cursor: widget.enabled ? SystemMouseCursors.text : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: IgnorePointer(
+          ignoring: !widget.enabled,
+          child: _gestures.buildGestureDetector(behavior: HitTestBehavior.translucent, child: box),
+        ),
       ),
     );
 

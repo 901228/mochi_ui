@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
 import "../theme/geometry.dart";
+import "../theme/size.dart";
+import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "collapsible.dart";
@@ -251,23 +253,31 @@ class _TitledBody extends StatelessWidget {
     final theme = context.theme;
     final g = theme.geometry;
 
+    // The row is a small button tall whether or not it has one in it, so putting an action there
+    // moves nothing — and the button keeps a target worth aiming at, which a row the height of a
+    // line of text cannot give it.
+    final line = MochiButtonMetrics.of(MochiSize.xs, touch: theme.touch, density: theme.density).height;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: g.space.sm,
       children: [
-        Row(
-          spacing: g.space.xs,
-          children: [
-            ?prefix,
-            Expanded(
-              child: DefaultTextStyle(
-                style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
-                child: title,
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: line),
+          child: Row(
+            spacing: g.space.xs,
+            children: [
+              ?prefix,
+              Expanded(
+                child: DefaultTextStyle(
+                  style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
+                  child: title,
+                ),
               ),
-            ),
-            ?suffix,
-          ],
+              ?suffix,
+            ],
+          ),
         ),
         child,
       ],

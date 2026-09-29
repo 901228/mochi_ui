@@ -87,6 +87,45 @@ void main() {
       expect(tester.getRect(find.text("Body")).top, greaterThan(title.bottom));
     });
 
+    testWidgets("the title row is a button tall, so putting one there moves nothing", (tester) async {
+      Future<double> title(Widget? suffix) async {
+        await tester.pumpWidget(
+          MochiApp(
+            themeMode: MochiThemeMode.light,
+            touch: false,
+            home: Center(
+              child: SizedBox(
+                width: 300,
+                child: MochiCard(
+                  title: const Text("Records"),
+                  titleSuffix: suffix,
+                  child: const Text("Body"),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        return tester.getRect(find.text("Body")).top - tester.getRect(find.text("Records")).top;
+      }
+
+      final plain = await title(null);
+      final withBar = await title(
+        MochiActionBar(size: MochiSize.xs, [
+          MochiAction(icon: MochiIcons.standard.more, label: "More", onPress: () {}),
+        ]),
+      );
+
+      // The row already has the room, so the bar costs nothing — and the button keeps a target
+      // worth aiming at, which is what a row the height of a line of text cannot give it.
+      expect(withBar, plain);
+      expect(
+        tester.getSize(find.byType(MochiButton)).height,
+        MochiButtonMetrics.of(MochiSize.xs, touch: false).height,
+      );
+    });
+
     testWidgets("uses the surface color and an elevation shadow", (tester) async {
       await tester.pumpWidget(app(const MochiCard(child: Text("Body"))));
 

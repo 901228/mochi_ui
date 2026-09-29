@@ -148,9 +148,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
               child: MochiCard(
                 title: const Text("Records"),
                 titlePrefix: Icon(TablerIcons.trophy),
-                // Dense and still: a bar beside a heading should not make the line taller, and
-                // growing inside a card's own border reads as the card moving.
-                titleSuffix: MochiActionBar(dense: true, scaleOnPress: false, [
+                // The title row already has an xs button's room, so this costs no height; still,
+                // since growing inside a card's own border reads as the card moving.
+                titleSuffix: MochiActionBar(size: MochiSize.xs, scaleOnPress: false, [
                   MochiAction(icon: TablerIcons.dots, label: "More", onPress: () {}),
                 ]),
                 child: const Text("A card can carry its own heading."),
