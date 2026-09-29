@@ -169,39 +169,54 @@ class MochiActionBar extends StatelessWidget {
     final shown = folded ? actions.take(slots - 1).toList() : actions;
     final hidden = folded ? actions.skip(slots - 1).toList() : const <MochiAction>[];
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: g.space.xs3,
+    // The bar's own box is the bar's, gaps included: a press that lands between two buttons goes
+    // to whatever is holding the bar otherwise — inside a search field's suffix that is the
+    // field, which takes the focus and lights its ring for a press that was aimed at a button.
+    // The layer sits *behind* the buttons, so a press on one hits the button and never reaches
+    // it, and the nearest recognizer is the one that wins the arena's sweep.
+    return Stack(
       children: [
-        for (final action in shown)
-          _ActionButton(action: action, size: size, appearance: appearance, scaleOnPress: scaleOnPress),
-        if (hidden.isNotEmpty)
-          MochiPopoverMenu(
-            menuBuilder: (context) => [
-              for (final action in hidden)
-                MochiMenuItem(
-                  title: Text(action.labelOf(theme)),
-                  prefix: switch (action.iconOf(theme)) {
-                    final icon? => Icon(icon),
-                    null => null,
-                  },
-                  intent: action.intent,
-                  enabled: action._enabled,
-                  selected: action.selected,
-                  onPress: action.onPress,
+        Positioned.fill(
+          // Opaque, so it is hit where no button is — a detector that defers to its child is
+          // never hit in a gap at all, which is the whole of the problem. A plain tap rather than
+          // an eager claim: a drag that starts here should still scroll whatever is behind.
+          child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () {}),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: g.space.xs3,
+          children: [
+            for (final action in shown)
+              _ActionButton(action: action, size: size, appearance: appearance, scaleOnPress: scaleOnPress),
+            if (hidden.isNotEmpty)
+              MochiPopoverMenu(
+                menuBuilder: (context) => [
+                  for (final action in hidden)
+                    MochiMenuItem(
+                      title: Text(action.labelOf(theme)),
+                      prefix: switch (action.iconOf(theme)) {
+                        final icon? => Icon(icon),
+                        null => null,
+                      },
+                      intent: action.intent,
+                      enabled: action._enabled,
+                      selected: action.selected,
+                      onPress: action.onPress,
+                    ),
+                ],
+                builder: (context, anchor, _) => MochiButton.icon(
+                  size: size,
+                  appearance: appearance,
+                  scaleOnPress: scaleOnPress,
+                  intent: MochiIntent.neutral,
+                  focusNode: anchor.focusNode,
+                  onPress: anchor.toggle,
+                  semanticLabel: menuLabel ?? theme.strings.more,
+                  icon: Icon(theme.icons.more),
                 ),
-            ],
-            builder: (context, anchor, _) => MochiButton.icon(
-              size: size,
-              appearance: appearance,
-              scaleOnPress: scaleOnPress,
-              intent: MochiIntent.neutral,
-              focusNode: anchor.focusNode,
-              onPress: anchor.toggle,
-              semanticLabel: menuLabel ?? theme.strings.more,
-              icon: Icon(theme.icons.more),
-            ),
-          ),
+              ),
+          ],
+        ),
       ],
     );
   }

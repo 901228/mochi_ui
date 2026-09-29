@@ -109,4 +109,42 @@ void main() {
     await tester.pumpWidget(app(MochiActionBar(actions(2))));
     expect(tester.widgetList<MochiButton>(find.byType(MochiButton)).every((b) => b.scaleOnPress), isTrue);
   });
+
+  testWidgets("a press in the bar's own gaps belongs to the bar", (tester) async {
+    final pressed = <String>[];
+
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            child: MochiSearchBar(suffix: MochiActionBar(actions(2, pressed: pressed))),
+          ),
+        ),
+      ),
+    );
+
+    final first = tester.getRect(find.byType(MochiButton).first);
+    final second = tester.getRect(find.byType(MochiButton).last);
+    final field = tester.widget<EditableText>(find.byType(EditableText));
+
+    // The gap between the two buttons is inside the search field's box, whose gesture detector
+    // covers the whole of it so a press on the padding puts the caret in the text. A press aimed
+    // at a button that landed a pixel wide of one is not that.
+    await tester.tapAt(Offset((first.right + second.left) / 2, first.center.dy));
+    await tester.pumpAndSettle();
+    expect(field.focusNode.hasFocus, isFalse);
+    expect(pressed, isEmpty);
+
+    // The buttons themselves still answer, and the text still takes a press of its own.
+    await tester.tap(find.byType(MochiButton).first);
+    await tester.pumpAndSettle();
+    expect(pressed, ["Action 1"]);
+
+    await tester.tapAt(Offset(first.left - 60, first.center.dy));
+    await tester.pumpAndSettle();
+    expect(field.focusNode.hasFocus, isTrue);
+  });
 }
