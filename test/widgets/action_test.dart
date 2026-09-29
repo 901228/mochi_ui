@@ -99,4 +99,14 @@ void main() {
     expect(find.byIcon(MochiIcons.standard.back), findsOneWidget);
     expect(find.byIcon(MochiIcons.standard.close), findsOneWidget);
   });
+
+  testWidgets("a bar can be told not to grow, for one tucked inside something else", (tester) async {
+    await tester.pumpWidget(app(MochiActionBar(actions(2), scaleOnPress: false)));
+
+    final buttons = tester.widgetList<MochiButton>(find.byType(MochiButton));
+    expect(buttons.every((button) => !button.scaleOnPress), isTrue);
+
+    await tester.pumpWidget(app(MochiActionBar(actions(2))));
+    expect(tester.widgetList<MochiButton>(find.byType(MochiButton)).every((b) => b.scaleOnPress), isTrue);
+  });
 }

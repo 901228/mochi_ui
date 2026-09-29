@@ -142,6 +142,28 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
                 child: const Text("Tappable card"),
               ),
             ),
+            // A title of its own, and the two ends of its line.
+            SizedBox(
+              width: 260,
+              child: MochiCard(
+                title: const Text("Records"),
+                titlePrefix: Icon(TablerIcons.trophy),
+                titleSuffix: MochiActionBar(scaleOnPress: false, [
+                  MochiAction(icon: TablerIcons.dots, label: "More", onPress: () {}),
+                ]),
+                child: const Text("A card can carry its own heading."),
+              ),
+            ),
+            // The two states a multi-select is made of.
+            for (final chosen in [false, true])
+              SizedBox(
+                width: 170,
+                child: MochiCard(
+                  selected: chosen,
+                  onPress: () {},
+                  child: Text(chosen ? "Selected" : "Not selected"),
+                ),
+              ),
           ],
         ),
         Wrap(

@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/geometry.dart";
 import "../theme/theme.dart";
+import "../theme/tone.dart";
 import "collapsible.dart";
 import "state_transition.dart";
 import "tappable.dart";
@@ -11,18 +12,27 @@ import "tappable.dart";
 ///
 /// Pass [onPress] to make the whole card tappable; it then reacts to hover, press and focus. Or
 /// use [MochiCard.collapsible] for a card whose body opens and closes under a title.
+///
+/// [selected] is a card that has been picked — one of several in a multi-select — and it is drawn
+/// the way every other chosen thing in the kit is: [intent]'s colour on the border, and the tone's
+/// soft fill mixed over the card's own ground rather than the page's.
 class MochiCard extends StatelessWidget {
   const MochiCard({
     super.key,
     required this.child,
+    this.title,
+    this.titlePrefix,
+    this.titleSuffix,
     this.padding,
     this.elevation = MochiElevation.sm,
     this.color,
+    this.selected = false,
+    this.intent = MochiIntent.primary,
     this.onPress,
     this.onLongPress,
     this.onSecondaryPress,
     this.semanticLabel,
-  }) : title = null,
+  }) : _collapsible = false,
        expanded = null,
        initiallyExpanded = false,
        onExpandedChanged = null;
@@ -39,13 +49,25 @@ class MochiCard extends StatelessWidget {
     this.padding,
     this.elevation = MochiElevation.sm,
     this.color,
-  }) : onPress = null,
+  }) : _collapsible = true,
+       titlePrefix = null,
+       titleSuffix = null,
+       selected = false,
+       intent = MochiIntent.primary,
+       onPress = null,
        onLongPress = null,
        onSecondaryPress = null,
        semanticLabel = null;
 
-  /// Set by [MochiCard.collapsible].
+  /// A heading over the card's content, in the `title` typeface — a heading, not body text at a
+  /// heavier weight, which is the rule the whole kit follows. [MochiCard.collapsible] makes the
+  /// same row the toggle that folds the body away.
   final Widget? title;
+
+  /// Either end of the title's own line: an icon before it, a `MochiActionBar` or a count after.
+  final Widget? titlePrefix;
+  final Widget? titleSuffix;
+
   final bool? expanded;
   final bool initiallyExpanded;
   final ValueChanged<bool>? onExpandedChanged;
@@ -57,6 +79,14 @@ class MochiCard extends StatelessWidget {
   /// Defaults to [MochiColors.surface].
   final Color? color;
 
+  /// Whether this card is one of the chosen ones.
+  final bool selected;
+
+  /// Colours a [selected] card.
+  final MochiIntent intent;
+
+  final bool _collapsible;
+
   final VoidCallback? onPress;
   final VoidCallback? onLongPress;
   final VoidCallback? onSecondaryPress;
@@ -66,15 +96,16 @@ class MochiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (title case final title?) {
+    if (_collapsible) {
       return _CardSurface(
         elevation: elevation,
         color: color,
+        intent: intent,
         // The padding moves inside, so the title row's hover fill reaches the card's edges.
         padding: EdgeInsets.zero,
         child: _CollapsibleBody(
           padding: padding,
-          title: title,
+          title: title!,
           expanded: expanded,
           initiallyExpanded: initiallyExpanded,
           onExpandedChanged: onExpandedChanged,
@@ -83,20 +114,43 @@ class MochiCard extends StatelessWidget {
       );
     }
 
+    final body = title == null
+        ? child
+        : _TitledBody(title: title!, prefix: titlePrefix, suffix: titleSuffix, child: child);
+
+    if (!_interactive && !selected) {
+      return _CardSurface(elevation: elevation, color: color, intent: intent, padding: padding, child: body);
+    }
+
+    // A card that is only selected still needs the states, so the surface knows to colour it.
     if (!_interactive) {
-      return _CardSurface(elevation: elevation, color: color, padding: padding, child: child);
+      return _CardSurface(
+        elevation: elevation,
+        color: color,
+        intent: intent,
+        padding: padding,
+        states: const {WidgetState.selected},
+        child: body,
+      );
     }
 
     return MochiTappable(
       onPress: onPress,
       onLongPress: onLongPress,
       onSecondaryPress: onSecondaryPress,
+      selected: selected,
       semanticLabel: semanticLabel,
       // Cards are large; growing them on press looks wrong. They tint instead.
       scaleOnPress: false,
-      builder: (context, states, child) =>
-          _CardSurface(elevation: elevation, color: color, padding: padding, states: states, child: child!),
-      child: child,
+      builder: (context, states, child) => _CardSurface(
+        elevation: elevation,
+        color: color,
+        intent: intent,
+        padding: padding,
+        states: states,
+        child: child!,
+      ),
+      child: body,
     );
   }
 }
@@ -105,6 +159,7 @@ class _CardSurface extends StatelessWidget {
   const _CardSurface({
     required this.elevation,
     required this.color,
+    required this.intent,
     required this.padding,
     required this.child,
     this.states = const {},
@@ -112,6 +167,7 @@ class _CardSurface extends StatelessWidget {
 
   final MochiElevation elevation;
   final Color? color;
+  final MochiIntent intent;
   final EdgeInsetsGeometry? padding;
   final Widget child;
   final Set<WidgetState> states;
@@ -122,17 +178,40 @@ class _CardSurface extends StatelessWidget {
     final colors = theme.colors;
     final g = theme.geometry;
     final base = color ?? colors.surface;
+    final tone = colors.of(intent);
+    // A chosen card is tinted, mixed over the card's own ground rather than the page's — the same
+    // fill a chosen radio card takes, so the two read as the same kind of "picked".
+    final chosen = colors.softOn(tone, base);
 
     return MochiStateTransition(
       states: states,
       duration: theme.motion.stateDuration,
       builder: (context, blend) {
         final decoration = ShapeDecoration(
-          color: blend.color((st) => MochiColors.stateLayer(base, colors.foreground, st)),
+          color: blend.color(
+            (st) => MochiColors.stateLayer(
+              st.contains(WidgetState.selected) ? chosen : base,
+              colors.foreground,
+              st,
+            ),
+          ),
           shadows: g.shadows.of(elevation, colors.shadow),
           shape: RoundedSuperellipseBorder(
             borderRadius: g.radius.md,
-            side: BorderSide(color: colors.border, width: g.borderWidth),
+            side: BorderSide(
+              width: g.borderWidth,
+              color: blend.color(
+                (st) => switch (st) {
+                  _ when st.contains(WidgetState.selected) => tone.base,
+                  _ when st.contains(WidgetState.hovered) => Color.lerp(
+                    colors.border,
+                    colors.mutedForeground,
+                    0.5,
+                  )!,
+                  _ => colors.border,
+                },
+              ),
+            ),
           ),
         );
 
@@ -153,6 +232,45 @@ class _CardSurface extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A heading over the card's content: the same row a collapsible card folds with, without the
+/// folding — and in the `title` typeface, which is the thing an app composing its own gets wrong.
+class _TitledBody extends StatelessWidget {
+  const _TitledBody({required this.title, required this.prefix, required this.suffix, required this.child});
+
+  final Widget title;
+  final Widget? prefix;
+  final Widget? suffix;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: g.space.sm,
+      children: [
+        Row(
+          spacing: g.space.xs,
+          children: [
+            ?prefix,
+            Expanded(
+              child: DefaultTextStyle(
+                style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
+                child: title,
+              ),
+            ),
+            ?suffix,
+          ],
+        ),
+        child,
+      ],
     );
   }
 }

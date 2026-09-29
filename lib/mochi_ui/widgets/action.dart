@@ -138,6 +138,7 @@ class MochiActionBar extends StatelessWidget {
     this.maxVisible,
     this.size = MochiSize.sm,
     this.appearance = MochiButtonAppearance.ghost,
+    this.scaleOnPress = true,
     this.menuLabel,
   }) : assert(maxVisible == null || maxVisible > 0);
 
@@ -148,6 +149,12 @@ class MochiActionBar extends StatelessWidget {
 
   final MochiSize size;
   final MochiButtonAppearance appearance;
+
+  /// Whether a press grows the button. A bar at the top of a page wants it; one tucked inside
+  /// something with a border of its own — a field's suffix, a row in a list — does not, since the
+  /// growth reads as the box itself moving. The bar cannot tell where it has been put, so this is
+  /// the caller's to say.
+  final bool scaleOnPress;
 
   /// Names the … for a screen reader. Defaults to `strings.more`.
   final String? menuLabel;
@@ -166,7 +173,8 @@ class MochiActionBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       spacing: g.space.xs3,
       children: [
-        for (final action in shown) _ActionButton(action: action, size: size, appearance: appearance),
+        for (final action in shown)
+          _ActionButton(action: action, size: size, appearance: appearance, scaleOnPress: scaleOnPress),
         if (hidden.isNotEmpty)
           MochiPopoverMenu(
             menuBuilder: (context) => [
@@ -186,6 +194,7 @@ class MochiActionBar extends StatelessWidget {
             builder: (context, anchor, _) => MochiButton.icon(
               size: size,
               appearance: appearance,
+              scaleOnPress: scaleOnPress,
               intent: MochiIntent.neutral,
               focusNode: anchor.focusNode,
               onPress: anchor.toggle,
@@ -201,11 +210,17 @@ class MochiActionBar extends StatelessWidget {
 /// One action as a button. Its label is the tooltip as well as its name, since an icon on its own
 /// says nothing to a screen reader.
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.action, required this.size, required this.appearance});
+  const _ActionButton({
+    required this.action,
+    required this.size,
+    required this.appearance,
+    required this.scaleOnPress,
+  });
 
   final MochiAction action;
   final MochiSize size;
   final MochiButtonAppearance appearance;
+  final bool scaleOnPress;
 
   @override
   Widget build(BuildContext context) {
@@ -220,6 +235,7 @@ class _ActionButton extends StatelessWidget {
       return MochiButton.icon(
         size: size,
         appearance: appearance,
+        scaleOnPress: scaleOnPress,
         intent: action.intent,
         enabled: action._enabled,
         selected: action.selected,
@@ -232,6 +248,7 @@ class _ActionButton extends StatelessWidget {
     return MochiButton(
       size: size,
       appearance: appearance,
+      scaleOnPress: scaleOnPress,
       intent: action.intent,
       enabled: action._enabled,
       selected: action.selected,

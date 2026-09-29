@@ -43,6 +43,50 @@ void main() {
       expect(tester.getRect(find.text("9 / 28")).left - card.left, greaterThanOrEqualTo(10));
     });
 
+    testWidgets("a chosen card wears the intent, the way a chosen radio card does", (tester) async {
+      await tester.pumpWidget(app(const MochiCard(child: Text("Body"))));
+      final plain = decoration(tester, MochiCard);
+
+      await tester.pumpWidget(
+        app(const MochiCard(selected: true, intent: MochiIntent.primary, child: Text("Body"))),
+      );
+      await tester.pumpAndSettle();
+      final chosen = decoration(tester, MochiCard);
+
+      final tone = MochiColors.light.of(MochiIntent.primary);
+      expect((chosen.shape as RoundedSuperellipseBorder).side.color, tone.base);
+      expect((plain.shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
+      // Tinted over the card's own ground, not the page's: the same fill a chosen radio card takes.
+      expect(chosen.color, MochiColors.light.softOn(tone, MochiColors.light.surface));
+    });
+
+    testWidgets("a title is a heading in the title typeface, with its own two ends", (tester) async {
+      await tester.pumpWidget(
+        app(
+          MochiCard(
+            title: const Text("Session"),
+            titlePrefix: Icon(MochiIcons.standard.search),
+            titleSuffix: const Text("12"),
+            child: const Text("Body"),
+          ),
+        ),
+      );
+
+      final style = tester.widget<DefaultTextStyle>(
+        find.ancestor(of: find.text("Session"), matching: find.byType(DefaultTextStyle)).first,
+      );
+      // The title typeface, not body at a heavier weight — the rule the whole kit follows.
+      expect(
+        style.style.fontVariations?.first.value,
+        MochiTypography.standard.title.sm.fontVariations?.first.value,
+      );
+
+      final title = tester.getRect(find.text("Session"));
+      expect(tester.getRect(find.byIcon(MochiIcons.standard.search)).right, lessThanOrEqualTo(title.left));
+      expect(tester.getRect(find.text("12")).left, greaterThanOrEqualTo(title.right));
+      expect(tester.getRect(find.text("Body")).top, greaterThan(title.bottom));
+    });
+
     testWidgets("uses the surface color and an elevation shadow", (tester) async {
       await tester.pumpWidget(app(const MochiCard(child: Text("Body"))));
 
