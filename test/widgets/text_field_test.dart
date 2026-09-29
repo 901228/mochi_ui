@@ -258,4 +258,52 @@ void main() {
     expect(fields[1].textCapitalization, TextCapitalization.sentences);
     expect(fields[2].textCapitalization, TextCapitalization.none);
   });
+
+  testWidgets("a press on the field's chrome never becomes a selection drag", (tester) async {
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: false,
+        home: Center(
+          child: SizedBox(
+            width: 400,
+            child: MochiTextField(
+              suffix: MochiActionBar([
+                MochiAction(icon: MochiIcons.standard.close, label: "Clear it", onPress: () {}),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final field = tester.widget<EditableText>(find.byType(EditableText));
+
+    // A real mouse click travels a pixel or two between down and up, which the field's own
+    // recognizer reads as a drag through the text — and a drag beats the button's tap. Three
+    // pixels was enough to put the caret in the text and light the ring for a press aimed at an
+    // action standing in the field's own chrome.
+    final press = await tester.startGesture(
+      tester.getCenter(find.byIcon(MochiIcons.standard.close)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump(const Duration(milliseconds: 40));
+    await press.moveBy(const Offset(4, 0));
+    await tester.pump(const Duration(milliseconds: 40));
+    await press.up();
+    await tester.pumpAndSettle();
+
+    expect(field.focusNode.hasFocus, isFalse);
+
+    // The text itself still takes a drag, which is how a selection is made.
+    final select = await tester.startGesture(
+      tester.getRect(find.byType(MochiTextField)).centerLeft + const Offset(40, 0),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump(const Duration(milliseconds: 40));
+    await select.moveBy(const Offset(40, 0));
+    await select.up();
+    await tester.pumpAndSettle();
+    expect(field.focusNode.hasFocus, isTrue);
+  });
 }

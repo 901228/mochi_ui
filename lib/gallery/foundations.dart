@@ -148,9 +148,9 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
               child: MochiCard(
                 title: const Text("Records"),
                 titlePrefix: Icon(TablerIcons.trophy),
-                // The title row already has an xs button's room, so this costs no height; still,
+                // No size: the title row itself asks for xs, which is the room it has. Still,
                 // since growing inside a card's own border reads as the card moving.
-                titleSuffix: MochiActionBar(size: MochiSize.xs, scaleOnPress: false, [
+                titleSuffix: MochiActionBar(scaleOnPress: false, [
                   MochiAction(icon: TablerIcons.dots, label: "More", onPress: () {}),
                 ]),
                 child: const Text("A card can carry its own heading."),

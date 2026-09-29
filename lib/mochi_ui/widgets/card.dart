@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/geometry.dart";
 import "../theme/size.dart";
+import "action_scale.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
@@ -265,18 +266,23 @@ class _TitledBody extends StatelessWidget {
       children: [
         ConstrainedBox(
           constraints: BoxConstraints(minHeight: line),
-          child: Row(
-            spacing: g.space.xs,
-            children: [
-              ?prefix,
-              Expanded(
-                child: DefaultTextStyle(
-                  style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
-                  child: title,
+          // The row is an xs button tall, so a bar of actions dropped in here is an xs bar unless
+          // the app says otherwise: it costs no height, and nobody has to know the number.
+          child: ActionScale(
+            size: MochiSize.xs,
+            child: Row(
+              spacing: g.space.xs,
+              children: [
+                ?prefix,
+                Expanded(
+                  child: DefaultTextStyle(
+                    style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
+                    child: title,
+                  ),
                 ),
-              ),
-              ?suffix,
-            ],
+                ?suffix,
+              ],
+            ),
           ),
         ),
         child,

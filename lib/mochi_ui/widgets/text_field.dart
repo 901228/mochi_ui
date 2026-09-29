@@ -387,16 +387,18 @@ class _MochiTextFieldState extends State<MochiTextField>
                         ? CrossAxisAlignment.center
                         : CrossAxisAlignment.start,
                     children: [
-                      ?widget.prefix,
+                      if (widget.prefix case final prefix?) _Chrome(child: prefix),
                       Expanded(child: field),
                       if (widget.clearable && text.isNotEmpty && widget.enabled && !widget.readOnly)
-                        MochiCloseButton(
-                          // Grows with the field, a little inside its height, so it stays an easy
-                          // target rather than a speck beside the text.
-                          metrics: MochiCloseButtonMetrics(diameter: m.height - 8, iconSize: m.iconSize),
-                          onPress: _clear,
+                        _Chrome(
+                          child: MochiCloseButton(
+                            // Grows with the field, a little inside its height, so it stays an
+                            // easy target rather than a speck beside the text.
+                            metrics: MochiCloseButtonMetrics(diameter: m.height - 8, iconSize: m.iconSize),
+                            onPress: _clear,
+                          ),
                         ),
-                      ?widget.suffix,
+                      if (widget.suffix case final suffix?) _Chrome(child: suffix),
                     ],
                   ),
                 ),
@@ -434,6 +436,30 @@ class _MochiTextFieldState extends State<MochiTextField>
   }
 
   void _requestKeyboard() => _editable?.requestKeyboard();
+}
+
+/// The bits of the box that are not the text: an icon, a clear button, a bar of actions.
+///
+/// They take the drags as well as the presses. A press that travels a few pixels — which a real
+/// mouse click does — is a *selection* drag to the field's own recognizer, and it wins the arena
+/// over the button's plain tap: pressing an action in the suffix put the caret in the text and
+/// lit the field's ring. Taps are left alone, so a tap on the magnifier still focuses the field
+/// the way a tap on the padding does.
+class _Chrome extends StatelessWidget {
+  const _Chrome({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onHorizontalDragStart: (_) {},
+    onHorizontalDragUpdate: (_) {},
+    onHorizontalDragEnd: (_) {},
+    onVerticalDragStart: (_) {},
+    onVerticalDragUpdate: (_) {},
+    onVerticalDragEnd: (_) {},
+    child: child,
+  );
 }
 
 class _GestureBuilder extends TextSelectionGestureDetectorBuilder {

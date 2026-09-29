@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/responsive.dart";
 import "../theme/size.dart";
+import "action_scale.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
@@ -136,7 +137,7 @@ class MochiActionBar extends StatelessWidget {
     this.actions, {
     super.key,
     this.maxVisible,
-    this.size = MochiSize.sm,
+    this.size,
     this.appearance = MochiButtonAppearance.ghost,
     this.dense = false,
     this.scaleOnPress = true,
@@ -148,7 +149,10 @@ class MochiActionBar extends StatelessWidget {
   /// How many slots the row has, the … included. Defaults to two on a phone and four above it.
   final int? maxVisible;
 
-  final MochiSize size;
+  /// Defaults to what the slot the bar sits in asks for — a card's title row wants `xs` — and to
+  /// `sm` where nothing has an opinion.
+  final MochiSize? size;
+
   final MochiButtonAppearance appearance;
 
   /// Squares the buttons down to their icons, so a bar sits inside a line of text without making
@@ -172,6 +176,7 @@ class MochiActionBar extends StatelessWidget {
     final theme = context.theme;
     final g = theme.geometry;
     final slots = maxVisible ?? context.responsive<int>(mobile: 2, tablet: 4);
+    final size = this.size ?? ActionScale.of(context) ?? MochiSize.sm;
     final metrics = dense ? _dense(theme) : null;
     final folded = actions.length > slots;
     // The … takes the last slot, so what is written out is one fewer.

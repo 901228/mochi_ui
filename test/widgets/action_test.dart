@@ -168,9 +168,11 @@ void main() {
     }
 
     final plain = await title(null);
-    // Even the smallest button is taller than a line of text, so an ordinary bar pushes the body
-    // down; a dense one is the size of its icons and changes nothing.
-    expect(await title(MochiActionBar(actions(1))), greaterThan(plain));
-    expect(await title(MochiActionBar(actions(1), dense: true)), plain);
+    // A card's title row asks for xs and has the room for it, so a bar that takes the row's word
+    // costs nothing; one told to be bigger pushes the body down, and a dense one never does
+    // whatever it is told.
+    expect(await title(MochiActionBar(actions(1))), plain);
+    expect(await title(MochiActionBar(actions(1), size: MochiSize.md)), greaterThan(plain));
+    expect(await title(MochiActionBar(actions(1), size: MochiSize.md, dense: true)), plain);
   });
 }
