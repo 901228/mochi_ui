@@ -138,6 +138,7 @@ class MochiActionBar extends StatelessWidget {
     this.maxVisible,
     this.size = MochiSize.sm,
     this.appearance = MochiButtonAppearance.ghost,
+    this.dense = false,
     this.scaleOnPress = true,
     this.menuLabel,
   }) : assert(maxVisible == null || maxVisible > 0);
@@ -149,6 +150,13 @@ class MochiActionBar extends StatelessWidget {
 
   final MochiSize size;
   final MochiButtonAppearance appearance;
+
+  /// Squares the buttons down to their icons, so a bar sits inside a line of text without making
+  /// it taller — a card's title row, a tile's trailing end. Even the smallest button is taller
+  /// than a line of text, since it is built to be aimed at; this trades that target for a row
+  /// that does not grow, which is only worth it where the bar is beside words rather than
+  /// standing on its own.
+  final bool dense;
 
   /// Whether a press grows the button. A bar at the top of a page wants it; one tucked inside
   /// something with a border of its own — a field's suffix, a row in a list — does not, since the
@@ -164,6 +172,7 @@ class MochiActionBar extends StatelessWidget {
     final theme = context.theme;
     final g = theme.geometry;
     final slots = maxVisible ?? context.responsive<int>(mobile: 2, tablet: 4);
+    final metrics = dense ? _dense(theme) : null;
     final folded = actions.length > slots;
     // The … takes the last slot, so what is written out is one fewer.
     final shown = folded ? actions.take(slots - 1).toList() : actions;
@@ -187,7 +196,13 @@ class MochiActionBar extends StatelessWidget {
           spacing: g.space.xs3,
           children: [
             for (final action in shown)
-              _ActionButton(action: action, size: size, appearance: appearance, scaleOnPress: scaleOnPress),
+              _ActionButton(
+                action: action,
+                size: size,
+                metrics: metrics,
+                appearance: appearance,
+                scaleOnPress: scaleOnPress,
+              ),
             if (hidden.isNotEmpty)
               MochiPopoverMenu(
                 menuBuilder: (context) => [
@@ -206,6 +221,7 @@ class MochiActionBar extends StatelessWidget {
                 ],
                 builder: (context, anchor, _) => MochiButton.icon(
                   size: size,
+                  metrics: metrics,
                   appearance: appearance,
                   scaleOnPress: scaleOnPress,
                   intent: MochiIntent.neutral,
@@ -222,18 +238,35 @@ class MochiActionBar extends StatelessWidget {
   }
 }
 
+/// A button the size of its icon and a hair more, with no padding beside it: the row is then as
+/// tall as the words it sits among rather than as tall as a thing to aim at.
+MochiButtonMetrics _dense(MochiTheme theme) {
+  final m = MochiButtonMetrics.of(MochiSize.xs, touch: theme.touch, density: theme.density);
+
+  return MochiButtonMetrics(
+    height: m.iconSize + 6,
+    horizontalPadding: 0,
+    gap: m.gap,
+    iconSize: m.iconSize,
+    radius: m.radius,
+    textStyle: m.textStyle,
+  );
+}
+
 /// One action as a button. Its label is the tooltip as well as its name, since an icon on its own
 /// says nothing to a screen reader.
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.action,
     required this.size,
+    required this.metrics,
     required this.appearance,
     required this.scaleOnPress,
   });
 
   final MochiAction action;
   final MochiSize size;
+  final MochiButtonMetrics? metrics;
   final MochiButtonAppearance appearance;
   final bool scaleOnPress;
 
@@ -249,6 +282,7 @@ class _ActionButton extends StatelessWidget {
     if (!action._showsLabel) {
       return MochiButton.icon(
         size: size,
+        metrics: metrics,
         appearance: appearance,
         scaleOnPress: scaleOnPress,
         intent: action.intent,
@@ -262,6 +296,7 @@ class _ActionButton extends StatelessWidget {
 
     return MochiButton(
       size: size,
+      metrics: metrics,
       appearance: appearance,
       scaleOnPress: scaleOnPress,
       intent: action.intent,

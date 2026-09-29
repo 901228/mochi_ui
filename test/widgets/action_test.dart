@@ -147,4 +147,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(field.focusNode.hasFocus, isTrue);
   });
+
+  testWidgets("a dense bar does not make the line it sits in any taller", (tester) async {
+    Future<double> title(Widget? suffix) async {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          touch: false,
+          home: Center(
+            child: SizedBox(
+              width: 300,
+              child: MochiCard(title: const Text("Records"), titleSuffix: suffix, child: const Text("Body")),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      return tester.getRect(find.text("Body")).top - tester.getRect(find.text("Records")).top;
+    }
+
+    final plain = await title(null);
+    // Even the smallest button is taller than a line of text, so an ordinary bar pushes the body
+    // down; a dense one is the size of its icons and changes nothing.
+    expect(await title(MochiActionBar(actions(1))), greaterThan(plain));
+    expect(await title(MochiActionBar(actions(1), dense: true)), plain);
+  });
 }
