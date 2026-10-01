@@ -24,6 +24,27 @@ void main() {
       expect(tester.hasRunningAnimations, isFalse);
     });
 
+    testWidgets("stays round when a tight parent makes its box wider than tall", (tester) async {
+      // The harness's own SizedBox is tight across, so the box is as wide as that and 30 tall.
+      await tester.pumpWidget(app(const SizedBox(height: 30, child: MochiCircularProgress(value: 0.5))));
+
+      final box = tester.getSize(find.byType(MochiCircularProgress));
+      expect(box.width, greaterThan(box.height));
+      final stroke = MochiProgressMetrics.of(MochiSize.md, touch: false).strokeWidth;
+      final ring = Rect.fromCenter(
+        center: box.center(Offset.zero),
+        width: box.shortestSide,
+        height: box.shortestSide,
+      ).deflate(stroke / 2);
+      // The track and the value, both on the same circle in the middle of the box.
+      expect(
+        find.descendant(of: find.byType(MochiCircularProgress), matching: find.byType(CustomPaint)),
+        paints
+          ..arc(rect: ring)
+          ..arc(rect: ring),
+      );
+    });
+
     testWidgets("takes the surrounding text color", (tester) async {
       await tester.pumpWidget(
         app(

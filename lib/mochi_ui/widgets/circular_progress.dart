@@ -109,7 +109,14 @@ class _RingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final arc = (Offset.zero & size).deflate(strokeWidth / 2);
+    // A parent's tight constraint can override the square size, so the ring is fitted to the short
+    // side instead of stretching into an ellipse.
+    final side = size.shortestSide;
+    final arc = Rect.fromCenter(
+      center: size.center(Offset.zero),
+      width: side,
+      height: side,
+    ).deflate(strokeWidth / 2);
 
     canvas.drawArc(
       arc,
