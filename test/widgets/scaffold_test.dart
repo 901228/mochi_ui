@@ -67,7 +67,63 @@ void main() {
 
     final title = tester.getCenter(find.text("Settings"));
     final header = tester.getRect(find.byType(MochiHeader));
-    expect(title.dx, moreOrLessEquals(header.center.dx, epsilon: 24));
+    expect(title.dx, moreOrLessEquals(header.center.dx));
+  });
+
+  group("a centred title", () {
+    MochiAction action(int at) => MochiAction(icon: TablerIcons.star, label: "Action $at", onPress: () {});
+
+    Widget page(String title, {int prefixes = 1, int suffixes = 0, TextDirection? direction}) {
+      Widget scaffold = MochiScaffold(
+        header: MochiHeader(
+          alignment: MochiHeaderAlignment.center,
+          title: Text(title),
+          prefixes: [for (var at = 0; at < prefixes; at++) action(at)],
+          suffixes: [for (var at = 0; at < suffixes; at++) action(10 + at)],
+          maxVisibleActions: 4,
+        ),
+        child: const SizedBox(),
+      );
+      if (direction != null) scaffold = Directionality(textDirection: direction, child: scaffold);
+      return app(scaffold);
+    }
+
+    testWidgets("stays in the middle of the bar however many actions either side has", (tester) async {
+      for (final suffixes in [0, 1, 3]) {
+        await tester.pumpWidget(page("Records", suffixes: suffixes));
+        final header = tester.getRect(find.byType(MochiHeader));
+        expect(
+          tester.getCenter(find.text("Records")).dx,
+          moreOrLessEquals(header.center.dx),
+          reason: "one action before it and $suffixes after",
+        );
+      }
+    });
+
+    testWidgets("a long one slides clear of the wider group instead of running into it", (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(page("A title a little too long to sit centred", prefixes: 1, suffixes: 3));
+
+      final title = tester.getRect(find.byType(Text).first);
+      final trailing = tester.getRect(find.byType(MochiActionBar).last);
+      final leading = tester.getRect(find.byType(MochiActionBar).first);
+      expect(title.right, lessThanOrEqualTo(trailing.left));
+      expect(title.left, greaterThanOrEqualTo(leading.right));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets("mirrors in right-to-left", (tester) async {
+      await tester.pumpWidget(page("Records", suffixes: 3, direction: TextDirection.rtl));
+
+      final header = tester.getRect(find.byType(MochiHeader));
+      expect(tester.getCenter(find.text("Records")).dx, moreOrLessEquals(header.center.dx));
+      expect(
+        tester.getRect(find.byType(MochiActionBar).first).left,
+        greaterThan(header.center.dx),
+        reason: "the leading group is on the right",
+      );
+    });
   });
 
   testWidgets("the title sits on the leading side", (tester) async {
