@@ -9,6 +9,7 @@ import "../theme/size.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
+import "../theme/typography.dart";
 import "badge.dart";
 import "field_frame.dart";
 import "focus_ring.dart";
@@ -203,7 +204,9 @@ class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening
       open: _open,
       maxListHeight: widget.maxListHeight,
       semanticValue: chosen.map((o) => o.label).join(", "),
-      widest: [?widget.hint, for (final option in options) option.label],
+      widest: [?widget.hint],
+      widestBadges: [for (final option in options) option.label],
+      anyBadgePrefix: options.any((o) => o.prefix != null),
       anyPrefix: false,
       badges: chosen.isNotEmpty,
       onPointerDown: pointerDown,
@@ -330,6 +333,8 @@ class _SelectField extends StatelessWidget {
     required this.onClose,
     required this.rows,
     required this.content,
+    this.widestBadges = const [],
+    this.anyBadgePrefix = false,
     this.badges = false,
   });
 
@@ -345,6 +350,14 @@ class _SelectField extends StatelessWidget {
 
   /// Every text the box may show, to size it when its width is unbounded.
   final List<String> widest;
+
+  /// Every label the box may show as a badge, which is wider than the same words as text: a
+  /// multi-select sized from the text alone puts each badge on a line of its own and still
+  /// overflows.
+  final List<String> widestBadges;
+
+  /// Whether a badge may carry an option's prefix, which widens it by an icon and a gap.
+  final bool anyBadgePrefix;
   final bool anyPrefix;
 
   /// Whether [content] is a wrap of badges, which sits closer to the box's edges than text.
@@ -441,19 +454,41 @@ class _SelectField extends StatelessWidget {
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     );
-    var text = 0.0;
-    for (final label in widest) {
-      painter
-        ..text = TextSpan(text: label, style: m.textStyle(theme.typography))
-        ..layout();
-      if (painter.width > text) text = painter.width;
+    double widestOf(List<String> labels, TextStyle style) {
+      var widest = 0.0;
+      for (final label in labels) {
+        painter
+          ..text = TextSpan(text: label, style: style)
+          ..layout();
+        if (painter.width > widest) widest = painter.width;
+      }
+      return widest;
     }
+
+    final border = theme.geometry.borderWidth;
+    final text = widestOf(widest, m.textStyle(theme.typography));
+    final b = MochiBadgeMetrics.of(_badgeSize(size), touch: theme.touch, density: theme.density);
+    final badgeText = widestOf(widestBadges, b.textStyle(theme.typography).withWeight(FontWeight.w600));
     painter.dispose();
 
-    return 2 * m.horizontalPadding +
-        2 * theme.geometry.borderWidth +
-        text +
-        (anyPrefix ? m.iconSize + m.gap : 0) +
+    // The same sums [_box] and [MochiBadge] lay out: text sits between the box's paddings, a badge
+    // starts at the badge inset and carries its own padding, border and ×.
+    final asText = m.horizontalPadding + text + (anyPrefix ? m.iconSize + m.gap : 0);
+    final asBadge = widestBadges.isEmpty
+        ? 0.0
+        : ((m.height - b.height) / 2 - border).clamp(0.0, double.infinity) +
+              2 * border +
+              b.horizontalPadding +
+              (anyBadgePrefix ? b.iconSize + b.gap : 0) +
+              badgeText +
+              b.gap +
+              b.close.diameter +
+              (b.height - b.close.diameter) / 2 -
+              border;
+
+    return math.max(asText, asBadge) +
+        m.horizontalPadding +
+        2 * border +
         m.gap +
         m.iconSize +
         // Rounding in text layout can otherwise tip the longest label into an ellipsis.

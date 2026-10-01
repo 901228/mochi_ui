@@ -154,6 +154,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets("unbounded, a multi-select is wide enough for its widest badge", (tester) async {
+    await tester.pumpWidget(
+      app(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Short labels, where a badge's padding and × outweigh the words: a filter's "none",
+            // "plus" and "dnf" each landed on a line of their own and ran off the end.
+            MochiMultiSelect<String>(
+              values: const {"none", "plus", "dnf"},
+              options: const [
+                MochiSelectOption(value: "none", label: "none", prefix: Icon(TablerIcons.check)),
+                MochiSelectOption(value: "plus", label: "plus", prefix: Icon(TablerIcons.plus)),
+                MochiSelectOption(value: "dnf", label: "dnf", prefix: Icon(TablerIcons.x)),
+              ],
+              onChanged: (_) {},
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    final field = tester.getRect(find.byType(MochiMultiSelect<String>));
+    final badge = tester.getRect(find.widgetWithText(MochiBadge, "plus"));
+    expect(badge.right, lessThanOrEqualTo(field.right));
+  });
+
   testWidgets("from the keyboard: arrow down opens on the chosen row, Enter picks", (tester) async {
     final seen = <String>[];
     await tester.pumpWidget(single(seen, start: "voice"));
