@@ -175,4 +175,62 @@ void main() {
     expect(await title(MochiActionBar(actions(1), size: MochiSize.md)), greaterThan(plain));
     expect(await title(MochiActionBar(actions(1), size: MochiSize.md, dense: true)), plain);
   });
+
+  group("a menu action", () {
+    MochiAction sort(List<String> pressed) => MochiAction.menu(
+      icon: MochiIcons.standard.check,
+      label: "Sort",
+      children: [
+        MochiAction(icon: MochiIcons.standard.search, label: "By name", onPress: () => pressed.add("name")),
+        MochiAction(icon: MochiIcons.standard.search, label: "By date", onPress: () => pressed.add("date")),
+      ],
+    );
+
+    testWidgets("is a button that opens its rows, and choosing one puts them away", (tester) async {
+      final pressed = <String>[];
+      await tester.pumpWidget(app(MochiActionBar([sort(pressed)])));
+
+      expect(find.text("By name"), findsNothing);
+      await tester.tap(find.byIcon(MochiIcons.standard.check));
+      await tester.pumpAndSettle();
+      expect(find.text("By date"), findsOneWidget);
+
+      await tester.tap(find.text("By date"));
+      await tester.pumpAndSettle();
+      expect(pressed, ["date"]);
+      expect(find.text("By date"), findsNothing);
+    });
+
+    testWidgets("folded into the … it becomes a submenu", (tester) async {
+      final pressed = <String>[];
+      await tester.pumpWidget(app(MochiActionBar([...actions(1), sort(pressed)], maxVisible: 1)));
+
+      await tester.tap(find.byIcon(MochiIcons.standard.more));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Sort"));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.text("By name")).dx,
+        greaterThan(tester.getTopRight(find.text("Sort")).dx),
+        reason: "beside its row, not in place of it",
+      );
+
+      await tester.tap(find.text("By name"));
+      await tester.pumpAndSettle();
+      expect(pressed, ["name"]);
+      expect(find.text("Sort"), findsNothing, reason: "the whole menu closes, not only the submenu");
+    });
+
+    testWidgets("with no rows it is disabled, having nothing to open", (tester) async {
+      await tester.pumpWidget(
+        app(
+          MochiActionBar([
+            MochiAction.menu(icon: MochiIcons.standard.check, label: "Sort", children: const []),
+          ]),
+        ),
+      );
+
+      expect(tester.widget<MochiButton>(find.byType(MochiButton)).enabled, isFalse);
+    });
+  });
 }

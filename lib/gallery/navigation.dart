@@ -439,11 +439,20 @@ class _ScaffoldSample extends StatelessWidget {
               variant: MochiHeaderVariant.bordered,
               title: const Text("Records"),
               // More than the bar has slots for, so the last ones fold into the …: on a phone
-              // that is two, from tablet width up four.
+              // that is two, from tablet width up four. Export is a menu: a dropdown while it is a
+              // button, a submenu once it has been folded.
               suffixes: [
                 MochiAction(icon: TablerIcons.search, label: "Search", onPress: () {}),
                 MochiAction(icon: TablerIcons.filter, label: "Filter", onPress: () {}),
-                MochiAction(icon: TablerIcons.download, label: "Export", onPress: () {}),
+                MochiAction.menu(
+                  icon: TablerIcons.download,
+                  label: "Export",
+                  children: [
+                    MochiAction(icon: TablerIcons.fileTypeCsv, label: "CSV", onPress: () {}),
+                    MochiAction(icon: TablerIcons.json, label: "JSON", onPress: () {}),
+                    MochiAction(icon: TablerIcons.fileTypePdf, label: "PDF", onPress: () {}),
+                  ],
+                ),
                 MochiAction(
                   icon: TablerIcons.trash,
                   label: "Delete",

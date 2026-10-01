@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart" show listEquals;
 import "package:flutter/widgets.dart";
 
 import "../theme/responsive.dart";
@@ -38,6 +39,23 @@ class MochiAction {
     this.intent = MochiIntent.neutral,
     this.enabled = true,
   }) : _builtin = null,
+       children = null,
+       assert(icon != null || showLabel, "An action with no icon has to show its label.");
+
+  /// Opens a menu of [children] rather than doing something itself — a sort order, a group of
+  /// exports. Its rows are actions too, and not widgets, because this one is drawn two ways like
+  /// any other: a button that opens a dropdown while there is room, and a row that opens a
+  /// submenu once it has been folded into the …. A menu of widgets could only be the first.
+  const MochiAction.menu({
+    this.icon,
+    required String this.label,
+    required List<MochiAction> this.children,
+    this.showLabel = false,
+    this.intent = MochiIntent.neutral,
+    this.enabled = true,
+  }) : onPress = null,
+       selected = false,
+       _builtin = null,
        assert(icon != null || showLabel, "An action with no icon has to show its label.");
 
   /// Goes back, with [MochiIcons.back] and [MochiStrings.back].
@@ -46,6 +64,7 @@ class MochiAction {
       label = null,
       showLabel = false,
       selected = false,
+      children = null,
       _builtin = _Builtin.back;
 
   /// Closes what it is in, with [MochiIcons.close] and [MochiStrings.close].
@@ -54,6 +73,7 @@ class MochiAction {
       label = null,
       showLabel = false,
       selected = false,
+      children = null,
       _builtin = _Builtin.close;
 
   /// Null only for the two built-in actions, which take theirs from the theme.
@@ -63,8 +83,12 @@ class MochiAction {
   /// only for the two built-in actions.
   final String? label;
 
-  /// Null disables the action, the same rule as everywhere else.
+  /// Null disables the action, the same rule as everywhere else — except on a menu, which has
+  /// none and is disabled by having no [children] instead.
   final VoidCallback? onPress;
+
+  /// The rows a [MochiAction.menu] opens. Null for every other action.
+  final List<MochiAction>? children;
 
   /// Whether the label is written out beside the icon rather than kept for the tooltip. An action
   /// with no icon shows it whatever this says, since otherwise there would be nothing to press.
@@ -79,7 +103,7 @@ class MochiAction {
 
   final _Builtin? _builtin;
 
-  bool get _enabled => enabled && onPress != null;
+  bool get _enabled => enabled && (onPress != null || (children?.isNotEmpty ?? false));
 
   /// The built-ins have no `icon` of their own — theirs comes from the theme — so an action is
   /// only words when it is neither.
@@ -113,10 +137,48 @@ class MochiAction {
           selected == other.selected &&
           intent == other.intent &&
           enabled == other.enabled &&
+          listEquals(children, other.children) &&
           _builtin == other._builtin;
 
   @override
-  int get hashCode => Object.hash(icon, label, onPress, showLabel, selected, intent, enabled, _builtin);
+  int get hashCode => Object.hash(
+    icon,
+    label,
+    onPress,
+    showLabel,
+    selected,
+    intent,
+    enabled,
+    Object.hashAll(children ?? const []),
+    _builtin,
+  );
+}
+
+/// One action as a menu row: a submenu when it is a menu itself, which is what keeps a folded
+/// menu action working — and, since its rows go through here too, a menu inside it as well.
+Widget _menuRow(MochiAction action, MochiTheme theme) {
+  final prefix = switch (action.iconOf(theme)) {
+    final icon? => Icon(icon),
+    null => null,
+  };
+  final children = action.children;
+  if (children != null) {
+    return MochiSubmenu(
+      title: Text(action.labelOf(theme)),
+      prefix: prefix,
+      enabled: action._enabled,
+      menuBuilder: (context) => [for (final child in children) _menuRow(child, theme)],
+    );
+  }
+
+  return MochiMenuItem(
+    title: Text(action.labelOf(theme)),
+    prefix: prefix,
+    intent: action.intent,
+    enabled: action._enabled,
+    selected: action.selected,
+    onPress: action.onPress,
+  );
 }
 
 enum _Builtin { back, close }
@@ -210,20 +272,7 @@ class MochiActionBar extends StatelessWidget {
               ),
             if (hidden.isNotEmpty)
               MochiPopoverMenu(
-                menuBuilder: (context) => [
-                  for (final action in hidden)
-                    MochiMenuItem(
-                      title: Text(action.labelOf(theme)),
-                      prefix: switch (action.iconOf(theme)) {
-                        final icon? => Icon(icon),
-                        null => null,
-                      },
-                      intent: action.intent,
-                      enabled: action._enabled,
-                      selected: action.selected,
-                      onPress: action.onPress,
-                    ),
-                ],
+                menuBuilder: (context) => [for (final action in hidden) _menuRow(action, theme)],
                 builder: (context, anchor, _) => MochiButton.icon(
                   size: size,
                   metrics: metrics,
@@ -279,6 +328,16 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
 
+    final children = action.children;
+    if (children == null) return _button(theme, action.onPress);
+
+    return MochiPopoverMenu(
+      menuBuilder: (context) => [for (final child in children) _menuRow(child, theme)],
+      builder: (context, anchor, _) => _button(theme, anchor.toggle, focusNode: anchor.focusNode),
+    );
+  }
+
+  Widget _button(MochiTheme theme, VoidCallback? onPress, {FocusNode? focusNode}) {
     final icon = action.iconOf(theme);
     final label = action.labelOf(theme);
 
@@ -294,7 +353,8 @@ class _ActionButton extends StatelessWidget {
         enabled: action._enabled,
         selected: action.selected,
         tooltip: label,
-        onPress: action.onPress,
+        focusNode: focusNode,
+        onPress: onPress,
         icon: Icon(icon),
       );
     }
@@ -307,7 +367,8 @@ class _ActionButton extends StatelessWidget {
       intent: action.intent,
       enabled: action._enabled,
       selected: action.selected,
-      onPress: action.onPress,
+      focusNode: focusNode,
+      onPress: onPress,
       prefix: switch (icon) {
         final icon? => Icon(icon),
         null => null,
