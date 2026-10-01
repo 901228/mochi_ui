@@ -166,6 +166,15 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
                   child: Text(chosen ? "Selected" : "Not selected"),
                 ),
               ),
+            // The two other appearances: a line with the page showing through, and a callout.
+            SizedBox(
+              width: 170,
+              child: MochiCard(appearance: .outlined, onPress: () {}, child: const Text("Outlined card")),
+            ),
+            const SizedBox(
+              width: 170,
+              child: MochiCard(appearance: .soft, intent: MochiIntent.info, child: Text("Soft card")),
+            ),
           ],
         ),
         Wrap(

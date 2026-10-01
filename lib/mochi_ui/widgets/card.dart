@@ -11,7 +11,25 @@ import "collapsible.dart";
 import "state_transition.dart";
 import "tappable.dart";
 
-/// A surface for grouped content: [MochiColors.surface] with a border and an elevation shadow.
+/// How a [MochiCard] stands off the page.
+///
+/// Not [MochiButtonAppearance]: a card holds other controls, whose own colours are tuned for the
+/// page and the surface, so a solid fill would leave them unreadable, and one with neither fill
+/// nor border is not a card at all.
+enum MochiCardAppearance {
+  /// [MochiColors.surface], a border and a shadow.
+  elevated,
+
+  /// A border and nothing else: the ground shows through, and there is no shadow, which would
+  /// show through with it.
+  outlined,
+
+  /// [intent]'s soft fill with no shadow, for a note or a callout rather than a container.
+  soft,
+}
+
+/// A surface for grouped content: [MochiColors.surface] with a border and an elevation shadow,
+/// or one of the other [MochiCardAppearance]s.
 ///
 /// Pass [onPress] to make the whole card tappable; it then reacts to hover, press and focus. Or
 /// use [MochiCard.collapsible] for a card whose body opens and closes under a title.
@@ -27,6 +45,7 @@ class MochiCard extends StatelessWidget {
     this.titlePrefix,
     this.titleSuffix,
     this.padding,
+    this.appearance = MochiCardAppearance.elevated,
     this.elevation = MochiElevation.sm,
     this.color,
     this.selected = false,
@@ -50,13 +69,14 @@ class MochiCard extends StatelessWidget {
     this.initiallyExpanded = false,
     this.onExpandedChanged,
     this.padding,
+    this.appearance = MochiCardAppearance.elevated,
     this.elevation = MochiElevation.sm,
     this.color,
+    this.intent = MochiIntent.primary,
   }) : _collapsible = true,
        titlePrefix = null,
        titleSuffix = null,
        selected = false,
-       intent = MochiIntent.primary,
        onPress = null,
        onLongPress = null,
        onSecondaryPress = null,
@@ -77,15 +97,18 @@ class MochiCard extends StatelessWidget {
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
+  final MochiCardAppearance appearance;
+
+  /// Only an [MochiCardAppearance.elevated] card casts a shadow.
   final MochiElevation elevation;
 
-  /// Defaults to [MochiColors.surface].
+  /// The fill, in place of what [appearance] would use.
   final Color? color;
 
   /// Whether this card is one of the chosen ones.
   final bool selected;
 
-  /// Colours a [selected] card.
+  /// Colours a [selected] card, and a [MochiCardAppearance.soft] one throughout.
   final MochiIntent intent;
 
   final bool _collapsible;
@@ -101,6 +124,7 @@ class MochiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (_collapsible) {
       return _CardSurface(
+        appearance: appearance,
         elevation: elevation,
         color: color,
         intent: intent,
@@ -122,12 +146,20 @@ class MochiCard extends StatelessWidget {
         : _TitledBody(title: title!, prefix: titlePrefix, suffix: titleSuffix, child: child);
 
     if (!_interactive && !selected) {
-      return _CardSurface(elevation: elevation, color: color, intent: intent, padding: padding, child: body);
+      return _CardSurface(
+        appearance: appearance,
+        elevation: elevation,
+        color: color,
+        intent: intent,
+        padding: padding,
+        child: body,
+      );
     }
 
     // A card that is only selected still needs the states, so the surface knows to colour it.
     if (!_interactive) {
       return _CardSurface(
+        appearance: appearance,
         elevation: elevation,
         color: color,
         intent: intent,
@@ -146,6 +178,7 @@ class MochiCard extends StatelessWidget {
       // Cards are large; growing them on press looks wrong. They tint instead.
       scaleOnPress: false,
       builder: (context, states, child) => _CardSurface(
+        appearance: appearance,
         elevation: elevation,
         color: color,
         intent: intent,
@@ -160,6 +193,7 @@ class MochiCard extends StatelessWidget {
 
 class _CardSurface extends StatelessWidget {
   const _CardSurface({
+    required this.appearance,
     required this.elevation,
     required this.color,
     required this.intent,
@@ -168,6 +202,7 @@ class _CardSurface extends StatelessWidget {
     this.states = const {},
   });
 
+  final MochiCardAppearance appearance;
   final MochiElevation elevation;
   final Color? color;
   final MochiIntent intent;
@@ -180,11 +215,22 @@ class _CardSurface extends StatelessWidget {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
-    final base = color ?? colors.surface;
     final tone = colors.of(intent);
+    final base =
+        color ??
+        switch (appearance) {
+          .elevated => colors.surface,
+          // Transparent surface rather than transparent black, which would flash grey on the way.
+          // The tints below then land on whatever the card sits on, page or surface alike.
+          .outlined => colors.surface.withValues(alpha: 0),
+          .soft => tone.soft,
+        };
     // A chosen card is tinted, mixed over the card's own ground rather than the page's — the same
     // fill a chosen radio card takes, so the two read as the same kind of "picked".
     final chosen = colors.softOn(tone, base);
+    // A soft card's line is its own tint a step deeper; a grey one around a coloured fill reads
+    // as a second, unrelated box.
+    final rest = appearance == .soft ? colors.softOn(tone, base) : colors.border;
 
     return MochiStateTransition(
       states: states,
@@ -198,7 +244,7 @@ class _CardSurface extends StatelessWidget {
               st,
             ),
           ),
-          shadows: g.shadows.of(elevation, colors.shadow),
+          shadows: appearance == .elevated ? g.shadows.of(elevation, colors.shadow) : null,
           shape: RoundedSuperellipseBorder(
             borderRadius: g.radius.md,
             side: BorderSide(
@@ -206,12 +252,8 @@ class _CardSurface extends StatelessWidget {
               color: blend.color(
                 (st) => switch (st) {
                   _ when st.contains(WidgetState.selected) => tone.base,
-                  _ when st.contains(WidgetState.hovered) => Color.lerp(
-                    colors.border,
-                    colors.mutedForeground,
-                    0.5,
-                  )!,
-                  _ => colors.border,
+                  _ when st.contains(WidgetState.hovered) => Color.lerp(rest, colors.mutedForeground, 0.5)!,
+                  _ => rest,
                 },
               ),
             ),

@@ -134,6 +134,53 @@ void main() {
       expect(d.shadows, isNotEmpty);
     });
 
+    testWidgets("an outlined card is a line with the ground showing through, and no shadow", (tester) async {
+      await tester.pumpWidget(
+        app(const MochiCard(appearance: MochiCardAppearance.outlined, child: Text("Body"))),
+      );
+
+      final d = decoration(tester, MochiCard);
+      expect(d.color!.a, 0);
+      expect(d.shadows, isNull, reason: "a shadow under a transparent card shows through it");
+      expect((d.shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
+    });
+
+    testWidgets("a soft card takes its intent's soft fill, and no shadow", (tester) async {
+      await tester.pumpWidget(
+        app(
+          const MochiCard(
+            appearance: MochiCardAppearance.soft,
+            intent: MochiIntent.success,
+            child: Text("Body"),
+          ),
+        ),
+      );
+
+      final d = decoration(tester, MochiCard);
+      expect(d.color, MochiColors.light.of(MochiIntent.success).soft);
+      expect(d.shadows, isNull);
+    });
+
+    testWidgets("a chosen outlined card still wears the intent", (tester) async {
+      await tester.pumpWidget(
+        app(
+          const MochiCard(
+            appearance: MochiCardAppearance.outlined,
+            selected: true,
+            intent: MochiIntent.danger,
+            child: Text("Body"),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final d = decoration(tester, MochiCard);
+      final tone = MochiColors.light.of(MochiIntent.danger);
+      expect((d.shape as RoundedSuperellipseBorder).side.color, tone.base);
+      expect(d.color!.a, greaterThan(0), reason: "tinted, over whatever the card sits on");
+      expect(d.color!.a, lessThan(1));
+    });
+
     testWidgets("is tappable and tints on hover when onPress is set", (tester) async {
       var pressed = 0;
       await tester.pumpWidget(app(MochiCard(onPress: () => pressed++, child: const Text("Body"))));
