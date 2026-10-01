@@ -6,6 +6,7 @@ import "../theme/colors.dart";
 import "../theme/theme.dart";
 import "divider.dart";
 import "focus_ring.dart";
+import "reveal.dart";
 import "state_transition.dart";
 import "tappable.dart";
 
@@ -18,6 +19,9 @@ import "tappable.dart";
 /// Uncontrolled by default, starting from [initiallyExpanded]. Pass [expanded] to own the state
 /// instead: a press then only calls [onExpandedChanged], and the widget follows whatever it is
 /// rebuilt with — which is how an accordion keeps only one open.
+///
+/// With nothing to press — opened by a switch or a choice elsewhere — use [MochiReveal], which
+/// is this body without the header.
 class MochiCollapsible extends StatefulWidget {
   const MochiCollapsible({
     super.key,
@@ -173,37 +177,17 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
             ),
           ),
         ),
-        AnimatedBuilder(
-          animation: _progress,
-          builder: (context, body) {
-            final t = _progress.value;
-            final closed = t == 0 && !_open;
-            if (closed && !widget.maintainState) return const SizedBox.shrink();
-            // The same tree open or closed, so a kept body's state survives.
-            return Offstage(
-              offstage: closed,
-              // Align rather than SizeTransition, which would also clip the body's own shadows and
-              // focus rings sideways; the ClipRect only needs to cut along the axis that grows.
-              child: ClipRect(
-                child: Align(
-                  alignment: AlignmentDirectional.topStart,
-                  heightFactor: t,
-                  child: Opacity(opacity: t, child: body),
-                ),
-              ),
-            );
-          },
-          // A closing body keeps its content but can no longer be reached with Tab.
-          child: ExcludeFocus(
-            excluding: !_open,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.divider) const MochiDivider(),
-                Padding(padding: widget.bodyPadding, child: widget.child),
-              ],
-            ),
+        RevealBody(
+          progress: _progress,
+          open: _open,
+          maintainState: widget.maintainState,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (widget.divider) const MochiDivider(),
+              Padding(padding: widget.bodyPadding, child: widget.child),
+            ],
           ),
         ),
       ],

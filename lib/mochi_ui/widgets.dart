@@ -33,6 +33,7 @@ export "widgets/press_scale.dart";
 export "widgets/resizable.dart";
 export "widgets/responsive.dart";
 export "widgets/refresh.dart";
+export "widgets/reveal.dart" show MochiReveal;
 export "widgets/scaffold.dart";
 export "widgets/scroll_area.dart";
 export "widgets/scroll_behavior.dart";

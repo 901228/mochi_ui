@@ -163,6 +163,53 @@ class _AccordionSampleState extends State<_AccordionSample> {
   }
 }
 
+class _RevealSample extends StatefulWidget {
+  const _RevealSample();
+
+  @override
+  State<_RevealSample> createState() => _RevealSampleState();
+}
+
+class _RevealSampleState extends State<_RevealSample> {
+  bool _inspection = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    // What opens it is a switch in another row, so there is no header of its own to press.
+    return SizedBox(
+      width: 320,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MochiTileGroup(
+            children: [
+              MochiTile(
+                prefix: const Icon(TablerIcons.hourglass),
+                title: const Text("Inspection"),
+                suffix: MochiSwitch(value: _inspection, onChanged: (v) => setState(() => _inspection = v)),
+              ),
+            ],
+          ),
+          MochiReveal(
+            expanded: _inspection,
+            child: Padding(
+              padding: EdgeInsets.only(top: g.space.sm),
+              child: MochiTileGroup(
+                children: [
+                  MochiTile(title: const Text("Duration"), details: const Text("15s"), onPress: () {}),
+                  MochiTile(title: const Text("Warnings"), details: const Text("8s, 12s"), onPress: () {}),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AvatarSample extends StatelessWidget {
   const _AvatarSample();
 
