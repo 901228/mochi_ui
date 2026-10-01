@@ -23,6 +23,7 @@ class MochiStrings {
     required this.close,
     required this.dismiss,
     required this.remove,
+    required this.listSeparator,
     required this.reorder,
     required this.goToPage,
     required this.search,
@@ -75,6 +76,10 @@ class MochiStrings {
 
   /// Takes one item out of a set, such as the × on a badge.
   final String remove;
+
+  /// Between the items of a list written out on one line, such as a multi-select's choices:
+  /// ", " in English, "、" in Chinese.
+  final String listSeparator;
 
   /// The grip a sortable row is dragged by, which has no words of its own.
   final String reorder;
@@ -168,6 +173,7 @@ class MochiStrings {
     close: "Close",
     dismiss: "Dismiss",
     remove: "Remove",
+    listSeparator: ", ",
     reorder: "Reorder",
     goToPage: "Go to page",
     search: "Search",
@@ -219,6 +225,7 @@ class MochiStrings {
     close: "關閉",
     dismiss: "關閉",
     remove: "移除",
+    listSeparator: "、",
     reorder: "重新排序",
     goToPage: "跳至頁數",
     search: "搜尋",
@@ -263,6 +270,7 @@ class MochiStrings {
     String? close,
     String? dismiss,
     String? remove,
+    String? listSeparator,
     String? reorder,
     String? goToPage,
     String? search,
@@ -303,6 +311,7 @@ class MochiStrings {
     close: close ?? this.close,
     dismiss: dismiss ?? this.dismiss,
     remove: remove ?? this.remove,
+    listSeparator: listSeparator ?? this.listSeparator,
     reorder: reorder ?? this.reorder,
     goToPage: goToPage ?? this.goToPage,
     search: search ?? this.search,
@@ -348,6 +357,7 @@ class MochiStrings {
           close == other.close &&
           dismiss == other.dismiss &&
           remove == other.remove &&
+          listSeparator == other.listSeparator &&
           reorder == other.reorder &&
           goToPage == other.goToPage &&
           search == other.search &&
@@ -391,6 +401,7 @@ class MochiStrings {
     close,
     dismiss,
     remove,
+    listSeparator,
     reorder,
     goToPage,
     search,

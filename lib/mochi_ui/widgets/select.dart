@@ -134,11 +134,22 @@ class _MochiSelectState<T> extends State<MochiSelect<T>> with _Opening {
   }
 }
 
+/// How a [MochiMultiSelect] writes its choices in the box.
+enum MochiMultiSelectDisplay {
+  /// One badge per choice, each with a × that takes it out; the box grows as they wrap.
+  badges,
+
+  /// The labels on one line, joined by `strings.listSeparator` and cut with an ellipsis: the box
+  /// stays one line tall, for a toolbar or a filter row where a growing field would shove
+  /// everything around it. Taking a choice out is then the list's job alone.
+  text,
+}
+
 /// Several choices from a list that drops down under a field, shown in the field as badges.
 ///
 /// The list stays open while options are ticked and unticked; a badge's × takes its option out
 /// without opening it. Otherwise it behaves like [MochiSelect], and grows taller as the badges
-/// wrap onto more lines.
+/// wrap onto more lines — or pass [display] `.text` for one line of labels instead.
 class MochiMultiSelect<T> extends StatefulWidget {
   const MochiMultiSelect({
     super.key,
@@ -153,10 +164,14 @@ class MochiMultiSelect<T> extends StatefulWidget {
     this.enabled = true,
     this.autofocus = false,
     this.maxListHeight = 320,
+    this.display = MochiMultiSelectDisplay.badges,
   });
 
   /// The chosen options' values.
   final Set<T> values;
+
+  /// Badges, or one line of labels.
+  final MochiMultiSelectDisplay display;
 
   /// Called with the whole new set. Null disables the select.
   final ValueChanged<Set<T>>? onChanged;
@@ -191,6 +206,9 @@ class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening
     final enabled = widget.enabled && onChanged != null;
     final focusValue = chosen.firstOrNull?.value ?? options.where((o) => o.enabled).firstOrNull?.value;
 
+    final asText = widget.display == MochiMultiSelectDisplay.text;
+    final separator = context.theme.strings.listSeparator;
+
     void toggle(T value) =>
         onChanged?.call(values.contains(value) ? ({...values}..remove(value)) : {...values, value});
 
@@ -203,12 +221,21 @@ class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening
       autofocus: widget.autofocus,
       open: _open,
       maxListHeight: widget.maxListHeight,
-      semanticValue: chosen.map((o) => o.label).join(", "),
-      widest: [?widget.hint],
-      widestBadges: [for (final option in options) option.label],
-      anyBadgePrefix: options.any((o) => o.prefix != null),
+      semanticValue: chosen.map((o) => o.label).join(separator),
+      // As text, the field is as wide as its longest label and the rest is ellipsized: one wide
+      // enough for every label at once would be a toolbar's worth.
+      widest: [
+        ?widget.hint,
+        if (asText)
+          for (final option in options) option.label,
+      ],
+      widestBadges: [
+        if (!asText)
+          for (final option in options) option.label,
+      ],
+      anyBadgePrefix: !asText && options.any((o) => o.prefix != null),
       anyPrefix: false,
-      badges: chosen.isNotEmpty,
+      badges: !asText && chosen.isNotEmpty,
       onPointerDown: pointerDown,
       onPointerUp: pointerUp,
       onOpenRequested: openRequested,
@@ -225,24 +252,30 @@ class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening
             onPress: () => toggle(option.value),
           ),
       ],
-      content: (context, m) => chosen.isEmpty
-          ? _Hint(widget.hint, m)
-          // The badges' × are for the pointer; from the keyboard the list does the same.
-          : ExcludeFocus(
-              child: Wrap(
-                spacing: context.theme.geometry.space.xs2,
-                runSpacing: context.theme.geometry.space.xs2,
-                children: [
-                  for (final option in chosen)
-                    MochiBadge(
-                      size: _badgeSize(widget.size),
-                      prefix: option.prefix,
-                      onDelete: enabled ? () => toggle(option.value) : null,
-                      child: Text(option.label),
-                    ),
-                ],
-              ),
-            ),
+      content: (context, m) => switch (widget.display) {
+        _ when chosen.isEmpty => _Hint(widget.hint, m),
+        .text => Text(
+          chosen.map((o) => o.label).join(separator),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        // The badges' × are for the pointer; from the keyboard the list does the same.
+        .badges => ExcludeFocus(
+          child: Wrap(
+            spacing: context.theme.geometry.space.xs2,
+            runSpacing: context.theme.geometry.space.xs2,
+            children: [
+              for (final option in chosen)
+                MochiBadge(
+                  size: _badgeSize(widget.size),
+                  prefix: option.prefix,
+                  onDelete: enabled ? () => toggle(option.value) : null,
+                  child: Text(option.label),
+                ),
+            ],
+          ),
+        ),
+      },
     );
   }
 }

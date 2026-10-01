@@ -182,6 +182,31 @@ void main() {
     expect(badge.right, lessThanOrEqualTo(field.right));
   });
 
+  testWidgets("as text, the choices are one ellipsized line and the box doesn't grow", (tester) async {
+    Widget field(Set<String> values) => app(
+      SizedBox(
+        width: 160,
+        child: MochiMultiSelect<String>(
+          values: values,
+          display: MochiMultiSelectDisplay.text,
+          options: options,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(field(const {"beep"}));
+    final one = tester.getSize(find.byType(MochiMultiSelect<String>)).height;
+
+    await tester.pumpWidget(field(const {"beep", "voice", "off"}));
+    expect(find.byType(MochiBadge), findsNothing);
+    final text = tester.widget<Text>(find.text("Beep, Voice, Nothing at all"));
+    expect(text.maxLines, 1);
+    expect(text.overflow, TextOverflow.ellipsis);
+    expect(tester.getSize(find.byType(MochiMultiSelect<String>)).height, one);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets("from the keyboard: arrow down opens on the chosen row, Enter picks", (tester) async {
     final seen = <String>[];
     await tester.pumpWidget(single(seen, start: "voice"));
