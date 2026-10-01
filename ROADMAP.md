@@ -148,3 +148,4 @@
 - **Radio card 當成獨立元件** — 見 P4 的 RadioGroup
 - **各元件的 style 類別** — 見 P0 的結論（有 size 軸的給 metrics，顏色不開 style）
 - **Animated icon — 暫緩，不是「換一組圖示」那麼簡單。** `MochiIcons` 存的是 `IconData`、元件寫的是 `Icon(theme.icons.close)`，而會動的圖示是一個帶 controller 的 widget，型別就對不上。更關鍵的是狀態：它需要知道「從哪個狀態到哪個狀態」（chevron 展開轉 90°、menu→close 變形），那是元件要把進度交給圖示，不是換 icon set 能解決的。真的要做的時候，第一步是把元件裡的 `Icon(theme.icons.x)` 換成 `theme.buildIcon(context, ...)` 這層間接（目前只有 6 個呼叫點，隨時可以補）
+- **Popover 的尖角 — 暫緩，等有畫面需要。** 現在的 popover 都是 select、menu、date picker：離 anchor 只有 4px、又從 anchor 那一角長出來，看得出是誰的。尖角也是這個 kit 裡唯一的尖形狀，forui / shadcn / Radix 預設都不帶。**觸發條件**：出現「anchor 很小、面板離它很遠、看不出關係」的畫面（onboarding 教學提示、小 ⓘ 的說明）。到時做成 `MochiPopover(arrow: true)`、預設關，要顧到：尖角跟著 anchor 中心走（夾進螢幕、翻邊之後都一樣）、滑到圓角開始前就停、框和尖角是同一條路徑（分開畫接縫會反鋸齒兩次）、陰影沿著合起來的形狀投、進場從尖角那一點長出來。`MochiTooltip` 到時一起決定
