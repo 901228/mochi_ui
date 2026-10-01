@@ -48,6 +48,16 @@ void main() {
     expect(find.text("Archive"), findsNothing);
   });
 
+  testWidgets("rows keep a hair apart, so two chosen ones don't run together", (tester) async {
+    await tester.pumpWidget(app(menu()));
+    await tester.tap(find.text("open"));
+    await tester.pumpAndSettle();
+
+    final rename = tester.getRect(find.widgetWithText(MochiMenuItem, "Rename"));
+    final archive = tester.getRect(find.widgetWithText(MochiMenuItem, "Archive"));
+    expect(archive.top - rename.bottom, MochiGeometry().space.xs3);
+  });
+
   testWidgets("a row without a handler is disabled", (tester) async {
     await tester.pumpWidget(app(menu()));
     await tester.tap(find.text("open"));

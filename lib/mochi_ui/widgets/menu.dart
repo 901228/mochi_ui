@@ -92,6 +92,9 @@ class MochiMenu extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                // A hair between rows, so two chosen ones next to each other — a multi-select's,
+                // or the hovered row beside the chosen one — read as two fills, not one block.
+                spacing: context.theme.geometry.space.xs3,
                 children: children,
               ),
             ),
