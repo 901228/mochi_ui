@@ -10,6 +10,7 @@ import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "button.dart";
 import "focus_ring.dart";
+import "modal_heading.dart";
 import "sheet.dart";
 import "text_field.dart";
 import "tile.dart";
@@ -128,23 +129,9 @@ class _ModalColumn extends StatelessWidget {
         // No line at all when there is nothing to put in it: a panel that is not a question has a
         // body and nothing to call it. A suffix on its own — a lone close button — keeps the line
         // and sits at its end.
-        if (title != null || titleSuffix != null)
-          Row(
-            spacing: g.space.sm,
-            children: [
-              Expanded(
-                child: DefaultTextStyle(
-                  style: theme.typography.title.md.copyWith(color: colors.foreground),
-                  child: title ?? const SizedBox.shrink(),
-                ),
-              ),
-              ?titleSuffix,
-            ],
-          ),
+        if (title != null || titleSuffix != null) ModalHeading(title: title, suffix: titleSuffix),
         if (body case final body?) ...[
-          // The gap belongs to the heading above it, not to the body: without one the body starts
-          // at the padding like any other panel's content.
-          if (title != null || titleSuffix != null) SizedBox(height: g.space.xs),
+          if (title != null || titleSuffix != null) SizedBox(height: ModalHeading.gapOf(context)),
           Flexible(
             child: SingleChildScrollView(
               child: DefaultTextStyle(

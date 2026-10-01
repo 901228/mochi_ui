@@ -4,6 +4,7 @@ import "../theme/geometry.dart";
 import "../theme/motion.dart";
 import "../theme/strings.dart";
 import "../theme/theme.dart";
+import "modal_heading.dart";
 import "transitions.dart";
 
 /// The edge a sheet is anchored to and slides in from.
@@ -16,6 +17,8 @@ class MochiSheet extends StatelessWidget {
   const MochiSheet({
     super.key,
     required this.child,
+    this.title,
+    this.titleSuffix,
     this.side = MochiSheetSide.bottom,
     this.handle,
     this.constraints,
@@ -24,6 +27,15 @@ class MochiSheet extends StatelessWidget {
   });
 
   final Widget child;
+
+  /// The heading over [child], drawn exactly as a [MochiDialog]'s: the same typeface, size and
+  /// gap. It stays put while [child] scrolls, which is what a long sheet wants.
+  final Widget? title;
+
+  /// At the end of the title's line: a close button, or an action that belongs to the sheet
+  /// rather than to an answer. See [MochiDialog.titleSuffix].
+  final Widget? titleSuffix;
+
   final MochiSheetSide side;
 
   /// The grab bar on a sheet that can be dragged away. Defaults to on for a sheet from the top or
@@ -103,7 +115,17 @@ class MochiSheet extends StatelessWidget {
                     // The sheet runs to the edge of the screen, so its own padding has to clear
                     // whatever the system puts there.
                     padding: (padding ?? EdgeInsets.all(g.space.md)).add(_safeArea(context)),
-                    child: child,
+                    child: title == null && titleSuffix == null
+                        ? child
+                        : Column(
+                            mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ModalHeading(title: title, suffix: titleSuffix),
+                              SizedBox(height: ModalHeading.gapOf(context)),
+                              Flexible(child: child),
+                            ],
+                          ),
                   ),
                 ),
                 if (showHandle && side == MochiSheetSide.top) const _SheetHandle(),

@@ -36,6 +36,50 @@ void main() {
     ),
   );
 
+  testWidgets("a title is drawn exactly as a dialog's, with the same gap under it", (tester) async {
+    Widget host(Widget panel) => MochiApp(
+      themeMode: MochiThemeMode.light,
+      home: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(width: 400, child: panel),
+      ),
+    );
+    const body = SizedBox(height: 40, child: Text("Body"));
+    const suffix = SizedBox.square(dimension: 20, child: Text("x"));
+
+    (TextStyle, double, Offset) measure(WidgetTester tester) {
+      final title = find.text("Settings");
+      final style = tester
+          .widget<RichText>(find.descendant(of: title, matching: find.byType(RichText)))
+          .text
+          .style!;
+      final gap = tester.getTopLeft(find.text("Body")).dy - tester.getBottomLeft(title).dy;
+      final suffixAt = tester.getTopRight(find.text("x")) - tester.getTopLeft(title);
+      return (style, gap, suffixAt);
+    }
+
+    await tester.pumpWidget(
+      host(const MochiDialog(title: Text("Settings"), titleSuffix: suffix, body: body)),
+    );
+    final dialog = measure(tester);
+
+    await tester.pumpWidget(
+      host(
+        const MochiSheet(
+          title: Text("Settings"),
+          titleSuffix: suffix,
+          padding: EdgeInsets.all(16),
+          child: body,
+        ),
+      ),
+    );
+    final sheet = measure(tester);
+
+    expect(sheet.$1, dialog.$1, reason: "same typeface, size and colour");
+    expect(sheet.$2, dialog.$2, reason: "same gap between the title and what follows");
+    expect(sheet.$3.dy, dialog.$3.dy, reason: "the suffix sits on the title's line in both");
+  });
+
   testWidgets("slides in from its edge and returns what it was popped with", (tester) async {
     String? result;
     await tester.pumpWidget(app(onResult: (value) => result = value));
