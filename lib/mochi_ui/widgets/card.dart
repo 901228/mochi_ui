@@ -44,6 +44,7 @@ class MochiCard extends StatelessWidget {
     this.title,
     this.titlePrefix,
     this.titleSuffix,
+    this.titleGap,
     this.padding,
     this.appearance = MochiCardAppearance.elevated,
     this.elevation = MochiElevation.sm,
@@ -76,6 +77,7 @@ class MochiCard extends StatelessWidget {
   }) : _collapsible = true,
        titlePrefix = null,
        titleSuffix = null,
+       titleGap = null,
        selected = false,
        onPress = null,
        onLongPress = null,
@@ -90,6 +92,11 @@ class MochiCard extends StatelessWidget {
   /// Either end of the title's own line: an icon before it, a `MochiActionBar` or a count after.
   final Widget? titlePrefix;
   final Widget? titleSuffix;
+
+  /// The room between the title's line and the content under it. Defaults to `geometry.space.sm`.
+  /// Taken as given, not scaled by density: pass a value read from `context.theme.geometry` to
+  /// keep in step with the theme.
+  final double? titleGap;
 
   final bool? expanded;
   final bool initiallyExpanded;
@@ -143,7 +150,7 @@ class MochiCard extends StatelessWidget {
 
     final body = title == null
         ? child
-        : _TitledBody(title: title!, prefix: titlePrefix, suffix: titleSuffix, child: child);
+        : _TitledBody(title: title!, prefix: titlePrefix, suffix: titleSuffix, gap: titleGap, child: child);
 
     if (!_interactive && !selected) {
       return _CardSurface(
@@ -284,11 +291,18 @@ class _CardSurface extends StatelessWidget {
 /// A heading over the card's content: the same row a collapsible card folds with, without the
 /// folding — and in the `title` typeface, which is the thing an app composing its own gets wrong.
 class _TitledBody extends StatelessWidget {
-  const _TitledBody({required this.title, required this.prefix, required this.suffix, required this.child});
+  const _TitledBody({
+    required this.title,
+    required this.prefix,
+    required this.suffix,
+    required this.gap,
+    required this.child,
+  });
 
   final Widget title;
   final Widget? prefix;
   final Widget? suffix;
+  final double? gap;
   final Widget child;
 
   @override
@@ -304,7 +318,7 @@ class _TitledBody extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: g.space.sm,
+      spacing: gap ?? g.space.sm,
       children: [
         ConstrainedBox(
           constraints: BoxConstraints(minHeight: line),

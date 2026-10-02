@@ -87,6 +87,21 @@ void main() {
       expect(tester.getRect(find.text("Body")).top, greaterThan(title.bottom));
     });
 
+    testWidgets("titleGap sets the room between the title's line and the content", (tester) async {
+      // The title's line is a ConstrainedBox at least an xs button tall; the gap is measured from it.
+      Future<double> gap(double? titleGap) async {
+        await tester.pumpWidget(
+          app(MochiCard(title: const Text("Session"), titleGap: titleGap, child: const Text("Body"))),
+        );
+        final line = find.ancestor(of: find.text("Session"), matching: find.byType(ConstrainedBox)).first;
+        return tester.getRect(find.text("Body")).top - tester.getRect(line).bottom;
+      }
+
+      expect(await gap(null), MochiGeometry.standard.space.sm);
+      expect(await gap(0), 0);
+      expect(await gap(20), 20);
+    });
+
     testWidgets("the title row is a button tall, so putting one there moves nothing", (tester) async {
       Future<double> title(Widget? suffix) async {
         await tester.pumpWidget(
