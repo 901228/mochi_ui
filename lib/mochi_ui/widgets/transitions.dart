@@ -446,6 +446,27 @@ class MochiPage<T> extends Page<T> {
   final MochiTransition? transition;
 
   @override
-  Route<T> createRoute(BuildContext context) =>
-      MochiPageRoute<T>(builder: (_) => child, transition: transition, settings: this);
+  Route<T> createRoute(BuildContext context) => _PageBasedRoute<T>(this);
+}
+
+/// A [MochiPageRoute] that reads its page every time it builds rather than once when it is made.
+///
+/// A navigator keeps the route when a page with the same key replaces the old one, and only
+/// swaps the route's [settings] for the new page: a route that had captured the first page's
+/// child went on showing it however often the page was rebuilt — a router's shell never moved
+/// off the tab it opened on.
+class _PageBasedRoute<T> extends MochiPageRoute<T> {
+  _PageBasedRoute(MochiPage<T> page) : super(builder: _unused, settings: page);
+
+  /// Never called: [buildPage] reads the page instead.
+  static Widget _unused(BuildContext _) => throw UnimplementedError();
+
+  MochiPage<T> get _page => settings as MochiPage<T>;
+
+  @override
+  MochiTransition? get transition => _page.transition;
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondary) =>
+      _page.child;
 }

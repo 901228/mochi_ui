@@ -183,6 +183,26 @@ void main() {
     expect((route as MochiPageRoute<void>).transition, MochiTransition.slide);
   });
 
+  testWidgets("a MochiPage rebuilt in place with the same key shows its new child", (tester) async {
+    // What a router's shell does on every tab change: the same page, a new child.
+    Widget host(String text) => MochiApp(
+      themeMode: MochiThemeMode.light,
+      home: Navigator(
+        pages: [MochiPage<void>(key: const ValueKey("shell"), child: Text(text))],
+        onDidRemovePage: (_) {},
+      ),
+    );
+
+    await tester.pumpWidget(host("first tab"));
+    await tester.pumpAndSettle();
+    expect(find.text("first tab"), findsOneWidget);
+
+    await tester.pumpWidget(host("second tab"));
+    await tester.pump();
+    expect(find.text("second tab"), findsOneWidget);
+    expect(find.text("first tab"), findsNothing);
+  });
+
   group("defaults.transition", () {
     Widget app({MochiTransition? defaults, MochiTransition? route}) => MochiApp(
       themeMode: MochiThemeMode.light,
