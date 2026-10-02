@@ -1,3 +1,4 @@
+import "package:flutter/gestures.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
@@ -19,6 +20,7 @@ class MochiSurfaceTransition extends StatelessWidget {
     this.slideFrom = AxisDirection.right,
     this.scaleFrom = 0.96,
     this.scrim = true,
+    this.linear = false,
   });
 
   /// Runs 0 to 1 as the surface enters.
@@ -46,16 +48,23 @@ class MochiSurfaceTransition extends StatelessWidget {
   /// covers the screen rather than only the surface's own bounds.
   final bool scrim;
 
+  /// Follows [animation] as it is rather than through the theme's curves, for while a finger is
+  /// driving it: a curve between the finger and the page makes the page lag behind it and then
+  /// catch up.
+  final bool linear;
+
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
 
     final motion = context.theme.motion;
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: motion.transitionCurve,
-      reverseCurve: motion.transitionReverseCurve,
-    );
+    final Animation<double> curved = linear
+        ? animation
+        : CurvedAnimation(
+            parent: animation,
+            curve: motion.transitionCurve,
+            reverseCurve: motion.transitionReverseCurve,
+          );
 
     final raised = scrim ? _EdgeShadow(animation: curved, edge: slideFrom, child: child) : child;
 
@@ -94,11 +103,13 @@ class MochiSurfaceTransition extends StatelessWidget {
 
     // A covered surface gives way a little: it recedes, and a sliding one travels a quarter of the
     // way in the same direction. The covering surface brings its own dimming.
-    final receding = CurvedAnimation(
-      parent: secondary,
-      curve: motion.transitionCurve,
-      reverseCurve: motion.transitionReverseCurve,
-    );
+    final Animation<double> receding = linear
+        ? secondary
+        : CurvedAnimation(
+            parent: secondary,
+            curve: motion.transitionCurve,
+            reverseCurve: motion.transitionReverseCurve,
+          );
 
     return switch (transition) {
       .slide => SlideTransition(
@@ -167,9 +178,11 @@ class _EdgeShadow extends StatelessWidget {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        // Only while travelling, for the same reason as the dimming above.
+        // Only while travelling, for the same reason as the dimming above. The box stays in the
+        // tree at rest with no shadow in it: adding it when a transition starts would rebuild
+        // everything under it, which loses a drag that is driving the transition.
         final moving = _travelling(animation);
-        if (moving == 0) return child!;
+        if (moving == 0) return DecoratedBox(decoration: const BoxDecoration(), child: child);
 
         return DecoratedBox(
           decoration: BoxDecoration(
@@ -200,6 +213,10 @@ class _EdgeShadow extends StatelessWidget {
 }
 
 /// A route that enters with [MochiSurfaceTransition] and takes its durations from the theme.
+///
+/// A page that slides in can be dragged back out by its leading edge, the way an iOS page can:
+/// the drag drives the route's own animation, so the page underneath comes back with it. Letting
+/// go past half way, or flicking, goes back; anything less settles the page where it was.
 class MochiPageRoute<T> extends PageRoute<T> {
   MochiPageRoute({required this.builder, this.transition, super.settings, super.fullscreenDialog});
 
@@ -215,6 +232,25 @@ class MochiPageRoute<T> extends PageRoute<T> {
   MochiMotion get _motion => _theme?.motion ?? MochiMotion.standard;
 
   MochiTransition get _defaults => _theme?.defaults.transition ?? MochiTransition.scaleFade;
+
+  MochiTransition get _transition => transition ?? _defaults;
+
+  /// Driven directly while the page is being dragged back.
+  AnimationController? _controller;
+
+  @override
+  AnimationController createAnimationController() => _controller = super.createAnimationController();
+
+  /// Whether a drag from the edge may start now. Not [popGestureEnabled], which also refuses a page
+  /// with a [PopScope] that says no: here, as with a sheet's drag, the page follows the finger
+  /// anyway and asks on release, so the scope hears about the attempt and the page settles back.
+  bool get _canDragBack =>
+      _transition == MochiTransition.slide &&
+      isCurrent &&
+      !isFirst &&
+      !willHandlePopInternally &&
+      animation!.isCompleted &&
+      !(navigator?.userGestureInProgress ?? true);
 
   @override
   Duration get transitionDuration => _motion.transitionDuration;
@@ -244,12 +280,153 @@ class MochiPageRoute<T> extends PageRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => MochiSurfaceTransition(
-    animation: animation,
-    secondaryAnimation: secondaryAnimation,
-    transition: transition ?? _defaults,
-    child: child,
-  );
+  ) {
+    final transition = _transition;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+
+    return MochiSurfaceTransition(
+      animation: animation,
+      secondaryAnimation: secondaryAnimation,
+      transition: transition,
+      // From the trailing edge, so a right-to-left page comes in from the left and goes back the
+      // way it came.
+      slideFrom: rtl ? AxisDirection.left : AxisDirection.right,
+      // Rebuilt when a gesture starts and stops (the modal scope listens to the navigator for it),
+      // which is also what keeps the page underneath, receding on this one's animation, in step.
+      linear: navigator?.userGestureInProgress ?? false,
+      child: transition == MochiTransition.slide ? _EdgeDrag(route: this, child: child) : child,
+    );
+  }
+
+  /// Goes back if the route lets it, the same bargain as a sheet's drag: [PopScope] can refuse,
+  /// and hears about the attempt either way. Returns whether the page is on its way out.
+  bool _popByDrag() {
+    if (popDisposition != RoutePopDisposition.pop) {
+      navigator?.maybePop();
+      return false;
+    }
+    navigator?.pop();
+    return true;
+  }
+}
+
+/// A strip along a page's leading edge that drags the page back to the one under it.
+class _EdgeDrag extends StatefulWidget {
+  const _EdgeDrag({required this.route, required this.child});
+
+  final MochiPageRoute<dynamic> route;
+  final Widget child;
+
+  @override
+  State<_EdgeDrag> createState() => _EdgeDragState();
+}
+
+class _EdgeDragState extends State<_EdgeDrag> {
+  /// How far in from the edge a drag may start. Narrow, since anything under it — a slider, a
+  /// list row's swipe — loses the start of its own drag there.
+  static const _edgeWidth = 20.0;
+
+  /// Over this speed towards the trailing edge, letting go goes back however little was dragged.
+  static const _flingVelocity = 700.0;
+
+  bool _dragging = false;
+
+  NavigatorState? get _navigator => widget.route.navigator;
+  AnimationController? get _controller => widget.route._controller;
+
+  /// Positive when a drag moves the page back out: rightwards, or leftwards in right-to-left.
+  double get _sign => Directionality.of(context) == TextDirection.rtl ? -1 : 1;
+
+  @override
+  void dispose() {
+    if (_dragging) _navigator?.didStopUserGesture();
+    super.dispose();
+  }
+
+  void _start(DragStartDetails details) {
+    if (!widget.route._canDragBack) return;
+    _dragging = true;
+    _navigator?.didStartUserGesture();
+  }
+
+  void _update(DragUpdateDetails details) {
+    final controller = _controller;
+    final width = context.size?.width ?? 0;
+    if (!_dragging || controller == null || width == 0) return;
+
+    controller.value -= _sign * details.delta.dx / width;
+  }
+
+  void _end(DragEndDetails details) {
+    final controller = _controller;
+    if (!_dragging || controller == null) return;
+    _dragging = false;
+
+    final velocity = _sign * details.velocity.pixelsPerSecond.dx;
+    final back = velocity > _flingVelocity || (velocity > -_flingVelocity && controller.value < 0.5);
+    final leaving = back && widget.route._popByDrag();
+
+    // Finished with the theme's curve from wherever the finger let go, over the share of the
+    // duration that is left. The gesture ends only once the page has arrived: the transitions are
+    // linear until then, and putting their curves back mid-flight would make the page jump.
+    final motion = context.theme.motion;
+    final navigator = _navigator;
+    final TickerFuture done;
+    if (leaving) {
+      done = controller.animateBack(
+        0,
+        duration: motion.transitionReverseDuration * controller.value,
+        curve: motion.transitionReverseCurve,
+      );
+    } else {
+      done = controller.animateTo(
+        1,
+        duration: motion.transitionDuration * (1 - controller.value),
+        curve: motion.transitionCurve,
+      );
+    }
+    done.whenCompleteOrCancel(() => navigator?.didStopUserGesture());
+  }
+
+  void _cancel() {
+    if (!_dragging) return;
+    _end(DragEndDetails());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        widget.child,
+        PositionedDirectional(
+          start: 0,
+          top: 0,
+          bottom: 0,
+          // The system's own edge padding is added, so the strip starts where the page's content
+          // does rather than under a notch.
+          width: _edgeWidth + (rtl ? padding.right : padding.left),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            // A finger's gesture: a mouse has no edge to swipe from, and taking its presses
+            // would steal the clicks on whatever sits along the page's edge.
+            supportedDevices: const {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.stylus,
+              PointerDeviceKind.invertedStylus,
+            },
+            onHorizontalDragStart: _start,
+            onHorizontalDragUpdate: _update,
+            onHorizontalDragEnd: _end,
+            onHorizontalDragCancel: _cancel,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The [Page] form of [MochiPageRoute], for routers such as go_router.

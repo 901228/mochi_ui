@@ -235,4 +235,106 @@ void main() {
       );
     });
   });
+
+  group("dragging a page back by its edge", () {
+    Widget app({MochiTransition transition = MochiTransition.slide, bool canPop = true, List<bool>? asked}) =>
+        MediaQuery(
+          data: const MediaQueryData(size: Size(400, 600)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            home: Builder(
+              builder: (context) => Center(
+                child: MochiButton(
+                  onPress: () => Navigator.of(context).push(
+                    MochiPageRoute<void>(
+                      transition: transition,
+                      builder: (_) => PopScope<void>(
+                        canPop: canPop,
+                        onPopInvokedWithResult: (didPop, _) => asked?.add(didPop),
+                        child: const SizedBox.expand(child: Center(child: Text("pushed"))),
+                      ),
+                    ),
+                  ),
+                  child: const Text("open"),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    Future<TestGesture> open(WidgetTester tester, Widget host) async {
+      await tester.binding.setSurfaceSize(const Size(400, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(host);
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      return tester.startGesture(const Offset(5, 300));
+    }
+
+    /// Walked in small steps, as a finger moves: one long jump would be a single update.
+    Future<void> drag(WidgetTester tester, TestGesture gesture, double dx) async {
+      for (var moved = 0.0; moved < dx; moved += 20) {
+        await gesture.moveBy(const Offset(20, 0));
+        await tester.pump();
+      }
+    }
+
+    testWidgets("follows the finger, and past half way goes back", (tester) async {
+      final gesture = await open(tester, app());
+      await drag(tester, gesture, 120);
+      final x = tester.getCenter(find.text("pushed")).dx;
+      expect(x, greaterThan(200 + 60), reason: "the page moves with the finger");
+      expect(find.text("open"), findsOneWidget, reason: "the page underneath comes back with it");
+
+      await drag(tester, gesture, 140);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(find.text("pushed"), findsNothing);
+    });
+
+    testWidgets("let go early, it settles back", (tester) async {
+      final gesture = await open(tester, app());
+      await drag(tester, gesture, 60);
+      await tester.pump(const Duration(milliseconds: 200));
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text("pushed"), findsOneWidget);
+      expect(tester.getCenter(find.text("pushed")).dx, 200);
+    });
+
+    testWidgets("a PopScope that says no keeps the page, and hears the attempt", (tester) async {
+      final asked = <bool>[];
+      final gesture = await open(tester, app(canPop: false, asked: asked));
+      await drag(tester, gesture, 300);
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text("pushed"), findsOneWidget);
+      expect(tester.getCenter(find.text("pushed")).dx, 200);
+      expect(asked, [false]);
+    });
+
+    testWidgets("only a sliding page can be dragged", (tester) async {
+      final gesture = await open(tester, app(transition: MochiTransition.fade));
+      await drag(tester, gesture, 300);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(find.text("pushed"), findsOneWidget);
+    });
+
+    testWidgets("a drag that starts away from the edge does nothing", (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(app());
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.startGesture(const Offset(100, 300));
+      await drag(tester, gesture, 280);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(find.text("pushed"), findsOneWidget);
+    });
+  });
 }

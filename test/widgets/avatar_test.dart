@@ -76,7 +76,18 @@ void main() {
 
   testWidgets("a circle is round, a rounded one keeps its corners in proportion", (tester) async {
     BorderRadiusGeometry cornersOf(WidgetTester tester) =>
-        ((tester.widget<DecoratedBox>(find.byType(DecoratedBox).first).decoration as ShapeDecoration).shape
+        ((tester
+                            .widget<DecoratedBox>(
+                              find
+                                  .descendant(
+                                    of: find.byType(MochiAvatar),
+                                    matching: find.byType(DecoratedBox),
+                                  )
+                                  .first,
+                            )
+                            .decoration
+                        as ShapeDecoration)
+                    .shape
                 as RoundedSuperellipseBorder)
             .borderRadius;
 
