@@ -1,3 +1,6 @@
+import "dart:math" as math;
+
+import "package:flutter/rendering.dart";
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
@@ -315,10 +318,8 @@ class _TitledBody extends StatelessWidget {
     // line of text cannot give it.
     final line = MochiButtonMetrics.of(MochiSize.xs, touch: theme.touch, density: theme.density).height;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: gap ?? g.space.sm,
+    return _TitledLayout(
+      gap: gap ?? g.space.sm,
       children: [
         ConstrainedBox(
           constraints: BoxConstraints(minHeight: line),
@@ -345,6 +346,109 @@ class _TitledBody extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The title over the content, like a min-sized [Column] — except that a card given a height (say,
+/// stretched in a row under [IntrinsicHeight]) hands the content the height left under the title,
+/// so a [Center] in it centres in the card rather than in its own line. Anywhere else, in a list or
+/// in a `Center`, the content takes its own height: a [Column] with an [Expanded] would throw in a
+/// list, and a [LayoutBuilder] would throw under [IntrinsicHeight].
+class _TitledLayout extends MultiChildRenderObjectWidget {
+  const _TitledLayout({required this.gap, required super.children}) : assert(children.length == 2);
+
+  final double gap;
+
+  @override
+  _RenderTitledLayout createRenderObject(BuildContext context) => _RenderTitledLayout(gap);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderTitledLayout renderObject) => renderObject.gap = gap;
+}
+
+class _TitledParentData extends ContainerBoxParentData<RenderBox> {}
+
+class _RenderTitledLayout extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _TitledParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, _TitledParentData> {
+  _RenderTitledLayout(this._gap);
+
+  double get gap => _gap;
+  double _gap;
+  set gap(double value) {
+    if (value == _gap) return;
+    _gap = value;
+    markNeedsLayout();
+  }
+
+  RenderBox get _title => firstChild!;
+  RenderBox get _body => lastChild!;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _TitledParentData) child.parentData = _TitledParentData();
+  }
+
+  @override
+  double computeMinIntrinsicWidth(double height) =>
+      math.max(_title.getMinIntrinsicWidth(double.infinity), _body.getMinIntrinsicWidth(double.infinity));
+
+  @override
+  double computeMaxIntrinsicWidth(double height) =>
+      math.max(_title.getMaxIntrinsicWidth(double.infinity), _body.getMaxIntrinsicWidth(double.infinity));
+
+  @override
+  double computeMinIntrinsicHeight(double width) =>
+      _title.getMinIntrinsicHeight(width) + gap + _body.getMinIntrinsicHeight(width);
+
+  @override
+  double computeMaxIntrinsicHeight(double width) =>
+      _title.getMaxIntrinsicHeight(width) + gap + _body.getMaxIntrinsicHeight(width);
+
+  @override
+  double? computeDistanceToActualBaseline(TextBaseline baseline) =>
+      defaultComputeDistanceToFirstActualBaseline(baseline);
+
+  /// Lays the two children out with [layoutChild] and returns the size; shared by layout and dry
+  /// layout so the two cannot disagree.
+  Size _layout(BoxConstraints constraints, ChildLayouter layoutChild, {required bool position}) {
+    // Stretched across like the column's children were; loose only where nothing bounds the width.
+    final bounded = constraints.hasBoundedWidth;
+    BoxConstraints across(double maxHeight) => bounded
+        ? BoxConstraints(minWidth: constraints.maxWidth, maxWidth: constraints.maxWidth, maxHeight: maxHeight)
+        : BoxConstraints(maxHeight: maxHeight);
+
+    final title = layoutChild(_title, across(double.infinity));
+    final top = title.height + gap;
+    // Only a card that has been *given* a height hands the rest down: a tight one, or one stretched
+    // to a neighbour. A merely bounded one — a card in a `Center` on a page — keeps its content's
+    // own height, or a centred child would blow it up to the whole screen. Loose either way, so a
+    // Text keeps its own height and only a child that wants the room, a Center, takes it.
+    final rest = constraints.minHeight > 0 ? math.max(0.0, constraints.maxHeight - top) : double.infinity;
+    final body = layoutChild(_body, across(rest));
+
+    if (position) {
+      (_title.parentData! as _TitledParentData).offset = Offset.zero;
+      (_body.parentData! as _TitledParentData).offset = Offset(0, top);
+    }
+    return constraints.constrain(Size(math.max(title.width, body.width), top + body.height));
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) =>
+      _layout(constraints, ChildLayoutHelper.dryLayoutChild, position: false);
+
+  @override
+  void performLayout() {
+    size = _layout(constraints, ChildLayoutHelper.layoutChild, position: true);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) =>
+      defaultHitTestChildren(result, position: position);
+
+  @override
+  void paint(PaintingContext context, Offset offset) => defaultPaint(context, offset);
 }
 
 class _CollapsibleBody extends StatelessWidget {
