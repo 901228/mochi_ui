@@ -3,6 +3,7 @@ import "dart:math" as math;
 import "package:flutter/rendering.dart";
 import "package:flutter/widgets.dart";
 
+import "../theme/size.dart";
 import "../theme/theme.dart";
 import "action.dart";
 
@@ -44,6 +45,7 @@ class MochiHeader extends StatelessWidget {
     this.prefixes = const [],
     this.suffixes = const [],
     this.maxVisibleActions,
+    this.actionSize,
     this.alignment = MochiHeaderAlignment.start,
     this.variant = MochiHeaderVariant.plain,
   });
@@ -57,6 +59,9 @@ class MochiHeader extends StatelessWidget {
   /// How many slots each group has, the … included. Defaults to the breakpoint's own count.
   final int? maxVisibleActions;
 
+  /// The size of both groups' buttons, one size for the whole bar. Defaults to the action bar's own.
+  final MochiSize? actionSize;
+
   /// Where the title sits.
   final MochiHeaderAlignment alignment;
 
@@ -68,8 +73,12 @@ class MochiHeader extends StatelessWidget {
     final g = theme.geometry;
 
     final border = BorderSide(color: theme.colors.border, width: g.borderWidth);
-    final leading = prefixes.isEmpty ? null : MochiActionBar(prefixes, maxVisible: maxVisibleActions);
-    final trailing = suffixes.isEmpty ? null : MochiActionBar(suffixes, maxVisible: maxVisibleActions);
+    final leading = prefixes.isEmpty
+        ? null
+        : MochiActionBar(prefixes, maxVisible: maxVisibleActions, size: actionSize);
+    final trailing = suffixes.isEmpty
+        ? null
+        : MochiActionBar(suffixes, maxVisible: maxVisibleActions, size: actionSize);
     final heading = DefaultTextStyle(
       style: theme.typography.title.lg.copyWith(color: theme.colors.foreground),
       overflow: TextOverflow.ellipsis,

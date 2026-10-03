@@ -51,6 +51,35 @@ void main() {
     expect(back, 1);
   });
 
+  testWidgets("actionSize sizes both groups' buttons", (tester) async {
+    Future<List<double>> heights(MochiSize? size) async {
+      await tester.pumpWidget(
+        app(
+          MochiScaffold(
+            header: MochiHeader(
+              title: const Text("Settings"),
+              actionSize: size,
+              prefixes: [MochiAction.back(onPress: () {})],
+              suffixes: [MochiAction.close(onPress: () {})],
+            ),
+            child: const SizedBox(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return [
+        for (final e in find.byType(MochiButton).evaluate()) tester.getSize(find.byWidget(e.widget)).height,
+      ];
+    }
+
+    // The harness runs as Android, so whichever scale the theme picked is the one to compare with.
+    final plain = await heights(null);
+    final touch = tester.element(find.byType(MochiScaffold)).theme.touch;
+    double height(MochiSize size) => MochiButtonMetrics.of(size, touch: touch).height;
+    expect(plain, [height(MochiSize.sm), height(MochiSize.sm)]);
+    expect(await heights(MochiSize.lg), [height(MochiSize.lg), height(MochiSize.lg)]);
+  });
+
   testWidgets("the title can be centered", (tester) async {
     await tester.pumpWidget(
       app(
