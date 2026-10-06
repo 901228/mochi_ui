@@ -395,14 +395,20 @@ class MochiPopoverSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
+    final raised = theme.layering == .raised;
 
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: theme.colors.overlay,
-        shadows: g.shadows.of(MochiElevation.lg, theme.colors.shadow),
+        shadows: raised
+            ? g.shadows.raised(MochiElevation.lg, theme.colors)
+            : g.shadows.of(MochiElevation.lg, theme.colors.shadow),
         shape: RoundedSuperellipseBorder(
           borderRadius: g.radius.md,
-          side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+          side: BorderSide(
+            color: raised ? theme.colors.overlay.withValues(alpha: 0) : theme.colors.border,
+            width: g.borderWidth,
+          ),
         ),
       ),
       child: ClipRSuperellipse(

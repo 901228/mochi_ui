@@ -47,6 +47,7 @@ class MochiToast extends StatelessWidget {
     final g = theme.geometry;
     final tone = colors.of(intent);
     final neutral = intent == MochiIntent.neutral;
+    final raised = theme.layering == .raised;
 
     // Only bites on a toast standing on its own: inside a stack the width is settled there and
     // handed down tight. The floor keeps a one-word message from shrinking to a stub.
@@ -58,12 +59,22 @@ class MochiToast extends StatelessWidget {
           color: colors.overlay,
           // Smaller than a dialog's: toasts stack a few pixels apart, and the one in front casts
           // onto the one behind it, where a large shadow reads as dirt in the gap.
-          shadows: g.shadows.of(MochiElevation.md, colors.shadow),
+          shadows: raised
+              ? g.shadows.raised(MochiElevation.md, colors)
+              : g.shadows.of(MochiElevation.md, colors.shadow),
           shape: RoundedSuperellipseBorder(
             borderRadius: g.radius.md,
             // A toast carries its intent in its edge rather than its fill: it sits over the page
             // for a moment, and a block of colour there is more alarm than the message warrants.
-            side: BorderSide(color: neutral ? colors.border : tone.base, width: g.borderWidth),
+            // A neutral one has no line to carry in the raised look: only an intent does.
+            side: BorderSide(
+              color: !neutral
+                  ? tone.base
+                  : raised
+                  ? colors.overlay.withValues(alpha: 0)
+                  : colors.border,
+              width: g.borderWidth,
+            ),
           ),
         ),
         child: Row(

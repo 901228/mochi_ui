@@ -68,6 +68,8 @@ class MochiDialog extends StatelessWidget {
     final g = theme.geometry;
     final axis = actionsAxis ?? (theme.touch ? Axis.vertical : Axis.horizontal);
 
+    final raised = theme.layering == .raised;
+
     return Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
@@ -81,10 +83,16 @@ class MochiDialog extends StatelessWidget {
             // The same ground as a popover: a dialog floats above the page rather than being part
             // of it.
             color: colors.overlay,
-            shadows: g.shadows.of(MochiElevation.lg, colors.shadow),
+            shadows: raised
+                ? g.shadows.raised(MochiElevation.lg, colors)
+                : g.shadows.of(MochiElevation.lg, colors.shadow),
             shape: RoundedSuperellipseBorder(
               borderRadius: g.radius.lg,
-              side: BorderSide(color: colors.border, width: g.borderWidth),
+              // Transparent, not absent: the line's width stays in the layout.
+              side: BorderSide(
+                color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
+                width: g.borderWidth,
+              ),
             ),
           ),
           child: _ModalColumn(

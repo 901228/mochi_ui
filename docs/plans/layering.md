@@ -30,7 +30,7 @@
 - [x] 深色模式的陰影：黑影在暗背景看不見，改在黑影上加白色光暈（alpha 0.5、模糊 12、spread 1；原本 0.35 / 24 太糊，並排的 card 會黏在一起）。試過頂端亮線，看起來怪；光暈 0.12 / 0.22 太淡
 - [x] **tile group**：整組一塊、底色 `overlay`、沒有框，用 `MochiShadows.raised` 托起、圓角 `lg`；列的底色跟著組；分隔線保留
 - [x] **bottom nav**：不畫上緣那條線，底色用 `overlay`，改用向上的陰影（深色一樣有光暈；`MochiShadows.raised` 是 card 和 bar 共用的）
-- [ ] **dialog / sheet / popover / menu**：確認已有的陰影在 raised 下不重複、深度一致
+- [x] **dialog / sheet / popover / toast**：底色本來就是 `overlay`；raised 時框線改透明、陰影改用 `MochiShadows.raised`（深色有光暈）。toast 有 intent 的保留 intent 色的框。tooltip 不動（反相色小氣泡）
 - [ ] 每改一個元件就補一個 raised 的測試，並確認 outlined 的原有測試不動
 
 ## 3. gallery 比較頁

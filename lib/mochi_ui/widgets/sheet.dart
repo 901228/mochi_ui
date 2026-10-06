@@ -82,6 +82,8 @@ class MochiSheet extends StatelessWidget {
           maxHeight: _vertical ? view.height * 0.9 : double.infinity,
         );
 
+    final raised = theme.layering == .raised;
+
     return Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
@@ -92,10 +94,15 @@ class MochiSheet extends StatelessWidget {
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: colors.overlay,
-            shadows: g.shadows.of(MochiElevation.lg, colors.shadow),
+            shadows: raised
+                ? g.shadows.raised(MochiElevation.lg, colors)
+                : g.shadows.of(MochiElevation.lg, colors.shadow),
             shape: RoundedSuperellipseBorder(
               borderRadius: _radius(g),
-              side: BorderSide(color: colors.border, width: g.borderWidth),
+              side: BorderSide(
+                color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
+                width: g.borderWidth,
+              ),
             ),
           ),
           child: ClipRSuperellipse(
