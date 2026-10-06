@@ -50,7 +50,8 @@
 
 跟分層無關，任何時候都可以插進來：
 
-- [ ] **select / 選單 / 右鍵選單在手機上改成 bottom sheet**（規則同 date picker：平板寬度以上用 popover）。CP 值最高
+- [x] **select / multi select 在手機上改成 bottom sheet**（規則同 date picker：平板寬度以上用 popover）。單選點一列就選中並關閉；多選勾進草稿，按 OK 才回傳，拖走或點 barrier 就丟掉
+- [ ] **選單 / 右鍵選單在手機上改成 bottom sheet**
 - [ ] **`MochiSwipeActions`**：清單列滑開出現動作（例如紀錄列滑開出現刪除）
 - [ ] **大標題 header**：捲動時從大標題縮成 bar 上的小標題（等第 4 節完成）
 

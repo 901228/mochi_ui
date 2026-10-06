@@ -12,23 +12,8 @@ import "focus_ring.dart";
 import "popover.dart";
 import "state_transition.dart";
 import "tappable.dart";
+import "menu_host.dart";
 import "value_transition.dart";
-
-/// The menu an item belongs to, so a [MochiMenuItem] can close the whole menu when it is chosen.
-///
-/// Only the outermost menu installs one, so an item in a submenu closes the menu it was opened
-/// from rather than just its own panel.
-class _MenuHost extends InheritedWidget {
-  const _MenuHost({required this.controller, required super.child});
-
-  final MenuController controller;
-
-  static MenuController? of(BuildContext context) =>
-      context.getInheritedWidgetOfExactType<_MenuHost>()?.controller;
-
-  @override
-  bool updateShouldNotify(_MenuHost old) => old.controller != controller;
-}
 
 /// The parts of a menu row's layout that change with the theme's scale.
 @immutable
@@ -164,7 +149,7 @@ class MochiMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final host = closeOnPress ? _MenuHost.of(context) : null;
+    final close = closeOnPress ? MenuHost.of(context) : null;
 
     return MochiTappable(
       enabled: enabled && onPress != null,
@@ -179,7 +164,7 @@ class MochiMenuItem extends StatelessWidget {
           ? null
           : () {
               onPress!();
-              host?.close();
+              close?.call();
             },
       builder: (context, states, _) =>
           _MenuItemSurface(states: states, intent: intent, prefix: prefix, title: title, suffix: suffix),
@@ -555,7 +540,8 @@ class MochiContextMenu extends StatelessWidget {
   }
 }
 
-/// Hosts the rows and marks this menu as the one an item closes.
+/// Hosts the rows and marks this menu as the one an item closes. Only the outermost menu installs
+/// a host, so an item in a submenu closes the menu it was opened from, not just its own panel.
 class _MenuPanel extends StatelessWidget {
   const _MenuPanel({required this.minWidth, required this.children});
 
@@ -567,6 +553,6 @@ class _MenuPanel extends StatelessWidget {
     final controller = MenuController.maybeOf(context);
     final menu = MochiMenu(minWidth: minWidth, children: children);
 
-    return controller == null ? menu : _MenuHost(controller: controller, child: menu);
+    return controller == null ? menu : MenuHost(close: controller.close, child: menu);
   }
 }

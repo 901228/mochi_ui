@@ -310,4 +310,100 @@ void main() {
       expect(tester.getSize(field()).height, greaterThan(one));
     });
   });
+
+  group("on a phone", () {
+    Widget phone(Widget child) => MochiApp(
+      themeMode: MochiThemeMode.light,
+      touch: true,
+      home: ResponsiveScope(
+        size: MochiScreenSize.mobile,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: SizedBox(width: 240, child: child),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("a select opens a sheet, and choosing a row answers and closes it", (tester) async {
+      final seen = <String>[];
+      String? value;
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) => phone(
+            MochiSelect<String>(
+              value: value,
+              hint: "Pick one",
+              label: const Text("Alert"),
+              options: options,
+              onChanged: (next) => setState(() {
+                seen.add(next);
+                value = next;
+              }),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text("Pick one"));
+      await tester.pumpAndSettle();
+      expect(find.byType(MochiSheet), findsOneWidget);
+      expect(find.byType(MochiPopoverSurface), findsNothing);
+
+      await tester.tap(find.text("Voice"));
+      await tester.pumpAndSettle();
+      expect(seen, ["voice"]);
+      expect(find.byType(MochiSheet), findsNothing);
+    });
+
+    testWidgets("a multi-select keeps its ticks in a draft until OK", (tester) async {
+      final seen = <Set<String>>[];
+      var values = <String>{};
+      await tester.pumpWidget(
+        StatefulBuilder(
+          builder: (context, setState) => phone(
+            MochiMultiSelect<String>(
+              values: values,
+              hint: "Pick some",
+              options: options,
+              onChanged: (next) => setState(() {
+                seen.add(next);
+                values = next;
+              }),
+            ),
+          ),
+        ),
+      );
+
+      // Dismissed: the draft goes with it.
+      await tester.tap(find.text("Pick some"));
+      await tester.pumpAndSettle();
+      // The rows run the sheet's width, as a single select's do.
+      expect(
+        tester.getSize(find.byType(MochiMenu)).width,
+        tester.getSize(find.byType(MochiSheet)).width - 2 * MochiTheme.light.geometry.space.md,
+      );
+      await tester.tap(find.text("Beep"));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+      expect(seen, isEmpty);
+
+      // Confirmed: the whole set, once.
+      await tester.tap(find.text("Pick some"));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Beep"));
+      await tester.pump();
+      await tester.tap(find.text("Voice"));
+      await tester.pumpAndSettle();
+      expect(seen, isEmpty);
+      await tester.tap(find.text(MochiStrings.standard.ok));
+      await tester.pumpAndSettle();
+      expect(seen, [
+        {"beep", "voice"},
+      ]);
+      expect(find.byType(MochiSheet), findsNothing);
+    });
+  });
 }

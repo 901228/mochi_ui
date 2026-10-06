@@ -21,9 +21,11 @@ Future<T?> showPickerSheet<T>(
   required Widget Function(BuildContext context, T value, ValueChanged<T> onChanged) body,
   bool Function(T value)? answered,
   MochiIntent intent = MochiIntent.primary,
+  Widget? title,
 }) => showMochiSheet<T>(
   context,
-  builder: (context) => _PickerSheet<T>(initial: initial, body: body, answered: answered, intent: intent),
+  builder: (context) =>
+      _PickerSheet<T>(initial: initial, body: body, answered: answered, intent: intent, title: title),
 );
 
 class _PickerSheet<T> extends StatefulWidget {
@@ -32,6 +34,7 @@ class _PickerSheet<T> extends StatefulWidget {
     required this.body,
     required this.answered,
     required this.intent,
+    required this.title,
   });
 
   final T initial;
@@ -41,6 +44,7 @@ class _PickerSheet<T> extends StatefulWidget {
   final bool Function(T value)? answered;
 
   final MochiIntent intent;
+  final Widget? title;
 
   @override
   State<_PickerSheet<T>> createState() => _PickerSheetState<T>();
@@ -56,6 +60,7 @@ class _PickerSheetState<T> extends State<_PickerSheet<T>> {
     final done = widget.answered?.call(_draft) ?? true;
 
     return MochiSheet(
+      title: widget.title,
       padding: EdgeInsets.all(g.space.md),
       child: Column(
         mainAxisSize: MainAxisSize.min,

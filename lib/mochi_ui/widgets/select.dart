@@ -2,9 +2,11 @@ import "dart:math" as math;
 
 import "dart:async";
 
+import "package:flutter/foundation.dart";
 import "package:flutter/services.dart";
 import "package:flutter/widgets.dart";
 
+import "../theme/responsive.dart";
 import "../theme/size.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
@@ -14,7 +16,10 @@ import "badge.dart";
 import "field_frame.dart";
 import "focus_ring.dart";
 import "menu.dart";
+import "menu_host.dart";
+import "picker_sheet.dart";
 import "popover.dart";
+import "sheet.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "value_transition.dart";
@@ -83,6 +88,39 @@ class MochiSelect<T> extends StatefulWidget {
 }
 
 class _MochiSelectState<T> extends State<MochiSelect<T>> with _Opening {
+  /// On a phone: the same rows in a sheet. Choosing one is the whole errand, so a row both answers
+  /// and puts the sheet away, as it does in the popover.
+  Future<void> _showSheet(MochiSelectOption<T>? chosen, T? focusValue) async {
+    setState(() => _open = true);
+    final keyboard = _keyboard;
+    await showMochiSheet<void>(
+      context,
+      builder: (context) => MochiSheet(
+        title: widget.label,
+        child: MenuHost(
+          close: () => Navigator.of(context).pop(),
+          child: MochiMenu(
+            minWidth: 0,
+            children: [
+              for (final option in widget.options)
+                _row(
+                  context,
+                  option,
+                  selected: option == chosen,
+                  autofocus: keyboard && option.value == focusValue,
+                  closeOnPress: true,
+                  onPress: () {
+                    if (option != chosen) widget.onChanged?.call(option.value);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (mounted) setState(() => _open = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final options = widget.options;
@@ -108,6 +146,7 @@ class _MochiSelectState<T> extends State<MochiSelect<T>> with _Opening {
       onOpenRequested: openRequested,
       onOpen: () => setState(() => _open = true),
       onClose: () => setState(() => _open = false),
+      onOpenSheet: () => _showSheet(chosen, focusValue),
       rows: (context) => [
         for (final option in options)
           _row(
@@ -193,6 +232,43 @@ class MochiMultiSelect<T> extends StatefulWidget {
 }
 
 class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening {
+  /// On a phone: the same rows in a sheet, ticked into a draft that only leaves through OK — a
+  /// sheet is a route and builds once, so it could not follow the parent's set as it changed, and
+  /// a sheet covers the page, so it is answered rather than glanced at. Dragging it away drops it.
+  Future<void> _showSheet(T? focusValue) async {
+    setState(() => _open = true);
+    final keyboard = _keyboard;
+    final picked = await showPickerSheet<Set<T>>(
+      context,
+      title: widget.label,
+      initial: widget.values,
+      // The picker sheet centres its panel, which suits a calendar; rows run edge to edge.
+      body: (context, draft, set) => SizedBox(
+        width: double.infinity,
+        child: MochiMenu(
+          minWidth: 0,
+          children: [
+            for (final option in widget.options)
+              _row(
+                context,
+                option,
+                selected: draft.contains(option.value),
+                autofocus: keyboard && option.value == focusValue,
+                closeOnPress: false,
+                onPress: () => set(
+                  draft.contains(option.value)
+                      ? ({...draft}..remove(option.value))
+                      : {...draft, option.value},
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && !setEquals(picked, widget.values)) widget.onChanged?.call(picked);
+    if (mounted) setState(() => _open = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final options = widget.options;
@@ -241,6 +317,7 @@ class _MochiMultiSelectState<T> extends State<MochiMultiSelect<T>> with _Opening
       onOpenRequested: openRequested,
       onOpen: () => setState(() => _open = true),
       onClose: () => setState(() => _open = false),
+      onOpenSheet: () => _showSheet(focusValue),
       rows: (context) => [
         for (final option in options)
           _row(
@@ -364,6 +441,7 @@ class _SelectField extends StatelessWidget {
     required this.onOpenRequested,
     required this.onOpen,
     required this.onClose,
+    required this.onOpenSheet,
     required this.rows,
     required this.content,
     this.widestBadges = const [],
@@ -401,6 +479,9 @@ class _SelectField extends StatelessWidget {
   final VoidCallback onOpenRequested;
   final VoidCallback onOpen;
   final VoidCallback onClose;
+
+  /// Shows the rows in a sheet instead, which is what a phone gets.
+  final VoidCallback onOpenSheet;
   final List<Widget> Function(BuildContext context) rows;
   final Widget Function(BuildContext context, MochiButtonMetrics metrics) content;
 
@@ -420,32 +501,15 @@ class _SelectField extends StatelessWidget {
   }
 
   Widget _build(BuildContext context, MochiTheme theme, MochiButtonMetrics m) {
-    final select = MochiPopoverMenu(
-      side: MochiPopoverSide.bottom,
-      align: MochiPopoverAlign.start,
-      matchAnchorWidth: true,
-      minWidth: 0,
-      constraints: BoxConstraints(maxHeight: maxListHeight),
-      onOpen: onOpen,
-      onClose: onClose,
-      menuBuilder: rows,
-      builder: (context, anchor, _) {
-        void show() {
-          if (anchor.isOpen) return anchor.close();
-          onOpenRequested();
-          anchor.open();
-        }
+    // A phone has no room under the field for a list, so the rows come up from the bottom
+    // instead — the same breakpoint the date picker uses; anything wider keeps the field in view.
+    final sheet = context.responsive(mobile: true, tablet: false);
 
-        void showFromKeys() {
-          if (anchor.isOpen) return;
-          onOpenRequested();
-          anchor.open();
-        }
-
-        return CallbackShortcuts(
+    Widget field({FocusNode? focusNode, required VoidCallback onPress, required VoidCallback onKeys}) =>
+        CallbackShortcuts(
           bindings: {
-            const SingleActivator(LogicalKeyboardKey.arrowDown): showFromKeys,
-            const SingleActivator(LogicalKeyboardKey.arrowUp): showFromKeys,
+            const SingleActivator(LogicalKeyboardKey.arrowDown): onKeys,
+            const SingleActivator(LogicalKeyboardKey.arrowUp): onKeys,
           },
           child: Listener(
             onPointerDown: (_) => onPointerDown(),
@@ -456,18 +520,50 @@ class _SelectField extends StatelessWidget {
               expanded: open,
               child: MochiTappable(
                 enabled: enabled,
-                focusNode: anchor.focusNode,
+                focusNode: focusNode,
                 autofocus: autofocus,
                 // A field, not a button: it tints its border rather than growing.
                 scaleOnPress: false,
-                onPress: show,
+                onPress: onPress,
                 builder: (context, states, _) => _box(context, theme, m, states),
               ),
             ),
           ),
         );
-      },
-    );
+
+    void showSheet() {
+      if (open) return;
+      onOpenRequested();
+      onOpenSheet();
+    }
+
+    final select = sheet
+        ? field(onPress: showSheet, onKeys: showSheet)
+        : MochiPopoverMenu(
+            side: MochiPopoverSide.bottom,
+            align: MochiPopoverAlign.start,
+            matchAnchorWidth: true,
+            minWidth: 0,
+            constraints: BoxConstraints(maxHeight: maxListHeight),
+            onOpen: onOpen,
+            onClose: onClose,
+            menuBuilder: rows,
+            builder: (context, anchor, _) {
+              void show() {
+                if (anchor.isOpen) return anchor.close();
+                onOpenRequested();
+                anchor.open();
+              }
+
+              void showFromKeys() {
+                if (anchor.isOpen) return;
+                onOpenRequested();
+                anchor.open();
+              }
+
+              return field(focusNode: anchor.focusNode, onPress: show, onKeys: showFromKeys);
+            },
+          );
 
     Widget frame(Widget box) =>
         MochiFieldFrame(label: label, description: description, error: error, enabled: enabled, child: box);
