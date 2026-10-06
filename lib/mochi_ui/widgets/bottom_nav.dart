@@ -1,6 +1,7 @@
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
+import "../theme/geometry.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
@@ -68,10 +69,10 @@ class MochiBottomNav<T> extends StatelessWidget {
   /// Labels under the icons. Off, only the chosen one says what it is.
   final bool showLabels;
 
-  /// Defaults to `colors.surface`.
+  /// Defaults to `colors.surface`, or `colors.overlay` in the raised look.
   final Color? background;
 
-  /// Whether to draw a line along its top edge, against the page.
+  /// Whether to draw a line along its top edge, against the page. The raised look has none.
   final bool border;
 
   @override
@@ -79,11 +80,16 @@ class MochiBottomNav<T> extends StatelessWidget {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
+    // A raised bar is lit and lifted like a raised card, and has no line along its top: the shadow
+    // is what sets it off the page.
+    final raised = theme.layering == .raised;
+    final ground = background ?? (raised ? colors.overlay : colors.surface);
 
     return Container(
       decoration: BoxDecoration(
-        color: background ?? colors.surface,
-        border: border
+        color: ground,
+        boxShadow: raised ? g.shadows.raised(MochiElevation.md, colors, up: true) : null,
+        border: border && !raised
             ? Border(
                 top: BorderSide(color: colors.border, width: g.borderWidth),
               )
@@ -101,6 +107,7 @@ class MochiBottomNav<T> extends StatelessWidget {
                 item: item,
                 selected: item.value == value,
                 intent: intent,
+                ground: ground,
                 showLabel: showLabels,
                 onPress: onChanged == null || !item.enabled || item.value == value
                     ? null
@@ -118,6 +125,7 @@ class _Destination<T> extends StatelessWidget {
     required this.item,
     required this.selected,
     required this.intent,
+    required this.ground,
     required this.showLabel,
     required this.onPress,
   });
@@ -125,6 +133,9 @@ class _Destination<T> extends StatelessWidget {
   final MochiBottomNavItem<T> item;
   final bool selected;
   final MochiIntent intent;
+
+  /// What the bar is filled with, which the pill and its hover layer are mixed over.
+  final Color ground;
   final bool showLabel;
   final VoidCallback? onPress;
 
@@ -170,8 +181,8 @@ class _Destination<T> extends StatelessWidget {
                         // on top of it.
                         color: blend.color(
                           (st) => st.contains(WidgetState.selected)
-                              ? MochiColors.stateLayer(colors.softOn(tone, colors.surface), tone.onSoft, st)
-                              : MochiColors.stateLayer(colors.surface, colors.foreground, st),
+                              ? MochiColors.stateLayer(colors.softOn(tone, ground), tone.onSoft, st)
+                              : MochiColors.stateLayer(ground, colors.foreground, st),
                         ),
                         shape: RoundedSuperellipseBorder(borderRadius: g.radius.full),
                       ),

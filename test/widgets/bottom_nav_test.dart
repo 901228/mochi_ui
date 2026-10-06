@@ -144,4 +144,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(MochiBottomNav<String>)).height, greaterThan(desktop));
   });
+
+  group("raised", () {
+    BoxDecoration barDecoration(WidgetTester tester) =>
+        tester
+                .widget<Container>(
+                  find
+                      .descendant(of: find.byType(MochiBottomNav<String>), matching: find.byType(Container))
+                      .first,
+                )
+                .decoration!
+            as BoxDecoration;
+
+    testWidgets("has no line along its top, is the overlay colour, and is lit from below", (tester) async {
+      await tester.pumpWidget(nav(touch: true));
+      await tester.pumpAndSettle();
+      final d = barDecoration(tester);
+      expect(d.border, isNull);
+      expect(d.color, MochiColors.light.overlay);
+      // The shadow is cast upwards: it is a bar at the bottom edge.
+      expect(d.boxShadow!.first.offset.dy, lessThan(0));
+    });
+
+    testWidgets("outlined keeps its line and its surface colour", (tester) async {
+      await tester.pumpWidget(nav());
+      await tester.pumpAndSettle();
+      final d = barDecoration(tester);
+      expect(d.border, isNotNull);
+      expect(d.color, MochiColors.light.surface);
+      expect(d.boxShadow, isNull);
+    });
+  });
 }

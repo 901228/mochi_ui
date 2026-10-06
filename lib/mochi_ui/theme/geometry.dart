@@ -1,6 +1,8 @@
 import "package:flutter/foundation.dart";
 import "package:flutter/widgets.dart";
 
+import "colors.dart";
+
 /// Corner radii. Use them with [RoundedSuperellipseBorder]; superellipse corners look
 /// tighter than circular ones at the same radius, so these run a little larger.
 @immutable
@@ -182,6 +184,29 @@ class MochiShadows {
 
   /// Floating surfaces: dialogs, sheets, toasts.
   final List<MochiShadowLayer> lg;
+
+  /// The shadow of a surface in the raised look (see `MochiLayering`): [of], and in the dark theme
+  /// a pale halo over it, since black on a dark page is invisible. [up] casts it towards the top
+  /// of the screen, for a bar standing along the bottom edge.
+  List<BoxShadow> raised(MochiElevation elevation, MochiColors colors, {bool up = false}) => [
+    for (final layer in switch (elevation) {
+      .sm => sm,
+      .md => md,
+      .lg => lg,
+    })
+      up
+          ? MochiShadowLayer(
+              offset: Offset(layer.offset.dx, -layer.offset.dy),
+              blur: layer.blur,
+              spread: layer.spread,
+              opacity: layer.opacity,
+            ).resolve(colors.shadow)
+          : layer.resolve(colors.shadow),
+    if (colors.brightness == Brightness.dark) _darkGlow,
+  ];
+
+  /// 50% white, tight enough that cards set side by side do not run together.
+  static const _darkGlow = BoxShadow(color: Color(0x80FFFFFF), blurRadius: 12, spreadRadius: 1);
 
   List<BoxShadow> of(MochiElevation elevation, Color color) => [
     for (final layer in switch (elevation) {
