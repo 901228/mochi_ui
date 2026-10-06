@@ -216,6 +216,7 @@ class _GalleryState extends State<_Gallery> {
       sections: const [
         ("tiles", _TileSample()),
         ("accordion", _AccordionSample()),
+        ("collapsible", _CollapsibleSample()),
         ("reveal", _RevealSample()),
         ("avatar", _AvatarSample()),
         ("skeleton", _SkeletonSample()),

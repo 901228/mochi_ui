@@ -69,4 +69,20 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets("clips only while it moves, so a shadow at rest is not cut off", (tester) async {
+    Clip clip() => tester
+        .widget<ClipRect>(
+          find.descendant(of: find.byType(MochiReveal), matching: find.byType(ClipRect)).first,
+        )
+        .clipBehavior;
+
+    await tester.pumpWidget(app(const MochiReveal(expanded: false, child: body)));
+    await tester.pumpWidget(app(const MochiReveal(expanded: true, child: body)));
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(clip(), isNot(Clip.none));
+
+    await tester.pumpAndSettle();
+    expect(clip(), Clip.none);
+  });
 }

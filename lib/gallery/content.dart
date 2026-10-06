@@ -163,6 +163,34 @@ class _AccordionSampleState extends State<_AccordionSample> {
   }
 }
 
+/// A bare collapsible whose body is a tile group: the group's shadow reaches past the body's
+/// box, so this is where a clip at the box's edge shows.
+class _CollapsibleSample extends StatelessWidget {
+  const _CollapsibleSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return SizedBox(
+      width: 320,
+      child: MochiCollapsible(
+        initiallyExpanded: true,
+        title: const Text("Inspection"),
+        radius: g.radius.md,
+        headerPadding: EdgeInsets.symmetric(vertical: g.space.xs),
+        bodyPadding: EdgeInsets.only(top: g.space.sm),
+        child: MochiTileGroup(
+          children: [
+            MochiTile(title: const Text("Duration"), details: const Text("15s"), onPress: () {}),
+            MochiTile(title: const Text("Warnings"), details: const Text("8s, 12s"), onPress: () {}),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _RevealSample extends StatefulWidget {
   const _RevealSample();
 

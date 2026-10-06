@@ -106,6 +106,11 @@ class RevealBody extends StatelessWidget {
           // Align rather than SizeTransition, which would also clip the child's own shadows and
           // focus rings sideways; the ClipRect only needs to cut along the axis that grows.
           child: ClipRect(
+            // Open, nothing is clipped: a raised group's shadow reaches past its box on every
+            // side, and a clip at the box's edge cut it off. Moving, only the growing axis is cut,
+            // with room sideways. Same widget either way, so the child keeps its state.
+            clipper: const _AlongHeight(),
+            clipBehavior: t == 1 ? Clip.none : Clip.hardEdge,
             child: Align(
               alignment: AlignmentDirectional.topStart,
               heightFactor: t,
@@ -117,4 +122,17 @@ class RevealBody extends StatelessWidget {
       child: ExcludeFocus(excluding: !open, child: child),
     );
   }
+}
+
+/// Cuts along the height only: the width gets room for a shadow to spill into.
+class _AlongHeight extends CustomClipper<Rect> {
+  const _AlongHeight();
+
+  static const _room = 64.0;
+
+  @override
+  Rect getClip(Size size) => Rect.fromLTRB(-_room, 0, size.width + _room, size.height);
+
+  @override
+  bool shouldReclip(_AlongHeight oldClipper) => false;
 }
