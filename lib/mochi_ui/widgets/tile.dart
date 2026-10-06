@@ -3,6 +3,7 @@ import "dart:ui" show lerpDouble;
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
+import "../theme/geometry.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "divider.dart";
@@ -48,15 +49,21 @@ double _prefixColumn(MochiTheme theme) => (theme.touch ? 20 : 18) + theme.geomet
 
 /// Lets rows see the group's layout decisions.
 class _TileGroupScope extends InheritedWidget {
-  const _TileGroupScope({required this.reservePrefix, required super.child});
+  const _TileGroupScope({required this.reservePrefix, required this.ground, required super.child});
 
   final bool reservePrefix;
+
+  /// What the group is filled with, which its rows are mixed over.
+  final Color ground;
+
+  static Color? groundOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_TileGroupScope>()?.ground;
 
   static bool reservesPrefix(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<_TileGroupScope>()?.reservePrefix ?? false;
 
   @override
-  bool updateShouldNotify(_TileGroupScope old) => old.reservePrefix != reservePrefix;
+  bool updateShouldNotify(_TileGroupScope old) => old.reservePrefix != reservePrefix || old.ground != ground;
 }
 
 /// A row in a [MochiTileGroup]: settings entries, list items, menu entries.
@@ -163,12 +170,13 @@ class _TileSurface extends StatelessWidget {
     final tone = colors.of(intent);
     final typography = theme.typography;
 
-    // Rows sit on the group's surface, not on the page, so the selected fill is mixed over that.
-    final selected = colors.softOn(tone, colors.surface);
+    // Rows sit on the group's fill, not on the page, so the selected fill is mixed over that.
+    final ground = _TileGroupScope.groundOf(context) ?? colors.surface;
+    final selected = colors.softOn(tone, ground);
 
     Color background(Set<WidgetState> st) => st.contains(WidgetState.selected)
         ? MochiColors.stateLayer(selected, tone.onSoft, st)
-        : MochiColors.stateLayer(colors.surface, colors.foreground, st);
+        : MochiColors.stateLayer(ground, colors.foreground, st);
 
     Color foreground(Set<WidgetState> st) =>
         st.contains(WidgetState.selected) ? tone.onSoft : colors.foreground;
@@ -307,6 +315,11 @@ class MochiTileGroup extends StatelessWidget {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
+    // A raised group is one lifted block like a raised card: lighter than the page, no line, a
+    // deeper shadow, and rounder.
+    final raised = theme.layering == .raised;
+    final ground = raised ? colors.overlay : colors.surface;
+    final radius = raised ? g.radius.lg : g.radius.md;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,17 +332,23 @@ class MochiTileGroup extends StatelessWidget {
           ),
         DecoratedBox(
           decoration: ShapeDecoration(
-            color: colors.surface,
+            color: ground,
+            shadows: raised ? g.shadows.raised(MochiElevation.md, colors) : null,
             shape: RoundedSuperellipseBorder(
-              borderRadius: g.radius.md,
-              side: BorderSide(color: colors.border, width: g.borderWidth),
+              borderRadius: radius,
+              // Transparent, not absent: the line's width stays in the layout.
+              side: BorderSide(
+                color: raised ? ground.withValues(alpha: 0) : colors.border,
+                width: g.borderWidth,
+              ),
             ),
           ),
           // Clipped so a row's hover tint follows the card's corners.
           child: ClipRSuperellipse(
-            borderRadius: g.radius.md,
+            borderRadius: radius,
             child: _TileGroupScope(
               reservePrefix: reservePrefix,
+              ground: ground,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

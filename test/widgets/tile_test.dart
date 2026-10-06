@@ -152,4 +152,55 @@ void main() {
       expect(find.text("Applies to new solves"), findsOneWidget);
     });
   });
+
+  group("raised group", () {
+    ShapeDecoration groupDecoration(WidgetTester tester) =>
+        tester
+                .widget<DecoratedBox>(
+                  find.descendant(of: find.byType(MochiTileGroup), matching: find.byType(DecoratedBox)).first,
+                )
+                .decoration
+            as ShapeDecoration;
+
+    Widget group({required bool touch}) => app(
+      touch: touch,
+      MochiTileGroup(
+        children: const [
+          MochiTile(title: Text("A")),
+          MochiTile(title: Text("B")),
+        ],
+      ),
+    );
+
+    testWidgets("is one lifted block: overlay fill, no line, a shadow, rounder", (tester) async {
+      await tester.pumpWidget(group(touch: false));
+      await tester.pumpAndSettle();
+      final flat = groupDecoration(tester);
+
+      await tester.pumpWidget(group(touch: true));
+      await tester.pumpAndSettle();
+      final raised = groupDecoration(tester);
+      expect(raised.color, MochiColors.light.overlay);
+      expect(raised.shadows, isNotEmpty);
+      expect((raised.shape as RoundedSuperellipseBorder).side.color.a, 0);
+      expect(
+        (raised.shape as RoundedSuperellipseBorder).borderRadius,
+        isNot((flat.shape as RoundedSuperellipseBorder).borderRadius),
+      );
+
+      // The outlined group keeps its surface, line and no shadow.
+      expect(flat.color, MochiColors.light.surface);
+      expect(flat.shadows, isNull);
+      expect((flat.shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
+    });
+
+    testWidgets("its rows are drawn over the group's fill", (tester) async {
+      await tester.pumpWidget(group(touch: true));
+      await tester.pumpAndSettle();
+      final row = tester.widget<ColoredBox>(
+        find.descendant(of: find.byType(MochiTile).first, matching: find.byType(ColoredBox)),
+      );
+      expect(row.color, MochiColors.light.overlay);
+    });
+  });
 }
