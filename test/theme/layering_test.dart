@@ -106,4 +106,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(shape().side.color.a, 0);
   });
+
+  testWidgets("a raised card in the dark theme is lit by a pale halo, and in the light one is not", (
+    tester,
+  ) async {
+    Widget themed(MochiThemeMode mode) => MochiApp(
+      themeMode: mode,
+      touch: true,
+      home: const Center(child: MochiCard(child: SizedBox(width: 20, height: 20))),
+    );
+    bool hasHalo() => cardDecoration(tester).shadows!.any((s) => s.color.computeLuminance() > 0.9);
+
+    await tester.pumpWidget(themed(MochiThemeMode.dark));
+    await tester.pumpAndSettle();
+    expect(hasHalo(), isTrue);
+
+    await tester.pumpWidget(themed(MochiThemeMode.light));
+    await tester.pumpAndSettle();
+    expect(hasHalo(), isFalse);
+  });
 }

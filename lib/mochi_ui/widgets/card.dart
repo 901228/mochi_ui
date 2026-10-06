@@ -201,6 +201,9 @@ class MochiCard extends StatelessWidget {
   }
 }
 
+/// The halo a raised card wears in the dark theme, over its black shadow.
+const _darkGlow = BoxShadow(color: Color(0x80FFFFFF), blurRadius: 12, spreadRadius: 1);
+
 /// How many times a soft fill's alpha a chosen raised card is tinted.
 const _raisedTint = 1.75;
 
@@ -274,7 +277,14 @@ class _CardSurface extends StatelessWidget {
               st,
             ),
           ),
-          shadows: appearance == .elevated ? g.shadows.of(shadowStep, colors.shadow) : null,
+          shadows: appearance == .elevated
+              ? [
+                  ...g.shadows.of(shadowStep, colors.shadow),
+                  // Black on a dark page is invisible, and the card's fill alone leaves a soft edge:
+                  // a pale halo is what a raised card is lit by there.
+                  if (raised && colors.brightness == Brightness.dark) _darkGlow,
+                ]
+              : null,
           shape: RoundedSuperellipseBorder(
             borderRadius: radius,
             side: BorderSide(

@@ -11,7 +11,7 @@
 - **`layering` 跟著 `touch` 走**：touch 是 `raised`，否則是 `outlined`；`MochiDefaults(layering:)` 可以覆蓋。
 - **field 不加陰影**，維持框線。
 - 陰影只給浮起來的東西；平放的東西靠框線。
-- 深色背景太暗，黑色陰影不明顯：先做淺色，深色看完效果再決定要加大陰影或邊緣亮線。
+- 深色背景太暗，黑色陰影不明顯：深色的 raised card 另外加一層白色光暈。
 
 ---
 
@@ -27,7 +27,7 @@
 - [x] **card**：不畫框、底色改用 `overlay`（比頁面亮：淺色是白、深色是 surface0，不然陰影只會從淺灰漸變到深灰、沒有邊緣）、陰影比 `elevation` 深一階、圓角 `md` → `lg`；`selected` 也不畫框，只用 intent 色的淡底色；`outlined` / `soft` 外觀不變
 - [x] **soft card**：raised 時圓角 `md` → `lg`、完全不畫框（含 selected）、不加陰影；`outlined` 不動
 - [x] 在 iPhone 上看過（web 版，淺色），決定陰影深度夠不夠（可能需要 touch 專用的陰影層）
-- [ ] 深色模式的陰影：確認看得出來，不夠就加大 alpha 或邊緣亮線
+- [x] 深色模式的陰影：黑影在暗背景看不見，改在黑影上加白色光暈（alpha 0.5、模糊 12、spread 1；原本 0.35 / 24 太糊，並排的 card 會黏在一起）。試過頂端亮線，看起來怪；光暈 0.12 / 0.22 太淡
 - [ ] **tile group**：整組一塊、外面沒有框，用陰影托起；列與列之間用內縮的分隔線
 - [ ] **bottom nav**：不畫上緣那條線，改用向上的陰影
 - [ ] **dialog / sheet / popover / menu**：確認已有的陰影在 raised 下不重複、深度一致
