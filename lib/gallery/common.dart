@@ -96,14 +96,23 @@ enum _RadiusPreset {
 }
 
 @immutable
-/// The three app-wide appearance knobs: corners, density and text size.
+/// The app-wide appearance knobs: corners, density, text size, layering and the brand colour.
 @immutable
 class _Look {
-  const _Look({this.radius = _RadiusPreset.standard, this.density = 1, this.textScale = 1, this.brand});
+  const _Look({
+    this.radius = _RadiusPreset.standard,
+    this.density = 1,
+    this.textScale = 1,
+    this.layering,
+    this.brand,
+  });
 
   final _RadiusPreset radius;
   final double density;
   final double textScale;
+
+  /// Null follows `touch`, which is what an app that says nothing gets.
+  final MochiLayering? layering;
 
   /// Null keeps the kit's own primary; anything else goes through `MochiColors.branded`.
   final Color? brand;
@@ -112,12 +121,15 @@ class _Look {
     _RadiusPreset? radius,
     double? density,
     double? textScale,
+    MochiLayering? layering,
+    bool clearLayering = false,
     Color? brand,
     bool clearBrand = false,
   }) => _Look(
     radius: radius ?? this.radius,
     density: density ?? this.density,
     textScale: textScale ?? this.textScale,
+    layering: clearLayering ? null : layering ?? this.layering,
     brand: clearBrand ? null : brand ?? this.brand,
   );
 }
@@ -161,6 +173,11 @@ class _LookBar extends StatelessWidget {
       const _ThemedText("text", .muted),
       for (final (label, value) in [("0.9×", 0.9), ("1×", 1.0), ("1.2×", 1.2)])
         _choice(label, look.textScale == value, () => onChanged(look.copyWith(textScale: value))),
+      const SizedBox(width: 16),
+      const _ThemedText("layering", .muted),
+      _choice("auto", look.layering == null, () => onChanged(look.copyWith(clearLayering: true))),
+      for (final value in MochiLayering.values)
+        _choice(value.name, look.layering == value, () => onChanged(look.copyWith(layering: value))),
       const SizedBox(width: 16),
       // One colour in, four out: MochiColors.branded works the rest of a tone out and keeps the
       // neutrals the kit was tuned with.

@@ -130,4 +130,24 @@ void main() {
       }
     }
   });
+
+  testWidgets("the layering knob in the look bar changes how a card is drawn", (tester) async {
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const PreviewApp());
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text("foundations").first);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    MochiLayering? layering() => tester.element(find.byType(MochiCard).first).theme.layering;
+    final before = layering();
+
+    final other = before == MochiLayering.raised ? "outlined" : "raised";
+    await tester.tap(find.widgetWithText(MochiButton, other).first);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.takeException(), isNull);
+    expect(layering(), isNot(before));
+  });
 }

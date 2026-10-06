@@ -31,6 +31,7 @@ class _PreviewAppState extends State<PreviewApp> {
   @override
   Widget build(BuildContext context) {
     final brand = _look.brand;
+    final defaults = MochiDefaults(layering: _look.layering);
 
     return MochiApp(
       title: "Mochi UI Preview",
@@ -40,14 +41,14 @@ class _PreviewAppState extends State<PreviewApp> {
       radius: _look.radius.value,
       density: _look.density,
       textScale: _look.textScale,
-      lightTheme: brand == null
-          ? null
-          : MochiTheme.light.copyWith(colors: MochiColors.branded(primary: brand)),
-      darkTheme: brand == null
-          ? null
-          : MochiTheme.dark.copyWith(
-              colors: MochiColors.branded(brightness: Brightness.dark, primary: brand),
-            ),
+      lightTheme: MochiTheme.light.copyWith(
+        defaults: defaults,
+        colors: brand == null ? null : MochiColors.branded(primary: brand),
+      ),
+      darkTheme: MochiTheme.dark.copyWith(
+        defaults: defaults,
+        colors: brand == null ? null : MochiColors.branded(brightness: Brightness.dark, primary: brand),
+      ),
       home: _Gallery(
         look: _look,
         onLookChanged: (look) => setState(() => _look = look),

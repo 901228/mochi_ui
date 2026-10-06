@@ -35,9 +35,9 @@
 
 ## 3. gallery 比較頁
 
-- [ ] gallery 加一頁「分層」：同一組內容（一張有標題的 card、兩個 field、一個 select、下方 bottom nav）outlined 和 raised 並排
-- [ ] top bar 的 look bar 加 layering 切換（跟著 touch / outlined / raised）
-- [ ] `gallery_smoke_test` 涵蓋新頁面
+- [x] ~~gallery 加一頁「分層」並排~~ 改成 look bar 切換：同一頁就能比較，不用維護兩份樣本
+- [x] look bar 加 layering 切換（auto / outlined / raised）
+- [x] `gallery_smoke_test` 涵蓋 layering 切換
 
 ## 4. 浮起來的 bar
 
