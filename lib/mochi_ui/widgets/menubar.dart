@@ -103,6 +103,8 @@ class _MochiMenubarState extends State<MochiMenubar> {
         children: [
           for (final (index, menu) in widget.menus.indexed)
             MochiPopoverMenu(
+              // A bar of menus is a desktop's: on a phone it stays a row of panels.
+              sheet: false,
               controller: _controllerFor(index),
               align: MochiPopoverAlign.start,
               minWidth: menu.minWidth,

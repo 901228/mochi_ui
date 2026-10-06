@@ -540,6 +540,8 @@ class _SelectField extends StatelessWidget {
     final select = sheet
         ? field(onPress: showSheet, onKeys: showSheet)
         : MochiPopoverMenu(
+            // The field opens its own sheet on a phone, with a draft for a multi-select.
+            sheet: false,
             side: MochiPopoverSide.bottom,
             align: MochiPopoverAlign.start,
             matchAnchorWidth: true,

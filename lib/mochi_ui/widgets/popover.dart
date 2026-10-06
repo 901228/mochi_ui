@@ -1,7 +1,9 @@
 import "package:flutter/widgets.dart";
 
 import "../theme/geometry.dart";
+import "../theme/responsive.dart";
 import "../theme/theme.dart";
+import "sheet.dart";
 import "transitions.dart";
 
 /// Which side of the anchor the popover sits on.
@@ -69,6 +71,8 @@ class MochiPopover extends StatefulWidget {
     this.autofocus = true,
     this.onOpen,
     this.onClose,
+    this.sheetBuilder,
+    this.sheet,
   });
 
   /// Builds the panel's content. Wrapped in a surface unless [surface] is false.
@@ -133,6 +137,17 @@ class MochiPopover extends StatefulWidget {
 
   final VoidCallback? onOpen;
   final VoidCallback? onClose;
+
+  /// What to show in a sheet instead of the panel, when [sheet] says so. Null never shows one.
+  ///
+  /// The anchor's `open` and `toggle` are the same either way, so a control wired to a popover
+  /// needs nothing new to open a sheet on a phone.
+  final WidgetBuilder? sheetBuilder;
+
+  /// Whether opening shows [sheetBuilder] in a sheet. Null decides by width: a sheet on a phone,
+  /// where there is no room beside the anchor for a panel — the breakpoint `showMochiModal`, the
+  /// date picker and the select share — and the panel from tablet width up.
+  final bool? sheet;
 
   @override
   State<MochiPopover> createState() => _MochiPopoverState();
@@ -209,6 +224,16 @@ class _MochiPopoverState extends State<MochiPopover> with SingleTickerProviderSt
     for (final other in _open.toList()) {
       if (!keep.contains(other)) other._controller.close();
     }
+
+    final sheetBuilder = widget.sheetBuilder;
+    if (sheetBuilder != null && (widget.sheet ?? context.responsive(mobile: true, tablet: false))) {
+      // A sheet is a route, not this anchor's overlay: the controller never opens, and a pointer
+      // position means nothing at the bottom of the screen.
+      widget.onOpen?.call();
+      showMochiSheet<void>(context, builder: sheetBuilder).then((_) => widget.onClose?.call());
+      return;
+    }
+
     _open.add(this);
     _isOpen.value = true;
 

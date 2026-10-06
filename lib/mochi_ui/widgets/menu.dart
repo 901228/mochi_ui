@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:math" as math;
 import "dart:ui" show lerpDouble;
 
 import "package:flutter/services.dart";
@@ -10,6 +11,8 @@ import "../theme/tone.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "popover.dart";
+import "reveal.dart";
+import "sheet.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "menu_host.dart";
@@ -350,8 +353,59 @@ class _MochiSubmenuState extends State<MochiSubmenu> {
     });
   }
 
+  /// Open, when it is a row in a sheet rather than a panel beside one.
+  bool _expanded = false;
+
+  /// In a sheet there is no "beside" for a second panel to stand at, so the rows open under this
+  /// one instead, a step in, and choosing one puts the whole sheet away like any other row.
+  Widget _inline(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: g.space.xs3,
+      children: [
+        MochiMenuItem(
+          prefix: widget.prefix,
+          title: widget.title,
+          // A quarter turn from pointing along the row to pointing down, which is where it opened.
+          suffix: MochiValueTransition<double>(
+            value: _expanded ? (rtl ? -0.5 : 0.5) : 0,
+            lerp: (a, b, t) => lerpDouble(a, b, t)!,
+            duration: theme.motion.sizeDuration,
+            curve: theme.motion.sizeCurve,
+            builder: (context, turns, _) => Transform.rotate(
+              angle: turns * math.pi,
+              child: Icon(rtl ? theme.icons.chevronLeft : theme.icons.chevronRight),
+            ),
+          ),
+          enabled: widget.enabled,
+          closeOnPress: false,
+          onPress: () => setState(() => _expanded = !_expanded),
+        ),
+        MochiReveal(
+          expanded: _expanded,
+          child: Padding(
+            padding: EdgeInsetsDirectional.only(start: g.space.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: g.space.xs3,
+              children: widget.menuBuilder(context),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_MenuSheet.contains(context)) return _inline(context);
+
     final theme = context.theme;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final towards = rtl ? MochiPopoverSide.left : MochiPopoverSide.right;
@@ -427,6 +481,7 @@ class MochiPopoverMenu extends StatelessWidget {
     this.closeOnAnchorPress = false,
     this.onOpen,
     this.onClose,
+    this.sheet,
   });
 
   /// Builds the rows. Called each time the menu opens, so the rows can reflect current state.
@@ -453,10 +508,16 @@ class MochiPopoverMenu extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onClose;
 
+  /// Whether the rows come up in a sheet instead. Null decides by width, as [MochiPopover.sheet]
+  /// does: a sheet on a phone, the panel from tablet width up. A menubar's menus pass false.
+  final bool? sheet;
+
   @override
   Widget build(BuildContext context) {
     return MochiPopover(
       controller: controller,
+      sheet: sheet,
+      sheetBuilder: sheet == false ? null : (context) => _MenuSheet(children: menuBuilder(context)),
       side: side,
       align: align,
       gap: gap,
@@ -490,6 +551,7 @@ class MochiContextMenu extends StatelessWidget {
     this.constraints,
     this.onOpen,
     this.onClose,
+    this.sheet,
   });
 
   /// Builds the rows. Called each time the menu opens, so the rows can reflect current state.
@@ -509,10 +571,15 @@ class MochiContextMenu extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onClose;
 
+  /// See [MochiPopoverMenu.sheet]. In a sheet a long press opens the same rows from the bottom,
+  /// which is what a phone's long-press menus do: there is no pointer to put a panel at.
+  final bool? sheet;
+
   @override
   Widget build(BuildContext context) {
     return MochiPopoverMenu(
       controller: controller,
+      sheet: sheet,
       align: MochiPopoverAlign.start,
       // The panel's corner goes exactly where the pointer was; there is no anchor to clear.
       gap: 0,
@@ -555,4 +622,35 @@ class _MenuPanel extends StatelessWidget {
 
     return controller == null ? menu : MenuHost(close: controller.close, child: menu);
   }
+}
+
+/// A menu's rows in a sheet, which is what a phone gets instead of the panel: the full width of
+/// the screen, and a row that is chosen pops the sheet the way it would close the panel.
+class _MenuSheet extends StatelessWidget {
+  const _MenuSheet({required this.children});
+
+  final List<Widget> children;
+
+  /// Whether [context] is inside one, which is how a submenu knows to open in place.
+  static bool contains(BuildContext context) => context.getInheritedWidgetOfExactType<_InMenuSheet>() != null;
+
+  @override
+  Widget build(BuildContext context) => MochiSheet(
+    child: _InMenuSheet(
+      child: MenuHost(
+        close: () => Navigator.of(context).pop(),
+        child: SizedBox(
+          width: double.infinity,
+          child: MochiMenu(minWidth: 0, children: children),
+        ),
+      ),
+    ),
+  );
+}
+
+class _InMenuSheet extends InheritedWidget {
+  const _InMenuSheet({required super.child});
+
+  @override
+  bool updateShouldNotify(_InMenuSheet old) => false;
 }
