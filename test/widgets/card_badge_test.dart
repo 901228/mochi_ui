@@ -4,8 +4,10 @@ import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
 void main() {
+  // The tests run on a touch platform, where layering is tonal; these are about the outlined look.
   Widget app(Widget child) => MochiApp(
     themeMode: MochiThemeMode.light,
+    lightTheme: MochiTheme.light.copyWith(defaults: const MochiDefaults(layering: .outlined)),
     home: Center(child: child),
   );
 

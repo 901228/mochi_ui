@@ -201,6 +201,9 @@ class MochiCard extends StatelessWidget {
   }
 }
 
+/// How many times a soft fill's alpha a chosen raised card is tinted.
+const _raisedTint = 1.75;
+
 class _CardSurface extends StatelessWidget {
   const _CardSurface({
     required this.appearance,
@@ -226,10 +229,19 @@ class _CardSurface extends StatelessWidget {
     final colors = theme.colors;
     final g = theme.geometry;
     final tone = colors.of(intent);
+    // A raised card has no line and a shadow a step deeper: the shadow is what sets it apart.
+    // A soft card is rounder in the same theme and loses its line, but casts no shadow, being
+    // a note rather than a container. An outlined card is its line, so it keeps its look.
+    final roundTheme = theme.layering == .raised && appearance != .outlined;
+    final raised = roundTheme && appearance == .elevated;
+    final radius = roundTheme ? g.radius.lg : g.radius.md;
+    final shadowStep = raised ? MochiElevation.values[math.min(elevation.index + 1, 2)] : elevation;
     final base =
         color ??
         switch (appearance) {
-          .elevated => colors.surface,
+          // A raised card is lighter than the page, not darker: a shadow around something darker
+          // than its ground only grades from one grey into the next with no edge between them.
+          .elevated => raised ? colors.overlay : colors.surface,
           // Transparent surface rather than transparent black, which would flash grey on the way.
           // The tints below then land on whatever the card sits on, page or surface alike.
           .outlined => colors.surface.withValues(alpha: 0),
@@ -237,10 +249,18 @@ class _CardSurface extends StatelessWidget {
         };
     // A chosen card is tinted, mixed over the card's own ground rather than the page's — the same
     // fill a chosen radio card takes, so the two read as the same kind of "picked".
-    final chosen = colors.softOn(tone, base);
+    // A raised card has no line to say it, so its tint is stronger than a soft fill elsewhere.
+    final chosen = raised
+        ? Color.alphaBlend(tone.base.withValues(alpha: colors.softAlpha * _raisedTint), base)
+        : colors.softOn(tone, base);
     // A soft card's line is its own tint a step deeper; a grey one around a coloured fill reads
-    // as a second, unrelated box.
-    final rest = appearance == .soft ? colors.softOn(tone, base) : colors.border;
+    // as a second, unrelated box. In the raised look there is no line at all.
+    final rest = switch (appearance) {
+      // Transparent, not absent: the line's width stays in the layout.
+      _ when roundTheme => base.withValues(alpha: 0),
+      .soft => colors.softOn(tone, base),
+      _ => colors.border,
+    };
 
     return MochiStateTransition(
       states: states,
@@ -254,15 +274,20 @@ class _CardSurface extends StatelessWidget {
               st,
             ),
           ),
-          shadows: appearance == .elevated ? g.shadows.of(elevation, colors.shadow) : null,
+          shadows: appearance == .elevated ? g.shadows.of(shadowStep, colors.shadow) : null,
           shape: RoundedSuperellipseBorder(
-            borderRadius: g.radius.md,
+            borderRadius: radius,
             side: BorderSide(
               width: g.borderWidth,
               color: blend.color(
                 (st) => switch (st) {
-                  _ when st.contains(WidgetState.selected) => tone.base,
-                  _ when st.contains(WidgetState.hovered) => Color.lerp(rest, colors.mutedForeground, 0.5)!,
+                  // A raised card has no line even when chosen: the tint says it.
+                  _ when st.contains(WidgetState.selected) && !roundTheme => tone.base,
+                  _ when st.contains(WidgetState.hovered) && !raised => Color.lerp(
+                    rest,
+                    colors.mutedForeground,
+                    0.5,
+                  )!,
                   _ => rest,
                 },
               ),
@@ -277,7 +302,7 @@ class _CardSurface extends StatelessWidget {
           // by the clip at all. Inside the padding it would round the *content's* corners by the
           // card's radius instead, which bites a piece out of anything in one of them.
           child: ClipRSuperellipse(
-            borderRadius: g.radius.md,
+            borderRadius: radius,
             child: Padding(
               // The border's width is added the way a Container adds a decoration's own padding,
               // so the content sits inside the line rather than under it.

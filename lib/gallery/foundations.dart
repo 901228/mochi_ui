@@ -171,10 +171,17 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
               width: 170,
               child: MochiCard(appearance: .outlined, onPress: () {}, child: const Text("Outlined card")),
             ),
-            const SizedBox(
-              width: 170,
-              child: MochiCard(appearance: .soft, intent: MochiIntent.info, child: Text("Soft card")),
-            ),
+            for (final chosen in [false, true])
+              SizedBox(
+                width: 170,
+                child: MochiCard(
+                  appearance: .soft,
+                  intent: MochiIntent.info,
+                  selected: chosen,
+                  onPress: () {},
+                  child: Text(chosen ? "Soft, selected" : "Soft card"),
+                ),
+              ),
           ],
         ),
         Wrap(

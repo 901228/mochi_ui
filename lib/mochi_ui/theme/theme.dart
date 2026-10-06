@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 
 import "colors.dart";
 import "defaults.dart";
+import "layering.dart";
 import "geometry.dart";
 import "icons.dart";
 import "motion.dart";
@@ -99,6 +100,9 @@ class MochiTheme {
 
   /// Touch-first sizing: larger hit targets and controls. See [MochiTheme.defaultTouch].
   final bool touch;
+
+  /// How surfaces are told apart: what [MochiDefaults.layering] says, else raised on a touch theme.
+  MochiLayering get layering => defaults.layering ?? (touch ? MochiLayering.raised : MochiLayering.outlined);
 
   final Map<Object, MochiThemeExtension<dynamic>> _extensions;
 

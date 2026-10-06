@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "layering.dart";
 import "motion.dart";
 import "size.dart";
 import "styles/button_style.dart";
@@ -22,6 +23,7 @@ class MochiDefaults {
     this.iconButtonAppearance = MochiButtonAppearance.ghost,
     this.buttonSize = MochiSize.md,
     this.transition = MochiTransition.scaleFade,
+    this.layering,
   });
 
   final MochiIntent buttonIntent;
@@ -36,6 +38,10 @@ class MochiDefaults {
   /// things rather than a setting.
   final MochiTransition transition;
 
+  /// How surfaces are told apart. Null follows [MochiTheme.touch]: raised on a touch theme,
+  /// outlined otherwise. Read it through [MochiTheme.layering].
+  final MochiLayering? layering;
+
   static const standard = MochiDefaults();
 
   @override
@@ -46,9 +52,10 @@ class MochiDefaults {
           buttonAppearance == other.buttonAppearance &&
           iconButtonAppearance == other.iconButtonAppearance &&
           buttonSize == other.buttonSize &&
-          transition == other.transition;
+          transition == other.transition &&
+          layering == other.layering;
 
   @override
   int get hashCode =>
-      Object.hash(buttonIntent, buttonAppearance, iconButtonAppearance, buttonSize, transition);
+      Object.hash(buttonIntent, buttonAppearance, iconButtonAppearance, buttonSize, transition, layering);
 }

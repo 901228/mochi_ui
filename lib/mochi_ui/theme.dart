@@ -2,6 +2,7 @@ export "theme/colors.dart";
 export "theme/defaults.dart";
 export "theme/geometry.dart";
 export "theme/icons.dart";
+export "theme/layering.dart";
 export "theme/motion.dart";
 export "theme/responsive.dart";
 export "theme/size.dart";
