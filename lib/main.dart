@@ -216,6 +216,7 @@ class _GalleryState extends State<_Gallery> {
       knobs: const {},
       sections: const [
         ("tiles", _TileSample()),
+        ("swipe actions", _SwipeSample()),
         ("accordion", _AccordionSample()),
         ("collapsible", _CollapsibleSample()),
         ("reveal", _RevealSample()),

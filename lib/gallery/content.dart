@@ -111,6 +111,70 @@ class _ScrollAreaSample extends StatelessWidget {
   }
 }
 
+/// Rows that slide aside: a pin behind the start, a share and a delete behind the end. Dragging
+/// follows touch, so turn it on in the top bar; deleting takes the row out, and the last one
+/// brings them all back.
+class _SwipeSample extends StatefulWidget {
+  const _SwipeSample();
+
+  @override
+  State<_SwipeSample> createState() => _SwipeSampleState();
+}
+
+class _SwipeSampleState extends State<_SwipeSample> {
+  static const _all = ["12.34", "11.02", "13.87", "10.56"];
+  var _times = [..._all];
+  final _pinned = <String>{};
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 320,
+      child: MochiTileGroup(
+        children: [
+          for (final time in _times)
+            MochiSwipeActions(
+              key: ValueKey(time),
+              fullSwipe: true,
+              leading: [
+                MochiAction(
+                  icon: TablerIcons.pin,
+                  label: _pinned.contains(time) ? "Unpin" : "Pin",
+                  intent: MochiIntent.info,
+                  onPress: () =>
+                      setState(() => _pinned.contains(time) ? _pinned.remove(time) : _pinned.add(time)),
+                ),
+              ],
+              trailing: [
+                MochiAction(
+                  icon: TablerIcons.share,
+                  label: "Share",
+                  intent: MochiIntent.primary,
+                  onPress: () {},
+                ),
+                MochiAction(
+                  icon: TablerIcons.trash,
+                  label: "Delete",
+                  intent: MochiIntent.danger,
+                  onPress: () => setState(() {
+                    _times = [..._times]..remove(time);
+                    if (_times.isEmpty) _times = [..._all];
+                  }),
+                ),
+              ],
+              child: MochiTile(
+                prefix: _pinned.contains(time) ? const Icon(TablerIcons.pin) : null,
+                title: Text(time),
+                details: const Text("3x3"),
+                onPress: () {},
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AccordionSample extends StatefulWidget {
   const _AccordionSample();
 

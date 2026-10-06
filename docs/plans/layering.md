@@ -52,7 +52,7 @@
 
 - [x] **select / multi select 在手機上改成 bottom sheet**（規則同 date picker：平板寬度以上用 popover）。單選點一列就選中並關閉；多選勾進草稿，按 OK 才回傳，拖走或點 barrier 就丟掉
 - [x] **選單 / 右鍵選單在手機上改成 bottom sheet**：`MochiPopoverMenu` / `MochiContextMenu` 在手機寬度開 sheet（`sheet:` 可覆蓋），submenu 在 sheet 裡原地展開；menubar 維持 popover
-- [ ] **`MochiSwipeActions`**：清單列滑開出現動作（例如紀錄列滑開出現刪除）
+- [x] **`MochiSwipeActions`**：清單列滑開出現動作（例如紀錄列滑開出現刪除）。動作是 `MochiAction`；拖過一半停住、點動作執行並收回、`fullSwipe`（預設關）滑到底執行最外側那顆；一次只開一列；跟著 touch，桌面用右鍵選單；動作也給 screen reader
 - [ ] **大標題 header**：捲動時從大標題縮成 bar 上的小標題（等第 4 節完成）
 
 ## 風險

@@ -47,6 +47,7 @@ export "widgets/slider.dart";
 export "widgets/sortable.dart";
 export "widgets/state_transition.dart";
 export "widgets/stepper.dart";
+export "widgets/swipe_actions.dart";
 export "widgets/switch.dart";
 export "widgets/tappable.dart";
 export "widgets/text_field.dart";
