@@ -42,7 +42,7 @@
 ## 4. 浮起來的 bar
 
 - [x] **bottom nav**：`MochiBottomNavVariant.floating`（raised 時預設）離開螢幕邊緣、圓角 `xl`（不用 full，跟其他元件一致）、最寬 480 置中、浮在 home indicator 上方；每格是圓角 `lg` 的區塊，內縮 `xl − lg`，選中那格填滿。docked 選中的小方塊改成 `sm`（`lg` 超過它高度的一半，畫出來還是 pill）；格子之間留 `xs2`。桌面寬螢幕用 sidebar，bottom nav 是手機的
-- [ ] **header**：touch 模式下預設用 `floating` variant
+- [x] **header**：`variant` 沒給時跟著 layering，raised 是 `floating`、outlined 是 `plain`。raised 的 floating 跟膠囊 bottom nav 一樣：`overlay`、沒框線、`raised(.lg)` 陰影、圓角 `xl`、左右離邊 `md`、狀態列下方 `xs`；outlined 的 floating 保留框線、圓角也改成 `xl`。明確傳 `variant:` 不受影響
 - [x] **`MochiScaffold.extendBody`**：內容延伸到 header / footer 底下，並把量出來的高度加進 `MediaQuery.padding`，捲動區自動留空。預設關閉，先在比較頁和 app 各開一頁看
 - [ ] 浮起來的 bar 配 `md` 陰影，確認不被 `ClipRect` 裁掉
 

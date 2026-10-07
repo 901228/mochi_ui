@@ -3,10 +3,12 @@ import "dart:math" as math;
 import "package:flutter/rendering.dart";
 import "package:flutter/widgets.dart";
 
+import "../theme/geometry.dart";
 import "../theme/size.dart";
 import "../theme/theme.dart";
 import "action.dart";
 import "scaffold.dart";
+import "shape_shadow.dart";
 
 /// Where a header's title sits.
 enum MochiHeaderAlignment {
@@ -28,8 +30,9 @@ enum MochiHeaderVariant {
   /// A surface with a hairline along its bottom edge, for pages that scroll under it.
   bordered,
 
-  /// Inset from the page edges with a border all the way around: a bar that floats above the
-  /// content instead of capping the page.
+  /// Clear of the page's edges and rounded: a bar that floats above the content instead of capping
+  /// the page. Lifted by a shadow in the raised look, outlined otherwise — the same bar as a
+  /// floating `MochiBottomNav`, lined up with it.
   floating,
 }
 
@@ -48,7 +51,7 @@ class MochiHeader extends StatelessWidget {
     this.maxVisibleActions,
     this.actionSize,
     this.alignment = MochiHeaderAlignment.start,
-    this.variant = MochiHeaderVariant.plain,
+    this.variant,
     this.automaticPrefix = true,
   });
 
@@ -68,7 +71,9 @@ class MochiHeader extends StatelessWidget {
   /// Where the title sits.
   final MochiHeaderAlignment alignment;
 
-  final MochiHeaderVariant variant;
+  /// Null follows the theme's layering: floating when raised, plain when outlined — the phone's
+  /// bar stands clear of the edges, as its bottom bar does.
+  final MochiHeaderVariant? variant;
 
   /// Whether a header with no [prefixes] of its own opens the scaffold's drawer from there, when
   /// it has one to open: the button comes and goes as the width crosses the breakpoint, which an
@@ -103,25 +108,29 @@ class MochiHeader extends StatelessWidget {
     // The status bar's room, when nothing above has already taken it: a scaffold with its bars
     // over the content leaves it to the header, so the header's own fill reaches the top edge.
     final inset = MediaQuery.paddingOf(context).top;
+    final raised = theme.layering == .raised;
+    final variant = this.variant ?? (raised ? MochiHeaderVariant.floating : MochiHeaderVariant.plain);
+    final floating = variant == .floating;
+    final ground = raised ? theme.colors.overlay : theme.colors.surface;
 
-    return Container(
-      margin: switch (variant) {
-        .plain || .bordered => EdgeInsets.zero,
-        .floating => EdgeInsets.all(g.space.xs).add(EdgeInsets.only(top: inset)),
-      },
+    final bar = Container(
       padding: EdgeInsets.symmetric(
         horizontal: g.space.md,
         vertical: g.space.sm,
-      ).add(EdgeInsets.only(top: variant == .floating ? 0 : inset)),
+      ).add(EdgeInsets.only(top: floating ? 0 : inset)),
       decoration: switch (variant) {
         .plain => null,
         .bordered => BoxDecoration(
           color: theme.colors.surface,
           border: Border(bottom: border),
         ),
+        // Transparent, not absent, when raised: the line's width stays in the layout.
         .floating => ShapeDecoration(
-          color: theme.colors.surface,
-          shape: g.shape(borderRadius: g.radius.md, side: border),
+          color: ground,
+          shape: g.shape(
+            borderRadius: g.radius.xl,
+            side: raised ? BorderSide(color: ground.withValues(alpha: 0), width: g.borderWidth) : border,
+          ),
         ),
       },
       child: switch (alignment) {
@@ -140,6 +149,19 @@ class MochiHeader extends StatelessWidget {
           children: [leading ?? const SizedBox.shrink(), heading, trailing ?? const SizedBox.shrink()],
         ),
       },
+    );
+
+    if (!floating) return bar;
+
+    // Clear of the edges by what a floating bottom bar keeps, so the two line up; under the status
+    // bar rather than behind it.
+    return Padding(
+      padding: EdgeInsets.fromLTRB(g.space.md, inset + g.space.xs, g.space.md, g.space.xs),
+      child: ShapeShadow(
+        radius: g.radius.xl,
+        shadows: raised ? g.shadows.raised(MochiElevation.lg, theme.colors) : null,
+        child: bar,
+      ),
     );
   }
 }

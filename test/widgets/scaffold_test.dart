@@ -159,7 +159,8 @@ void main() {
     await tester.pumpWidget(
       app(
         const MochiScaffold(
-          header: MochiHeader(title: Text("Timer")),
+          // Plain, so the bar's edge is the header's: a floating one is inset from it.
+          header: MochiHeader(variant: MochiHeaderVariant.plain, title: Text("Timer")),
           child: SizedBox(),
         ),
       ),
