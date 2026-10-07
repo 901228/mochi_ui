@@ -3,6 +3,8 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+import "../support/surface.dart";
+
 void main() {
   // The tests run on a touch platform, where layering is tonal; these are about the outlined look.
   Widget app(Widget child) => MochiApp(
@@ -11,13 +13,7 @@ void main() {
     home: Center(child: child),
   );
 
-  ShapeDecoration decoration(WidgetTester tester, Type of) =>
-      tester
-              .widget<DecoratedBox>(
-                find.descendant(of: find.byType(of), matching: find.byType(DecoratedBox)).first,
-              )
-              .decoration
-          as ShapeDecoration;
+  ShapeDecoration decoration(WidgetTester tester, Type of) => surfaceOf(tester, find.byType(of));
 
   group("card", () {
     testWidgets("the clip is the card's own outline, not the content's", (tester) async {
@@ -148,7 +144,7 @@ void main() {
 
       final d = decoration(tester, MochiCard);
       expect(d.color, MochiColors.light.surface);
-      expect(d.shadows, isNotEmpty);
+      expect(shadowsOf(tester, find.byType(MochiCard)), isNotEmpty);
     });
 
     testWidgets("an outlined card is a line with the ground showing through, and no shadow", (tester) async {
@@ -158,7 +154,11 @@ void main() {
 
       final d = decoration(tester, MochiCard);
       expect(d.color!.a, 0);
-      expect(d.shadows, isNull, reason: "a shadow under a transparent card shows through it");
+      expect(
+        shadowsOf(tester, find.byType(MochiCard)),
+        isNull,
+        reason: "a shadow under a transparent card shows through it",
+      );
       expect((d.shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
     });
 
@@ -175,7 +175,7 @@ void main() {
 
       final d = decoration(tester, MochiCard);
       expect(d.color, MochiColors.light.of(MochiIntent.success).soft);
-      expect(d.shadows, isNull);
+      expect(shadowsOf(tester, find.byType(MochiCard)), isNull);
     });
 
     testWidgets("a chosen outlined card still wears the intent", (tester) async {

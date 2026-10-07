@@ -15,6 +15,7 @@ import "sheet.dart";
 import "text_field.dart";
 import "tile.dart";
 import "transitions.dart";
+import "shape_shadow.dart";
 
 /// A modal box: a title, some content, and the actions that answer it.
 ///
@@ -77,30 +78,33 @@ class MochiDialog extends StatelessWidget {
       label: semanticLabel,
       child: ConstrainedBox(
         constraints: constraints,
-        child: Container(
-          padding: padding ?? EdgeInsets.all(theme.touch ? g.space.lg : g.space.md),
-          decoration: ShapeDecoration(
-            // The same ground as a popover: a dialog floats above the page rather than being part
-            // of it.
-            color: colors.overlay,
-            shadows: raised
-                ? g.shadows.raised(MochiElevation.lg, colors)
-                : g.shadows.of(MochiElevation.lg, colors.shadow),
-            shape: RoundedSuperellipseBorder(
-              borderRadius: g.radius.lg,
-              // Transparent, not absent: the line's width stays in the layout.
-              side: BorderSide(
-                color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
-                width: g.borderWidth,
+        child: ShapeShadow(
+          radius: g.radius.lg,
+          shadows: raised
+              ? g.shadows.raised(MochiElevation.lg, colors)
+              : g.shadows.of(MochiElevation.lg, colors.shadow),
+          child: Container(
+            padding: padding ?? EdgeInsets.all(theme.touch ? g.space.lg : g.space.md),
+            decoration: ShapeDecoration(
+              // The same ground as a popover: a dialog floats above the page rather than being part
+              // of it.
+              color: colors.overlay,
+              shape: RoundedSuperellipseBorder(
+                borderRadius: g.radius.lg,
+                // Transparent, not absent: the line's width stays in the layout.
+                side: BorderSide(
+                  color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
+                  width: g.borderWidth,
+                ),
               ),
             ),
-          ),
-          child: _ModalColumn(
-            title: title,
-            titleSuffix: titleSuffix,
-            body: body,
-            actions: actions,
-            actionsAxis: axis,
+            child: _ModalColumn(
+              title: title,
+              titleSuffix: titleSuffix,
+              body: body,
+              actions: actions,
+              actionsAxis: axis,
+            ),
           ),
         ),
       ),

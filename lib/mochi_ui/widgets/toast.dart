@@ -6,6 +6,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/icons.dart";
 import "close_button.dart";
+import "shape_shadow.dart";
 import "../theme/responsive.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
@@ -53,62 +54,65 @@ class MochiToast extends StatelessWidget {
     // handed down tight. The floor keeps a one-word message from shrinking to a stub.
     return ConstrainedBox(
       constraints: BoxConstraints(minWidth: 240, maxWidth: g.toastWidth),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
-        decoration: ShapeDecoration(
-          color: colors.overlay,
-          // Smaller than a dialog's: toasts stack a few pixels apart, and the one in front casts
-          // onto the one behind it, where a large shadow reads as dirt in the gap.
-          shadows: raised
-              ? g.shadows.raised(MochiElevation.md, colors)
-              : g.shadows.of(MochiElevation.md, colors.shadow),
-          shape: RoundedSuperellipseBorder(
-            borderRadius: g.radius.md,
-            // A toast carries its intent in its edge rather than its fill: it sits over the page
-            // for a moment, and a block of colour there is more alarm than the message warrants.
-            // A neutral one has no line to carry in the raised look: only an intent does.
-            side: BorderSide(
-              color: !neutral
-                  ? tone.base
-                  : raised
-                  ? colors.overlay.withValues(alpha: 0)
-                  : colors.border,
-              width: g.borderWidth,
+      child: ShapeShadow(
+        radius: g.radius.md,
+        // Smaller than a dialog's: toasts stack a few pixels apart, and the one in front casts
+        // onto the one behind it, where a large shadow reads as dirt in the gap.
+        shadows: raised
+            ? g.shadows.raised(MochiElevation.md, colors)
+            : g.shadows.of(MochiElevation.md, colors.shadow),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
+          decoration: ShapeDecoration(
+            color: colors.overlay,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: g.radius.md,
+              // A toast carries its intent in its edge rather than its fill: it sits over the page
+              // for a moment, and a block of colour there is more alarm than the message warrants.
+              // A neutral one has no line to carry in the raised look: only an intent does.
+              side: BorderSide(
+                color: !neutral
+                    ? tone.base
+                    : raised
+                    ? colors.overlay.withValues(alpha: 0)
+                    : colors.border,
+                width: g.borderWidth,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          spacing: g.space.xs,
-          children: [
-            if (icon case final icon?)
-              IconTheme.merge(
-                data: IconThemeData(color: neutral ? colors.mutedForeground : tone.onSoft, size: 18),
-                child: icon,
-              ),
-            // Expanded, not Flexible: the message takes whatever is left so the action and the
-            // close button sit against the right edge instead of trailing the text.
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                spacing: g.space.xs3,
-                children: [
-                  DefaultTextStyle(
-                    // A heading over its description, the same pairing as a dialog's.
-                    style: theme.typography.title.sm.copyWith(color: colors.foreground),
-                    child: title,
-                  ),
-                  if (description case final description?)
+          child: Row(
+            spacing: g.space.xs,
+            children: [
+              if (icon case final icon?)
+                IconTheme.merge(
+                  data: IconThemeData(color: neutral ? colors.mutedForeground : tone.onSoft, size: 18),
+                  child: icon,
+                ),
+              // Expanded, not Flexible: the message takes whatever is left so the action and the
+              // close button sit against the right edge instead of trailing the text.
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: g.space.xs3,
+                  children: [
                     DefaultTextStyle(
-                      style: theme.typography.body.xs.copyWith(color: colors.mutedForeground),
-                      child: description,
+                      // A heading over its description, the same pairing as a dialog's.
+                      style: theme.typography.title.sm.copyWith(color: colors.foreground),
+                      child: title,
                     ),
-                ],
+                    if (description case final description?)
+                      DefaultTextStyle(
+                        style: theme.typography.body.xs.copyWith(color: colors.mutedForeground),
+                        child: description,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            ?action,
-            if (onClose case final onClose?) MochiCloseButton(onPress: onClose),
-          ],
+              ?action,
+              if (onClose case final onClose?) MochiCloseButton(onPress: onClose),
+            ],
+          ),
         ),
       ),
     );

@@ -8,6 +8,7 @@ import "../theme/typography.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
+import "shape_shadow.dart";
 
 /// How a [MochiBottomNav] sits at the bottom of the screen.
 enum MochiBottomNavVariant {
@@ -153,18 +154,21 @@ class MochiBottomNav<T> extends StatelessWidget {
           heightFactor: 1,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: maxFloatingWidth),
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: ground,
-                shadows: raised ? g.shadows.raised(MochiElevation.lg, colors) : null,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: g.radius.xl,
-                  side: raised || !border
-                      ? BorderSide(color: ground.withValues(alpha: 0), width: g.borderWidth)
-                      : BorderSide(color: colors.border, width: g.borderWidth),
+            child: ShapeShadow(
+              radius: g.radius.xl,
+              shadows: raised ? g.shadows.raised(MochiElevation.lg, colors) : null,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: ground,
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: g.radius.xl,
+                    side: raised || !border
+                        ? BorderSide(color: ground.withValues(alpha: 0), width: g.borderWidth)
+                        : BorderSide(color: colors.border, width: g.borderWidth),
+                  ),
                 ),
+                child: Padding(padding: EdgeInsets.all(inset), child: row(floating: true)),
               ),
-              child: Padding(padding: EdgeInsets.all(inset), child: row(floating: true)),
             ),
           ),
         ),

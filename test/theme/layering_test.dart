@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+import "../support/surface.dart";
+
 void main() {
   Widget app({required bool touch, MochiDefaults? defaults, required Widget child}) => MochiApp(
     themeMode: MochiThemeMode.light,
@@ -53,6 +55,7 @@ void main() {
     await tester.pumpWidget(card());
     await tester.pumpAndSettle();
     final raised = cardDecoration(tester);
+    final raisedShadows = shadowsOf(tester, find.byType(MochiCard))!;
     expect(raised.color, MochiColors.light.overlay);
     expect(raised.color!.computeLuminance(), greaterThan(MochiColors.light.background.computeLuminance()));
     expect((raised.shape as RoundedSuperellipseBorder).side.color.a, 0);
@@ -65,8 +68,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final flat = cardDecoration(tester);
-    expect(raised.shadows!.first.blurRadius, greaterThan(flat.shadows!.first.blurRadius));
+    expect(
+      raisedShadows.first.blurRadius,
+      greaterThan(shadowsOf(tester, find.byType(MochiCard))!.first.blurRadius),
+    );
   });
 
   testWidgets("a raised card that is chosen is tinted, with no line", (tester) async {
@@ -99,7 +104,7 @@ void main() {
     await tester.pumpWidget(soft(touch: true));
     await tester.pumpAndSettle();
     expect(shape().borderRadius, isNot(flatRadius));
-    expect(cardDecoration(tester).shadows, isNull);
+    expect(shadowsOf(tester, find.byType(MochiCard)), isNull);
     expect(shape().side.color.a, 0);
 
     await tester.pumpWidget(soft(touch: true, selected: true));
@@ -115,7 +120,7 @@ void main() {
       touch: true,
       home: const Center(child: MochiCard(child: SizedBox(width: 20, height: 20))),
     );
-    bool hasHalo() => cardDecoration(tester).shadows!.any((s) => s.color.computeLuminance() > 0.9);
+    bool hasHalo() => shadowsOf(tester, find.byType(MochiCard))!.any((s) => s.color.computeLuminance() > 0.9);
 
     await tester.pumpWidget(themed(MochiThemeMode.dark));
     await tester.pumpAndSettle();

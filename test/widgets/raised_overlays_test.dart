@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+import "../support/surface.dart";
+
 void main() {
   Widget app(Widget child, {required bool touch, MochiThemeMode mode = MochiThemeMode.light}) => MochiApp(
     themeMode: mode,
@@ -37,7 +39,7 @@ void main() {
     });
 
     testWidgets("a $key is lit by a halo in the dark theme only when raised", (tester) async {
-      bool halo() => surface(tester, within).shadows!.any((s) => s.color.computeLuminance() > 0.9);
+      bool halo() => shadowsOf(tester, within)!.any((s) => s.color.computeLuminance() > 0.9);
 
       await tester.pumpWidget(app(value(), touch: true, mode: MochiThemeMode.dark));
       await tester.pumpAndSettle();

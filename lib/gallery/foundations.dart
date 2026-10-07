@@ -53,15 +53,18 @@ class _GeometrySample extends StatelessWidget {
     Widget swatch(String label, BorderRadius radius, {List<BoxShadow>? shadows}) => Column(
       spacing: g.space.xs,
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: ShapeDecoration(
-            color: colors.overlay,
-            shadows: shadows,
-            shape: RoundedSuperellipseBorder(
-              borderRadius: radius,
-              side: BorderSide(color: colors.border, width: g.borderWidth),
+        // The shadow the kit's way: off a rounded rectangle under the superellipse.
+        DecoratedBox(
+          decoration: BoxDecoration(borderRadius: radius, boxShadow: shadows),
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: ShapeDecoration(
+              color: colors.overlay,
+              shape: RoundedSuperellipseBorder(
+                borderRadius: radius,
+                side: BorderSide(color: colors.border, width: g.borderWidth),
+              ),
             ),
           ),
         ),

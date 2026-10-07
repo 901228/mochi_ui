@@ -62,6 +62,11 @@
 - [x] **`MochiSwipeActions`**：清單列滑開出現動作（例如紀錄列滑開出現刪除）。動作是 `MochiAction`；拖過一半停住、點動作執行並收回、`fullSwipe`（預設關）滑到底執行最外側那顆；一次只開一列；跟著 touch，桌面用右鍵選單；動作也給 screen reader
 - [ ] **大標題 header**：捲動時從大標題縮成 bar 上的小標題（等第 4 節完成）
 
+## 效能
+
+- [x] **陰影改從圓角矩形投出**：superellipse 上的模糊在 web 每幀整塊重畫，raised 的 30 列 tile group 捲動 raster 52ms（約 18fps）。改用 `ShapeShadow`（下層 `BoxDecoration` 圓角矩形陰影、上層 superellipse 外形）後 16–18ms，接近 outlined 的 10–13ms。gallery smoke test 檢查所有頁面沒有 `ShapeDecoration.shadows`
+- [ ] iPhone 上實測（release web / PWA）
+
 ## 風險
 
 - **外觀整個變**：`raised` 影響幾乎所有元件，gallery 和 app 都要檢查一遍；每次只改一個元件。

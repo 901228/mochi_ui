@@ -8,6 +8,7 @@ import "../theme/size.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "circular_progress.dart";
+import "shape_shadow.dart";
 
 /// Where a pull-to-refresh is in its errand.
 enum _Phase { idle, pulling, refreshing, settling }
@@ -227,22 +228,25 @@ class _MochiRefreshState extends State<MochiRefresh> with SingleTickerProviderSt
                     ),
                   );
                 },
-                child: Container(
-                  width: _puck,
-                  height: _puck,
-                  alignment: Alignment.center,
-                  decoration: ShapeDecoration(
-                    color: colors.surface,
-                    shape: CircleBorder(
-                      side: BorderSide(color: colors.border, width: theme.geometry.borderWidth),
+                child: ShapeShadow(
+                  radius: const BorderRadius.all(Radius.circular(_puck / 2)),
+                  shadows: theme.geometry.shadows.of(MochiElevation.sm, colors.shadow),
+                  child: Container(
+                    width: _puck,
+                    height: _puck,
+                    alignment: Alignment.center,
+                    decoration: ShapeDecoration(
+                      color: colors.surface,
+                      shape: CircleBorder(
+                        side: BorderSide(color: colors.border, width: theme.geometry.borderWidth),
+                      ),
                     ),
-                    shadows: theme.geometry.shadows.of(MochiElevation.sm, colors.shadow),
-                  ),
-                  child: _Spinner(
-                    phase: () => _phase,
-                    extent: _extent,
-                    trigger: widget.triggerDistance,
-                    color: tone.onSoft,
+                    child: _Spinner(
+                      phase: () => _phase,
+                      extent: _extent,
+                      trigger: widget.triggerDistance,
+                      color: tone.onSoft,
+                    ),
                   ),
                 ),
               ),

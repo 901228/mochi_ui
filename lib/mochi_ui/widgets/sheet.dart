@@ -6,6 +6,7 @@ import "../theme/strings.dart";
 import "../theme/theme.dart";
 import "modal_heading.dart";
 import "transitions.dart";
+import "shape_shadow.dart";
 
 /// The edge a sheet is anchored to and slides in from.
 enum MochiSheetSide { left, right, top, bottom }
@@ -91,52 +92,55 @@ class MochiSheet extends StatelessWidget {
       label: semanticLabel,
       child: ConstrainedBox(
         constraints: limits,
-        child: DecoratedBox(
-          decoration: ShapeDecoration(
-            color: colors.overlay,
-            shadows: raised
-                ? g.shadows.raised(MochiElevation.lg, colors)
-                : g.shadows.of(MochiElevation.lg, colors.shadow),
-            shape: RoundedSuperellipseBorder(
-              borderRadius: _radius(g),
-              side: BorderSide(
-                color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
-                width: g.borderWidth,
+        child: ShapeShadow(
+          radius: _radius(g),
+          shadows: raised
+              ? g.shadows.raised(MochiElevation.lg, colors)
+              : g.shadows.of(MochiElevation.lg, colors.shadow),
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              color: colors.overlay,
+              shape: RoundedSuperellipseBorder(
+                borderRadius: _radius(g),
+                side: BorderSide(
+                  color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
+                  width: g.borderWidth,
+                ),
               ),
             ),
-          ),
-          child: ClipRSuperellipse(
-            borderRadius: _radius(g),
-            child: Column(
-              // A sheet from an edge fills the screen across its own axis and is only as big as
-              // its content along it: the column shrink-wraps a bottom sheet's height, and runs
-              // the whole height for one from the side.
-              mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // On the edge that faces into the screen, which is the one you drag from: the
-                // bottom of a sheet that came down from the top.
-                if (showHandle && side != MochiSheetSide.top) const _SheetHandle(),
-                Flexible(
-                  child: Padding(
-                    // The sheet runs to the edge of the screen, so its own padding has to clear
-                    // whatever the system puts there.
-                    padding: (padding ?? EdgeInsets.all(g.space.md)).add(_safeArea(context)),
-                    child: title == null && titleSuffix == null
-                        ? child
-                        : Column(
-                            mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ModalHeading(title: title, suffix: titleSuffix),
-                              SizedBox(height: ModalHeading.gapOf(context)),
-                              Flexible(child: child),
-                            ],
-                          ),
+            child: ClipRSuperellipse(
+              borderRadius: _radius(g),
+              child: Column(
+                // A sheet from an edge fills the screen across its own axis and is only as big as
+                // its content along it: the column shrink-wraps a bottom sheet's height, and runs
+                // the whole height for one from the side.
+                mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // On the edge that faces into the screen, which is the one you drag from: the
+                  // bottom of a sheet that came down from the top.
+                  if (showHandle && side != MochiSheetSide.top) const _SheetHandle(),
+                  Flexible(
+                    child: Padding(
+                      // The sheet runs to the edge of the screen, so its own padding has to clear
+                      // whatever the system puts there.
+                      padding: (padding ?? EdgeInsets.all(g.space.md)).add(_safeArea(context)),
+                      child: title == null && titleSuffix == null
+                          ? child
+                          : Column(
+                              mainAxisSize: _vertical ? MainAxisSize.min : MainAxisSize.max,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ModalHeading(title: title, suffix: titleSuffix),
+                                SizedBox(height: ModalHeading.gapOf(context)),
+                                Flexible(child: child),
+                              ],
+                            ),
+                    ),
                   ),
-                ),
-                if (showHandle && side == MochiSheetSide.top) const _SheetHandle(),
-              ],
+                  if (showHandle && side == MochiSheetSide.top) const _SheetHandle(),
+                ],
+              ),
             ),
           ),
         ),

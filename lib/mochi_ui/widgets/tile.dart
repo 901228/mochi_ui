@@ -11,6 +11,7 @@ import "focus_ring.dart";
 import "state_transition.dart";
 import "value_transition.dart";
 import "tappable.dart";
+import "shape_shadow.dart";
 
 /// The parts of a row's layout that change with the theme's scale.
 @immutable
@@ -330,37 +331,40 @@ class MochiTileGroup extends StatelessWidget {
             style: theme.typography.title.xs.copyWith(color: colors.mutedForeground),
             child: label,
           ),
-        DecoratedBox(
-          decoration: ShapeDecoration(
-            color: ground,
-            shadows: raised ? g.shadows.raised(MochiElevation.md, colors) : null,
-            shape: RoundedSuperellipseBorder(
-              borderRadius: radius,
-              // Transparent, not absent: the line's width stays in the layout.
-              side: BorderSide(
-                color: raised ? ground.withValues(alpha: 0) : colors.border,
-                width: g.borderWidth,
+        ShapeShadow(
+          radius: radius,
+          shadows: raised ? g.shadows.raised(MochiElevation.md, colors) : null,
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              color: ground,
+              shape: RoundedSuperellipseBorder(
+                borderRadius: radius,
+                // Transparent, not absent: the line's width stays in the layout.
+                side: BorderSide(
+                  color: raised ? ground.withValues(alpha: 0) : colors.border,
+                  width: g.borderWidth,
+                ),
               ),
             ),
-          ),
-          // Clipped so a row's hover tint follows the card's corners.
-          child: ClipRSuperellipse(
-            borderRadius: radius,
-            child: _TileGroupScope(
-              reservePrefix: reservePrefix,
-              ground: ground,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final (index, child) in children.indexed) ...[
-                    if (index > 0 && divider != MochiTileDivider.none)
-                      MochiDivider(
-                        indent: _indent(theme),
-                        endIndent: divider == MochiTileDivider.indented ? g.space.md : 0,
-                      ),
-                    child,
+            // Clipped so a row's hover tint follows the card's corners.
+            child: ClipRSuperellipse(
+              borderRadius: radius,
+              child: _TileGroupScope(
+                reservePrefix: reservePrefix,
+                ground: ground,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final (index, child) in children.indexed) ...[
+                      if (index > 0 && divider != MochiTileDivider.none)
+                        MochiDivider(
+                          indent: _indent(theme),
+                          endIndent: divider == MochiTileDivider.indented ? g.space.md : 0,
+                        ),
+                      child,
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

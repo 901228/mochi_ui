@@ -14,7 +14,8 @@ pre-commit:
 
     # only run tests on staged files
     flutter-test:
-      glob: "test/**/*.dart"
+      # Test files only: helpers in test/support have no main.
+      glob: "test/**/*_test.dart"
       run: fvm flutter test {staged_files}
 
     # check pubspec.yaml

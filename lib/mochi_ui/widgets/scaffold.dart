@@ -7,6 +7,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/responsive.dart";
 import "../theme/theme.dart";
+import "shape_shadow.dart";
 
 /// A page: an optional header, the content, and an optional footer, on the theme background —
 /// and, for an app's home, the navigation around it.
@@ -590,21 +591,25 @@ class _DrawerLayerState extends State<_DrawerLayer> {
                                 onHorizontalDragStart: _start,
                                 onHorizontalDragUpdate: _update,
                                 onHorizontalDragEnd: _end,
-                                child: DecoratedBox(
-                                  decoration: ShapeDecoration(
-                                    color: colors.overlay,
-                                    shadows: g.shadows.of(MochiElevation.lg, colors.shadow),
-                                    shape: RoundedSuperellipseBorder(
+                                child: ShapeShadow(
+                                  radius: BorderRadiusDirectional.horizontal(end: g.radius.xl.topLeft),
+                                  shadows: g.shadows.of(MochiElevation.lg, colors.shadow),
+                                  child: DecoratedBox(
+                                    decoration: ShapeDecoration(
+                                      color: colors.overlay,
+                                      shape: RoundedSuperellipseBorder(
+                                        borderRadius: BorderRadiusDirectional.horizontal(
+                                          end: g.radius.xl.topLeft,
+                                        ).resolve(Directionality.of(context)),
+                                      ),
+                                    ),
+                                    child: ClipRSuperellipse(
                                       borderRadius: BorderRadiusDirectional.horizontal(
                                         end: g.radius.xl.topLeft,
                                       ).resolve(Directionality.of(context)),
+                                      // It runs to the screen's top, bottom and leading edge.
+                                      child: SafeArea(right: _rtl, left: !_rtl, child: widget.child),
                                     ),
-                                  ),
-                                  child: ClipRSuperellipse(
-                                    borderRadius: BorderRadiusDirectional.horizontal(end: g.radius.xl.topLeft)
-                                        .resolve(Directionality.of(context)),
-                                    // It runs to the screen's top, bottom and leading edge.
-                                    child: SafeArea(right: _rtl, left: !_rtl, child: widget.child),
                                   ),
                                 ),
                               ),

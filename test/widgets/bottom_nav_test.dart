@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+import "../support/surface.dart";
+
 void main() {
   Widget app(Widget child, {EdgeInsets padding = EdgeInsets.zero, bool touch = false}) => MochiApp(
     themeMode: MochiThemeMode.light,
@@ -201,18 +203,7 @@ void main() {
   });
 
   group("floating", () {
-    ShapeDecoration barShape(WidgetTester tester) =>
-        tester
-                .widget<DecoratedBox>(
-                  find
-                      .descendant(
-                        of: find.byType(MochiBottomNav<String>),
-                        matching: find.byType(DecoratedBox),
-                      )
-                      .first,
-                )
-                .decoration
-            as ShapeDecoration;
+    ShapeDecoration barShape(WidgetTester tester) => surfaceOf(tester, find.byType(MochiBottomNav<String>));
 
     Finder barBox() =>
         find.descendant(of: find.byType(MochiBottomNav<String>), matching: find.byType(DecoratedBox)).first;
@@ -231,7 +222,7 @@ void main() {
       final shape = barShape(tester).shape as RoundedSuperellipseBorder;
       expect(shape.borderRadius, g.radius.xl);
       expect(shape.side.color.a, 0);
-      expect(barShape(tester).shadows, isNotEmpty);
+      expect(shadowsOf(tester, find.byType(MochiBottomNav<String>)), isNotEmpty);
     });
 
     testWidgets("the chosen destination is a block inside it, its corner following the bar's", (
@@ -278,7 +269,7 @@ void main() {
     testWidgets("can be asked for on an outlined theme, and docked on a raised one", (tester) async {
       await tester.pumpWidget(nav(variant: MochiBottomNavVariant.floating));
       await tester.pumpAndSettle();
-      expect(barShape(tester).shadows, isNull);
+      expect(shadowsOf(tester, find.byType(MochiBottomNav<String>)), isNull);
       expect((barShape(tester).shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
 
       await tester.pumpWidget(nav(touch: true, variant: MochiBottomNavVariant.docked));

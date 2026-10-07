@@ -15,6 +15,7 @@ import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "text_field.dart";
+import "shape_shadow.dart";
 
 /// Picks a colour: the shade square, a hue bar, an optional opacity bar, a hex field and a row of
 /// swatches.
@@ -576,15 +577,18 @@ class _Knob extends StatelessWidget {
 
     return SizedBox.square(
       dimension: diameter,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: color,
-          shadows: g.shadows.of(MochiElevation.sm, theme.colors.shadow),
-          shape: RoundedSuperellipseBorder(
-            borderRadius: g.radius.full,
-            // Plain white rather than a theme colour: the knob sits on the colours themselves,
-            // where the page's own ground says nothing about what will read.
-            side: const BorderSide(color: Color(0xFFFFFFFF), width: 3),
+      child: ShapeShadow(
+        radius: g.radius.full,
+        shadows: g.shadows.of(MochiElevation.sm, theme.colors.shadow),
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            color: color,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: g.radius.full,
+              // Plain white rather than a theme colour: the knob sits on the colours themselves,
+              // where the page's own ground says nothing about what will read.
+              side: const BorderSide(color: Color(0xFFFFFFFF), width: 3),
+            ),
           ),
         ),
       ),

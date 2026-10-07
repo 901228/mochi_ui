@@ -178,17 +178,25 @@ void main() {
     await gesture.moveBy(const Offset(0, 30));
     await tester.pumpAndSettle();
 
-    // The lift is the one shadow with nothing filled in behind it; the cards have their own.
+    // The lift is the one shadow with nothing filled in behind it that is not a card's own: those
+    // are cast by the `ShapeShadow` under each card.
+    final cards = find
+        .descendant(of: find.byType(MochiCard), matching: find.byType(DecoratedBox))
+        .evaluate()
+        .map((e) => e.widget)
+        .toSet();
     final shadowed = find.byWidgetPredicate((widget) {
       final decoration = widget is DecoratedBox ? widget.decoration : null;
-      return decoration is ShapeDecoration &&
+      return !cards.contains(widget) &&
+          decoration is BoxDecoration &&
           decoration.color == null &&
-          decoration.shadows?.isNotEmpty == true;
+          decoration.boxShadow?.isNotEmpty == true &&
+          decoration.borderRadius != null;
     });
     expect(shadowed, findsOneWidget, reason: "the row being carried casts a shadow");
     expect(
       tester.widget<DecoratedBox>(shadowed).decoration,
-      isA<ShapeDecoration>().having((d) => d.shape, "shape", isA<RoundedSuperellipseBorder>()),
+      isA<BoxDecoration>().having((d) => d.borderRadius, "corners", isNot(BorderRadius.zero)),
       reason: "a square shadow under a rounded row is a grey box nobody drew",
     );
     // And it keeps out of the gap between rows: cast around the padded row it would stand proud

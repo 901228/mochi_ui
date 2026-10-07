@@ -13,6 +13,7 @@ import "../theme/tone.dart";
 import "collapsible.dart";
 import "state_transition.dart";
 import "tappable.dart";
+import "shape_shadow.dart";
 
 /// How a [MochiCard] stands off the page.
 ///
@@ -274,11 +275,6 @@ class _CardSurface extends StatelessWidget {
               st,
             ),
           ),
-          shadows: switch (appearance) {
-            .elevated when raised => g.shadows.raised(shadowStep, colors),
-            .elevated => g.shadows.of(elevation, colors.shadow),
-            _ => null,
-          },
           shape: RoundedSuperellipseBorder(
             borderRadius: radius,
             side: BorderSide(
@@ -299,19 +295,27 @@ class _CardSurface extends StatelessWidget {
           ),
         );
 
-        return DecoratedBox(
-          decoration: decoration,
-          // The clip is the card's own outline, with the padding inside it: a row's hover fill and
-          // a scrollbar's thumb still stop at the corners, and the padded content is never reached
-          // by the clip at all. Inside the padding it would round the *content's* corners by the
-          // card's radius instead, which bites a piece out of anything in one of them.
-          child: ClipRSuperellipse(
-            borderRadius: radius,
-            child: Padding(
-              // The border's width is added the way a Container adds a decoration's own padding,
-              // so the content sits inside the line rather than under it.
-              padding: (padding ?? EdgeInsets.all(g.space.md)).add(decoration.padding),
-              child: child,
+        return ShapeShadow(
+          radius: radius,
+          shadows: switch (appearance) {
+            .elevated when raised => g.shadows.raised(shadowStep, colors),
+            .elevated => g.shadows.of(elevation, colors.shadow),
+            _ => null,
+          },
+          child: DecoratedBox(
+            decoration: decoration,
+            // The clip is the card's own outline, with the padding inside it: a row's hover fill and
+            // a scrollbar's thumb still stop at the corners, and the padded content is never reached
+            // by the clip at all. Inside the padding it would round the *content's* corners by the
+            // card's radius instead, which bites a piece out of anything in one of them.
+            child: ClipRSuperellipse(
+              borderRadius: radius,
+              child: Padding(
+                // The border's width is added the way a Container adds a decoration's own padding,
+                // so the content sits inside the line rather than under it.
+                padding: (padding ?? EdgeInsets.all(g.space.md)).add(decoration.padding),
+                child: child,
+              ),
             ),
           ),
         );

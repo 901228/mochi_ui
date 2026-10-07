@@ -11,6 +11,7 @@ import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "value_transition.dart";
+import "shape_shadow.dart";
 
 /// How a [MochiSegmentedControl] looks.
 ///
@@ -176,14 +177,17 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
               ),
             ),
           )
-        : Container(
-            decoration: ShapeDecoration(
-              // Raised out of the track, the way a chosen segment reads on iOS.
-              color: neutral ? colors.overlay : colors.softOn(tone, colors.surface),
-              shadows: neutral ? g.shadows.of(MochiElevation.sm, colors.shadow) : const [],
-              shape: RoundedSuperellipseBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity)),
+        : ShapeShadow(
+            radius: BorderRadius.all(Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity))),
+            shadows: neutral ? g.shadows.of(MochiElevation.sm, colors.shadow) : const [],
+            child: Container(
+              decoration: ShapeDecoration(
+                // Raised out of the track, the way a chosen segment reads on iOS.
+                color: neutral ? colors.overlay : colors.softOn(tone, colors.surface),
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity)),
+                  ),
                 ),
               ),
             ),

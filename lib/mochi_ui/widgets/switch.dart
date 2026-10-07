@@ -7,6 +7,7 @@ import "focus_ring.dart";
 import "state_transition.dart";
 import "value_transition.dart";
 import "tappable.dart";
+import "shape_shadow.dart";
 
 /// An on/off switch. Pass a null [onChanged] (or `enabled: false`) to disable it.
 class MochiSwitch extends StatelessWidget {
@@ -116,12 +117,15 @@ class _SwitchSurface extends StatelessWidget {
               alignment: Alignment(blend.number((st) => st.contains(WidgetState.selected) ? 1 : -1), 0),
               child: SizedBox.square(
                 dimension: thumbSize,
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: blend.color(thumb),
-                    shadows: theme.geometry.shadows.of(.sm, colors.shadow),
-                    shape: RoundedSuperellipseBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(thumbSize / 2)),
+                child: ShapeShadow(
+                  radius: BorderRadius.all(Radius.circular(thumbSize / 2)),
+                  shadows: theme.geometry.shadows.of(.sm, colors.shadow),
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      color: blend.color(thumb),
+                      shape: RoundedSuperellipseBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(thumbSize / 2)),
+                      ),
                     ),
                   ),
                 ),

@@ -5,6 +5,7 @@ import "../theme/responsive.dart";
 import "../theme/theme.dart";
 import "sheet.dart";
 import "transitions.dart";
+import "shape_shadow.dart";
 
 /// Which side of the anchor the popover sits on.
 ///
@@ -422,23 +423,26 @@ class MochiPopoverSurface extends StatelessWidget {
     final g = theme.geometry;
     final raised = theme.layering == .raised;
 
-    return DecoratedBox(
-      decoration: ShapeDecoration(
-        color: theme.colors.overlay,
-        shadows: raised
-            ? g.shadows.raised(MochiElevation.lg, theme.colors)
-            : g.shadows.of(MochiElevation.lg, theme.colors.shadow),
-        shape: RoundedSuperellipseBorder(
-          borderRadius: g.radius.md,
-          side: BorderSide(
-            color: raised ? theme.colors.overlay.withValues(alpha: 0) : theme.colors.border,
-            width: g.borderWidth,
+    return ShapeShadow(
+      radius: g.radius.md,
+      shadows: raised
+          ? g.shadows.raised(MochiElevation.lg, theme.colors)
+          : g.shadows.of(MochiElevation.lg, theme.colors.shadow),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: theme.colors.overlay,
+          shape: RoundedSuperellipseBorder(
+            borderRadius: g.radius.md,
+            side: BorderSide(
+              color: raised ? theme.colors.overlay.withValues(alpha: 0) : theme.colors.border,
+              width: g.borderWidth,
+            ),
           ),
         ),
-      ),
-      child: ClipRSuperellipse(
-        borderRadius: g.radius.md,
-        child: Padding(padding: padding ?? EdgeInsets.all(g.space.xs), child: child),
+        child: ClipRSuperellipse(
+          borderRadius: g.radius.md,
+          child: Padding(padding: padding ?? EdgeInsets.all(g.space.xs), child: child),
+        ),
       ),
     );
   }

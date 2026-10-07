@@ -4,6 +4,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/theme.dart";
 import "../theme/typography.dart";
+import "shape_shadow.dart";
 
 /// Shows [message] on hover (mouse), long press (touch), or keyboard focus.
 ///
@@ -105,19 +106,22 @@ class _TooltipBubble extends StatelessWidget {
         scale: Tween(begin: 0.96, end: 1.0).animate(animation),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 280),
-          child: DecoratedBox(
-            decoration: ShapeDecoration(
-              color: tone.base,
-              shadows: theme.geometry.shadows.of(MochiElevation.md, theme.colors.shadow),
-              shape: RoundedSuperellipseBorder(borderRadius: theme.geometry.radius.xs),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: DefaultTextStyle(
-                style: theme.typography.body.xs.withWeight(FontWeight.w500).copyWith(color: tone.onBase),
-                child: IconTheme.merge(
-                  data: IconThemeData(color: tone.onBase, size: 14),
-                  child: child,
+          child: ShapeShadow(
+            radius: theme.geometry.radius.xs,
+            shadows: theme.geometry.shadows.of(MochiElevation.md, theme.colors.shadow),
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
+                color: tone.base,
+                shape: RoundedSuperellipseBorder(borderRadius: theme.geometry.radius.xs),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: DefaultTextStyle(
+                  style: theme.typography.body.xs.withWeight(FontWeight.w500).copyWith(color: tone.onBase),
+                  child: IconTheme.merge(
+                    data: IconThemeData(color: tone.onBase, size: 14),
+                    child: child,
+                  ),
                 ),
               ),
             ),

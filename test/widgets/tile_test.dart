@@ -2,6 +2,8 @@ import "package:flutter/widgets.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:mochi_ui/mochi_ui.dart";
 
+import "../support/surface.dart";
+
 void main() {
   Widget app(Widget child, {bool touch = false}) => MochiApp(
     themeMode: MochiThemeMode.light,
@@ -154,13 +156,7 @@ void main() {
   });
 
   group("raised group", () {
-    ShapeDecoration groupDecoration(WidgetTester tester) =>
-        tester
-                .widget<DecoratedBox>(
-                  find.descendant(of: find.byType(MochiTileGroup), matching: find.byType(DecoratedBox)).first,
-                )
-                .decoration
-            as ShapeDecoration;
+    ShapeDecoration groupDecoration(WidgetTester tester) => surfaceOf(tester, find.byType(MochiTileGroup));
 
     Widget group({required bool touch}) => app(
       touch: touch,
@@ -176,12 +172,14 @@ void main() {
       await tester.pumpWidget(group(touch: false));
       await tester.pumpAndSettle();
       final flat = groupDecoration(tester);
+      final flatShadows = shadowsOf(tester, find.byType(MochiTileGroup));
 
       await tester.pumpWidget(group(touch: true));
       await tester.pumpAndSettle();
       final raised = groupDecoration(tester);
+      final raisedShadows = shadowsOf(tester, find.byType(MochiTileGroup));
       expect(raised.color, MochiColors.light.overlay);
-      expect(raised.shadows, isNotEmpty);
+      expect(raisedShadows, isNotEmpty);
       expect((raised.shape as RoundedSuperellipseBorder).side.color.a, 0);
       expect(
         (raised.shape as RoundedSuperellipseBorder).borderRadius,
@@ -190,7 +188,7 @@ void main() {
 
       // The outlined group keeps its surface, line and no shadow.
       expect(flat.color, MochiColors.light.surface);
-      expect(flat.shadows, isNull);
+      expect(flatShadows, isNull);
       expect((flat.shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
     });
 

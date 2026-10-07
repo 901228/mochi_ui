@@ -11,6 +11,7 @@ import "field_frame.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "value_transition.dart";
+import "shape_shadow.dart";
 
 /// A number picked by sliding: inspection time, a volume, a weight.
 ///
@@ -424,14 +425,17 @@ class _Thumb extends StatelessWidget {
           radius: full,
           child: SizedBox.square(
             dimension: size,
-            child: DecoratedBox(
-              decoration: ShapeDecoration(
-                color: color,
-                shadows: shadows,
-                shape: RoundedSuperellipseBorder(
-                  borderRadius: full,
-                  // Thick enough to read as the intent's colour at a glance.
-                  side: BorderSide(color: border, width: diameter / 5),
+            child: ShapeShadow(
+              radius: full,
+              shadows: shadows,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: color,
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: full,
+                    // Thick enough to read as the intent's colour at a glance.
+                    side: BorderSide(color: border, width: diameter / 5),
+                  ),
                 ),
               ),
             ),

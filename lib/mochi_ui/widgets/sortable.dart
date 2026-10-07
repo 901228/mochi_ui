@@ -153,15 +153,16 @@ class _Carried extends StatelessWidget {
           child: Stack(
             children: [
               // Behind the row and inside its gap, so what shows is the blur around the row
-              // itself. A shape, not a plain box: a shadow cast off a rectangle behind a row
-              // with rounded corners is a grey square nobody drew.
+              // itself. Rounded, not a plain box: a shadow cast off a rectangle behind a row with
+              // rounded corners is a grey square nobody drew. A rounded rectangle rather than the
+              // superellipse itself, for the reason `ShapeShadow` gives.
               Positioned.fill(
                 child: Padding(
                   padding: gap,
                   child: DecoratedBox(
-                    decoration: ShapeDecoration(
-                      shape: RoundedSuperellipseBorder(borderRadius: radius ?? theme.geometry.radius.md),
-                      shadows: [for (final shadow in shadows) shadow.scale(t)],
+                    decoration: BoxDecoration(
+                      borderRadius: radius ?? theme.geometry.radius.md,
+                      boxShadow: [for (final shadow in shadows) shadow.scale(t)],
                     ),
                   ),
                 ),

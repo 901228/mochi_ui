@@ -80,6 +80,36 @@ void main() {
     expect(find.byType(MochiSheet), findsOneWidget, reason: "the tier is what decides, not the window");
   });
 
+  testWidgets("no surface casts its shadow off a superellipse", (tester) async {
+    // A blur along an arbitrary path is redrawn whole on every frame on the web, and a raised page
+    // full of them scrolled at 18 frames a second; shadows go on a `ShapeShadow` instead. Every
+    // page, both layerings, so one put back on a ShapeDecoration anywhere turns up here.
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const PreviewApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (final layering in ["outlined", "raised"]) {
+      await tester.tap(find.widgetWithText(MochiButton, layering).first);
+      await tester.pump(const Duration(milliseconds: 400));
+      for (final page in ["foundations", "buttons", "inputs", "navigation", "content", "dates", "overlays"]) {
+        await tester.tap(find.text(page).first);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+
+        final offenders = [
+          for (final element in find.byType(DecoratedBox, skipOffstage: false).evaluate())
+            if ((element.widget as DecoratedBox).decoration case final ShapeDecoration d
+                when d.shadows?.isNotEmpty ?? false)
+              element.widget,
+        ];
+        expect(offenders, isEmpty, reason: "$layering / $page");
+      }
+    }
+  });
+
   testWidgets("no page overflows at any viewport", (tester) async {
     // The gallery is where every component is laid out at once, so this is the cheapest check
     // that none of them runs off a narrow page — which is what a phone is.
