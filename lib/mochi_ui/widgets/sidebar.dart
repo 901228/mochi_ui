@@ -239,7 +239,7 @@ class MochiSidebarItem extends StatelessWidget {
                         ? MochiColors.stateLayer(colors.softOn(tone, colors.surface), tone.onSoft, st)
                         : MochiColors.stateLayer(colors.surface, colors.foreground, st),
                   ),
-                  shape: RoundedSuperellipseBorder(borderRadius: g.radius.sm),
+                  shape: g.shape(borderRadius: g.radius.sm),
                 ),
                 child: IconTheme.merge(
                   data: IconThemeData(color: foreground, size: metrics.iconSize),

@@ -190,7 +190,7 @@ class _SkeletonBox extends StatelessWidget {
     final colors = theme.colors;
     final shape = round
         ? const CircleBorder()
-        : RoundedSuperellipseBorder(borderRadius: radius ?? theme.geometry.radius.sm);
+        : theme.geometry.shape(borderRadius: radius ?? theme.geometry.radius.sm);
 
     // Between the page and its lines: a fill that reads as "something belongs here", not as a
     // filled-in answer.

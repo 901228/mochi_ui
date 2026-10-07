@@ -131,7 +131,8 @@ class MochiTheme {
   T? maybeExtension<T extends MochiThemeExtension<T>>() => _extensions[T] as T?;
 
   /// Replaces the given fields. [extensions] are merged by type: entries replace existing
-  /// extensions of the same type, others are kept. [radius] replaces just the geometry's corners.
+  /// extensions of the same type, others are kept. [radius] replaces just the geometry's corners,
+  /// and [corners] just their curve.
   ///
   /// [geometry] is taken before [density] is applied, as it was passed in: don't hand back
   /// `theme.geometry`, which already has it, or the spacing is scaled twice.
@@ -140,6 +141,7 @@ class MochiTheme {
     MochiTypography? typography,
     MochiGeometry? geometry,
     MochiRadius? radius,
+    MochiCorners? corners,
     double? density,
     MochiIcons? icons,
     MochiStrings? strings,
@@ -150,10 +152,7 @@ class MochiTheme {
   }) => MochiTheme._raw(
     colors: colors ?? this.colors,
     typography: typography ?? this.typography,
-    geometry: switch ((geometry ?? _geometry, radius)) {
-      (final geometry, null) => geometry,
-      (final geometry, final radius?) => geometry.copyWith(radius: radius),
-    },
+    geometry: (geometry ?? _geometry).copyWith(radius: radius, corners: corners),
     density: density ?? this.density,
     icons: icons ?? this.icons,
     strings: strings ?? this.strings,

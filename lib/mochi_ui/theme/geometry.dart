@@ -229,6 +229,23 @@ class MochiShadows {
   int get hashCode => Object.hash(Object.hashAll(sm), Object.hashAll(md), Object.hashAll(lg));
 }
 
+/// The curve every corner in the kit is drawn with.
+enum MochiCorners {
+  /// A superellipse: the curve eases into the straight edge rather than meeting it at a point,
+  /// which is what makes a corner look soft rather than cut. Native Impeller draws it as cheaply
+  /// as a rounded rectangle.
+  superellipse,
+
+  /// A circular arc. The web's renderers have no superellipse of their own and draw one as an
+  /// arbitrary path, a clip along one most of all, which on an iPhone held every frame at 60ms
+  /// (a page with nothing raised on it as much as one full of shadows); the same page drawn with
+  /// this ran at 6.
+  rounded;
+
+  /// What a platform gets unless told otherwise: [rounded] on the web, [superellipse] elsewhere.
+  static const platform = kIsWeb ? rounded : superellipse;
+}
+
 /// Size and shape tokens shared by components. Colors live in [MochiColors].
 @immutable
 class MochiGeometry {
@@ -241,6 +258,7 @@ class MochiGeometry {
     this.focusRingGap = 2,
     this.pagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     this.toastWidth = 400,
+    this.corners = MochiCorners.platform,
   });
 
   final MochiRadius radius;
@@ -264,6 +282,19 @@ class MochiGeometry {
   /// left, and the queue's deck would have nothing steady to line up with.
   final double toastWidth;
 
+  /// The curve of every corner. Components never name a border shape themselves: they ask [shape]
+  /// for one and wrap their clips in `MochiClip`, so this is the one place it is decided.
+  final MochiCorners corners;
+
+  /// The border for a box with [borderRadius] and [side], drawn with [corners].
+  OutlinedBorder shape({
+    BorderRadiusGeometry borderRadius = BorderRadius.zero,
+    BorderSide side = BorderSide.none,
+  }) => switch (corners) {
+    .superellipse => RoundedSuperellipseBorder(borderRadius: borderRadius, side: side),
+    .rounded => RoundedRectangleBorder(borderRadius: borderRadius, side: side),
+  };
+
   static const standard = MochiGeometry();
 
   MochiGeometry copyWith({
@@ -275,6 +306,7 @@ class MochiGeometry {
     double? focusRingGap,
     EdgeInsets? pagePadding,
     double? toastWidth,
+    MochiCorners? corners,
   }) => MochiGeometry(
     radius: radius ?? this.radius,
     space: space ?? this.space,
@@ -284,6 +316,7 @@ class MochiGeometry {
     focusRingGap: focusRingGap ?? this.focusRingGap,
     pagePadding: pagePadding ?? this.pagePadding,
     toastWidth: toastWidth ?? this.toastWidth,
+    corners: corners ?? this.corners,
   );
 
   /// The spacing and the page padding times [factor]; lines, corners and shadows stay put. See
@@ -302,9 +335,19 @@ class MochiGeometry {
           focusRingWidth == other.focusRingWidth &&
           focusRingGap == other.focusRingGap &&
           pagePadding == other.pagePadding &&
-          toastWidth == other.toastWidth;
+          toastWidth == other.toastWidth &&
+          corners == other.corners;
 
   @override
-  int get hashCode =>
-      Object.hash(radius, space, shadows, borderWidth, focusRingWidth, focusRingGap, pagePadding, toastWidth);
+  int get hashCode => Object.hash(
+    radius,
+    space,
+    shadows,
+    borderWidth,
+    focusRingWidth,
+    focusRingGap,
+    pagePadding,
+    toastWidth,
+    corners,
+  );
 }

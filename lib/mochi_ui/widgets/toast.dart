@@ -65,7 +65,7 @@ class MochiToast extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs),
           decoration: ShapeDecoration(
             color: colors.overlay,
-            shape: RoundedSuperellipseBorder(
+            shape: g.shape(
               borderRadius: g.radius.md,
               // A toast carries its intent in its edge rather than its fill: it sits over the page
               // for a moment, and a block of colour there is more alarm than the message warrants.

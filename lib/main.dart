@@ -39,6 +39,7 @@ class _PreviewAppState extends State<PreviewApp> {
       touch: _touch,
       strings: _zh ? MochiStrings.zhHant : MochiStrings.en,
       radius: _look.radius.value,
+      corners: _look.corners,
       density: _look.density,
       textScale: _look.textScale,
       lightTheme: MochiTheme.light.copyWith(

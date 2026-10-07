@@ -65,7 +65,9 @@
 ## 效能
 
 - [x] **陰影改從圓角矩形投出**：superellipse 上的模糊在 web 每幀整塊重畫，raised 的 30 列 tile group 捲動 raster 52ms（約 18fps）。改用 `ShapeShadow`（下層 `BoxDecoration` 圓角矩形陰影、上層 superellipse 外形）後 16–18ms，接近 outlined 的 10–13ms。gallery smoke test 檢查所有頁面沒有 `ShapeDecoration.shadows`
-- [ ] iPhone 上實測（release web / PWA）
+- [x] iPhone 上實測（release web / PWA）：陰影不是主因，outlined 和 raised 都是 60–70ms
+- [x] **圓角改成 token `MochiGeometry.corners`**：web 預設用圓角矩形（superellipse 在 CanvasKit/Skwasm 是任意路徑，裁切特別貴）。iPhone 上 60–70ms → 約 6ms。原生維持 superellipse
+- [ ] 原生 iOS build 上確認 superellipse 不慢
 
 ## 風險
 

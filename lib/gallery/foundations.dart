@@ -61,7 +61,7 @@ class _GeometrySample extends StatelessWidget {
             height: 72,
             decoration: ShapeDecoration(
               color: colors.overlay,
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: radius,
                 side: BorderSide(color: colors.border, width: g.borderWidth),
               ),

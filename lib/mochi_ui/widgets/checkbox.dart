@@ -137,7 +137,7 @@ class _CheckboxSurface extends StatelessWidget {
             height: size,
             decoration: ShapeDecoration(
               color: blend.color(fill),
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: radius,
                 side: BorderSide(color: blend.color(border), width: g.borderWidth),
               ),

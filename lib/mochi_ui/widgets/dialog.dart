@@ -89,7 +89,7 @@ class MochiDialog extends StatelessWidget {
               // The same ground as a popover: a dialog floats above the page rather than being part
               // of it.
               color: colors.overlay,
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: g.radius.lg,
                 // Transparent, not absent: the line's width stays in the layout.
                 side: BorderSide(

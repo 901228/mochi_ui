@@ -104,6 +104,7 @@ class _Look {
     this.density = 1,
     this.textScale = 1,
     this.layering,
+    this.corners,
     this.brand,
   });
 
@@ -114,6 +115,9 @@ class _Look {
   /// Null follows `touch`, which is what an app that says nothing gets.
   final MochiLayering? layering;
 
+  /// Null is the platform's own: rounded on the web, superellipses elsewhere.
+  final MochiCorners? corners;
+
   /// Null keeps the kit's own primary; anything else goes through `MochiColors.branded`.
   final Color? brand;
 
@@ -123,6 +127,8 @@ class _Look {
     double? textScale,
     MochiLayering? layering,
     bool clearLayering = false,
+    MochiCorners? corners,
+    bool clearCorners = false,
     Color? brand,
     bool clearBrand = false,
   }) => _Look(
@@ -130,6 +136,7 @@ class _Look {
     density: density ?? this.density,
     textScale: textScale ?? this.textScale,
     layering: clearLayering ? null : layering ?? this.layering,
+    corners: clearCorners ? null : corners ?? this.corners,
     brand: clearBrand ? null : brand ?? this.brand,
   );
 }
@@ -173,6 +180,17 @@ class _LookBar extends StatelessWidget {
       const _ThemedText("text", .muted),
       for (final (label, value) in [("0.9×", 0.9), ("1×", 1.0), ("1.2×", 1.2)])
         _choice(label, look.textScale == value, () => onChanged(look.copyWith(textScale: value))),
+      const SizedBox(width: 16),
+      // The curve, not the size: superellipses are what the kit is drawn with, circular arcs are
+      // what the web can afford.
+      const _ThemedText("curve", .muted),
+      _choice("auto", look.corners == null, () => onChanged(look.copyWith(clearCorners: true))),
+      _choice(
+        "superellipse",
+        look.corners == .superellipse,
+        () => onChanged(look.copyWith(corners: .superellipse)),
+      ),
+      _choice("circular", look.corners == .rounded, () => onChanged(look.copyWith(corners: .rounded))),
       const SizedBox(width: 16),
       const _ThemedText("layering", .muted),
       _choice("auto", look.layering == null, () => onChanged(look.copyWith(clearLayering: true))),

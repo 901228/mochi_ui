@@ -984,7 +984,7 @@ class _ColorDot extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: color,
-          shape: RoundedSuperellipseBorder(
+          shape: theme.geometry.shape(
             borderRadius: theme.geometry.radius.xs,
             side: BorderSide(color: theme.colors.border, width: theme.geometry.borderWidth),
           ),

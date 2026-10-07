@@ -4,6 +4,7 @@ import "../theme/geometry.dart";
 import "../theme/motion.dart";
 import "../theme/strings.dart";
 import "../theme/theme.dart";
+import "clip.dart";
 import "modal_heading.dart";
 import "transitions.dart";
 import "shape_shadow.dart";
@@ -100,7 +101,7 @@ class MochiSheet extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: colors.overlay,
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: _radius(g),
                 side: BorderSide(
                   color: raised ? colors.overlay.withValues(alpha: 0) : colors.border,
@@ -108,7 +109,7 @@ class MochiSheet extends StatelessWidget {
                 ),
               ),
             ),
-            child: ClipRSuperellipse(
+            child: MochiClip(
               borderRadius: _radius(g),
               child: Column(
                 // A sheet from an edge fills the screen across its own axis and is only as big as
@@ -178,7 +179,7 @@ class _SheetHandle extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: theme.colors.border,
-              shape: RoundedSuperellipseBorder(borderRadius: theme.geometry.radius.full),
+              shape: theme.geometry.shape(borderRadius: theme.geometry.radius.full),
             ),
           ),
         ),

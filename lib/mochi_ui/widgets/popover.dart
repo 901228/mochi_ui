@@ -3,6 +3,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/responsive.dart";
 import "../theme/theme.dart";
+import "clip.dart";
 import "sheet.dart";
 import "transitions.dart";
 import "shape_shadow.dart";
@@ -431,7 +432,7 @@ class MochiPopoverSurface extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: theme.colors.overlay,
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: g.radius.md,
             side: BorderSide(
               color: raised ? theme.colors.overlay.withValues(alpha: 0) : theme.colors.border,
@@ -439,7 +440,7 @@ class MochiPopoverSurface extends StatelessWidget {
             ),
           ),
         ),
-        child: ClipRSuperellipse(
+        child: MochiClip(
           borderRadius: g.radius.md,
           child: Padding(padding: padding ?? EdgeInsets.all(g.space.xs), child: child),
         ),

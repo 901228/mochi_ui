@@ -160,7 +160,7 @@ class MochiBottomNav<T> extends StatelessWidget {
               child: DecoratedBox(
                 decoration: ShapeDecoration(
                   color: ground,
-                  shape: RoundedSuperellipseBorder(
+                  shape: g.shape(
                     borderRadius: g.radius.xl,
                     side: raised || !border
                         ? BorderSide(color: ground.withValues(alpha: 0), width: g.borderWidth)
@@ -260,7 +260,7 @@ class _Destination<T> extends StatelessWidget {
                 decoration: floating
                     ? ShapeDecoration(
                         color: fill,
-                        shape: RoundedSuperellipseBorder(borderRadius: cell),
+                        shape: g.shape(borderRadius: cell),
                       )
                     : null,
                 child: Column(
@@ -275,7 +275,7 @@ class _Destination<T> extends StatelessWidget {
                               color: fill,
                               // `sm`, not the floating cell's `lg`: the block is little taller than
                               // the icon, and a corner past half its height would round it into a pill.
-                              shape: RoundedSuperellipseBorder(borderRadius: g.radius.sm),
+                              shape: g.shape(borderRadius: g.radius.sm),
                             ),
                       child: Stack(
                         clipBehavior: Clip.none,

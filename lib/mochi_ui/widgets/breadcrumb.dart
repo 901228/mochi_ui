@@ -146,7 +146,7 @@ class _Step extends StatelessWidget {
               color: blend.color(
                 (st) => MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
               ),
-              shape: RoundedSuperellipseBorder(borderRadius: g.radius.xs),
+              shape: g.shape(borderRadius: g.radius.xs),
             ),
             child: content(
               blend.color(

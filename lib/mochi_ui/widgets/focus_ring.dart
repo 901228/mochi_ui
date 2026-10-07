@@ -75,7 +75,7 @@ class MochiFocusRing extends StatelessWidget {
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(
+                  shape: g.shape(
                     borderRadius: ringRadius,
                     side: BorderSide(
                       color: theme.colors.focusRing,

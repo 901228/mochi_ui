@@ -110,6 +110,35 @@ void main() {
     }
   });
 
+  testWidgets("with circular corners, no page draws a superellipse", (tester) async {
+    // The web cannot afford them, so the token has to reach every corner on every page: one left
+    // behind is a path clip on every frame.
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(const PreviewApp());
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.widgetWithText(MochiButton, "circular").first);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (final page in ["foundations", "buttons", "inputs", "navigation", "content", "dates", "overlays"]) {
+      await tester.tap(find.text(page).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      final shapes = [
+        for (final element in find.byWidgetPredicate((_) => true, skipOffstage: false).evaluate())
+          if (element.widget
+              case DecoratedBox(decoration: ShapeDecoration(:final shape)) ||
+                  Container(decoration: ShapeDecoration(:final shape)))
+            shape,
+      ];
+      expect(shapes.whereType<RoundedSuperellipseBorder>(), isEmpty, reason: page);
+      expect(find.byType(ClipRSuperellipse, skipOffstage: false), findsNothing, reason: page);
+    }
+  });
+
   testWidgets("no page overflows at any viewport", (tester) async {
     // The gallery is where every component is laid out at once, so this is the cheapest check
     // that none of them runs off a narrow page — which is what a phone is.

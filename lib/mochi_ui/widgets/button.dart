@@ -369,7 +369,7 @@ class _ButtonSurface extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: iconOnly ? 0 : m.horizontalPadding),
               decoration: ShapeDecoration(
                 color: blend.color((st) => s.background(colors, st)),
-                shape: RoundedSuperellipseBorder(
+                shape: theme.geometry.shape(
                   borderRadius: radius,
                   side: BorderSide(
                     color: blend.color((st) => s.border(colors, st)),

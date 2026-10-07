@@ -251,7 +251,7 @@ class _Header extends StatelessWidget {
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: blend.color((st) => MochiColors.stateLayer(clear, colors.foreground, st)),
-            shape: RoundedSuperellipseBorder(borderRadius: radius),
+            shape: theme.geometry.shape(borderRadius: radius),
           ),
           child: Opacity(
             opacity: enabled ? 1 : 0.4,

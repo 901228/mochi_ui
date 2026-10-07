@@ -318,7 +318,7 @@ class _TreeRow<T extends Object> extends StatelessWidget {
                         ? MochiColors.stateLayer(colors.softOn(tone, colors.surface), tone.onSoft, st)
                         : MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
                   ),
-                  shape: RoundedSuperellipseBorder(borderRadius: g.radius.xs),
+                  shape: g.shape(borderRadius: g.radius.xs),
                 ),
                 child: IconTheme.merge(
                   data: IconThemeData(color: foreground, size: iconSize),

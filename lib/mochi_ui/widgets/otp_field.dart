@@ -324,7 +324,7 @@ class _BoxState extends State<_Box> with SingleTickerProviderStateMixin {
         alignment: Alignment.center,
         decoration: ShapeDecoration(
           color: colors.surface,
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: m.radius(g.radius),
             side: BorderSide(
               width: g.borderWidth,
@@ -389,7 +389,7 @@ class _Caret extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: color,
-          shape: const RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(1))),
+          shape: context.theme.geometry.shape(borderRadius: BorderRadius.all(Radius.circular(1))),
         ),
       ),
     );

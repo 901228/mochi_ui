@@ -111,7 +111,7 @@ class _SwitchSurface extends StatelessWidget {
             padding: EdgeInsets.all(inset),
             decoration: ShapeDecoration(
               color: blend.color(track),
-              shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.all(Radius.circular(height / 2))),
+              shape: theme.geometry.shape(borderRadius: BorderRadius.all(Radius.circular(height / 2))),
             ),
             child: Align(
               alignment: Alignment(blend.number((st) => st.contains(WidgetState.selected) ? 1 : -1), 0),
@@ -123,7 +123,7 @@ class _SwitchSurface extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: ShapeDecoration(
                       color: blend.color(thumb),
-                      shape: RoundedSuperellipseBorder(
+                      shape: theme.geometry.shape(
                         borderRadius: BorderRadius.all(Radius.circular(thumbSize / 2)),
                       ),
                     ),

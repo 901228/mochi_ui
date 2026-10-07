@@ -323,7 +323,7 @@ class _ShadeAreaState extends State<_ShadeArea> {
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _ShapePainter(
-                      shape: RoundedSuperellipseBorder(
+                      shape: g.shape(
                         borderRadius: radius,
                         // A hairline, or a white square on a light page has no edge at all.
                         side: BorderSide(color: colors.border, width: g.borderWidth),
@@ -458,7 +458,7 @@ class _ChannelBarState extends State<_ChannelBar> {
     final g = theme.geometry;
     final thumb = theme.touch ? 24.0 : 20.0;
     final height = theme.touch ? 14.0 : 12.0;
-    final shape = RoundedSuperellipseBorder(borderRadius: g.radius.full);
+    final shape = g.shape(borderRadius: g.radius.full);
 
     final bar = LayoutBuilder(
       builder: (context, constraints) {
@@ -583,7 +583,7 @@ class _Knob extends StatelessWidget {
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: color,
-            shape: RoundedSuperellipseBorder(
+            shape: g.shape(
               borderRadius: g.radius.full,
               // Plain white rather than a theme colour: the knob sits on the colours themselves,
               // where the page's own ground says nothing about what will read.
@@ -612,7 +612,7 @@ class _Sample extends StatelessWidget {
       dimension: size,
       child: CustomPaint(
         painter: _ShapePainter(
-          shape: RoundedSuperellipseBorder(
+          shape: theme.geometry.shape(
             borderRadius: theme.geometry.radius.xs,
             side: BorderSide(color: colors.border, width: theme.geometry.borderWidth),
           ),
@@ -654,7 +654,7 @@ class _Swatch extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: color,
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: g.radius.sm,
                 side: BorderSide(
                   width: g.borderWidth * (selected ? 2 : 1),

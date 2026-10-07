@@ -365,7 +365,7 @@ class _Track extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: color,
-              shape: RoundedSuperellipseBorder(borderRadius: radius),
+              shape: context.theme.geometry.shape(borderRadius: radius),
             ),
           ),
         ),
@@ -377,7 +377,7 @@ class _Track extends StatelessWidget {
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 color: filled,
-                shape: RoundedSuperellipseBorder(borderRadius: radius),
+                shape: context.theme.geometry.shape(borderRadius: radius),
               ),
             ),
           ),
@@ -431,7 +431,7 @@ class _Thumb extends StatelessWidget {
               child: DecoratedBox(
                 decoration: ShapeDecoration(
                   color: color,
-                  shape: RoundedSuperellipseBorder(
+                  shape: context.theme.geometry.shape(
                     borderRadius: full,
                     // Thick enough to read as the intent's colour at a glance.
                     side: BorderSide(color: border, width: diameter / 5),

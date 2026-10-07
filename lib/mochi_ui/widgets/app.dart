@@ -28,6 +28,7 @@ class MochiApp extends StatelessWidget {
     this.touch,
     this.strings,
     this.radius,
+    this.corners,
     this.density,
     this.textScale = 1,
     this.toastAlignment,
@@ -46,6 +47,7 @@ class MochiApp extends StatelessWidget {
     this.touch,
     this.strings,
     this.radius,
+    this.corners,
     this.density,
     this.textScale = 1,
     this.toastAlignment,
@@ -74,6 +76,9 @@ class MochiApp extends StatelessWidget {
   /// Overrides `geometry.radius` of both themes: the app's corners, from [MochiRadius.sharp]
   /// through [MochiRadius.standard] to [MochiRadius.pill].
   final MochiRadius? radius;
+
+  /// Overrides `geometry.corners` of both themes. Defaults to [MochiCorners.platform].
+  final MochiCorners? corners;
 
   /// Overrides [MochiTheme.density] of both themes: how tightly spacing and controls are packed.
   final double? density;
@@ -115,6 +120,7 @@ class MochiApp extends StatelessWidget {
         strings: strings,
         density: density,
         radius: radius,
+        corners: corners,
       ),
       child: Builder(
         builder: (context) => ColoredBox(

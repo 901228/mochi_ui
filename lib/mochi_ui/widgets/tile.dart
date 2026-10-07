@@ -6,6 +6,7 @@ import "../theme/colors.dart";
 import "../theme/geometry.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
+import "clip.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
@@ -337,7 +338,7 @@ class MochiTileGroup extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: ground,
-              shape: RoundedSuperellipseBorder(
+              shape: g.shape(
                 borderRadius: radius,
                 // Transparent, not absent: the line's width stays in the layout.
                 side: BorderSide(
@@ -347,7 +348,7 @@ class MochiTileGroup extends StatelessWidget {
               ),
             ),
             // Clipped so a row's hover tint follows the card's corners.
-            child: ClipRSuperellipse(
+            child: MochiClip(
               borderRadius: radius,
               child: _TileGroupScope(
                 reservePrefix: reservePrefix,

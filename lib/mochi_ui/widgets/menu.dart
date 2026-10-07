@@ -228,7 +228,7 @@ class _MenuItemSurface extends StatelessWidget {
             child: Container(
               decoration: ShapeDecoration(
                 color: blend.color(background),
-                shape: RoundedSuperellipseBorder(borderRadius: g.radius.xs),
+                shape: g.shape(borderRadius: g.radius.xs),
               ),
               padding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: metrics.padding),
               constraints: BoxConstraints(minHeight: metrics.minHeight),

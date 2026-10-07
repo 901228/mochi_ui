@@ -313,7 +313,7 @@ class _MochiStepperState extends State<MochiStepper> {
               padding: const EdgeInsets.all(2),
               decoration: ShapeDecoration(
                 color: colors.surface,
-                shape: RoundedSuperellipseBorder(
+                shape: g.shape(
                   borderRadius: radius,
                   side: BorderSide(
                     width: g.borderWidth,

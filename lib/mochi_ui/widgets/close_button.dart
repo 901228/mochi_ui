@@ -132,7 +132,7 @@ class _CloseSurface extends StatelessWidget {
               height: m.diameter,
               decoration: ShapeDecoration(
                 color: blend.color((st) => MochiColors.stateLayer(clear, color, st)),
-                shape: RoundedSuperellipseBorder(borderRadius: radius),
+                shape: theme.geometry.shape(borderRadius: radius),
               ),
               child: Icon(
                 theme.icons.close,

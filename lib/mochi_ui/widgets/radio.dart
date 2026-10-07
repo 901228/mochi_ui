@@ -243,7 +243,7 @@ class _RadioSurface extends StatelessWidget {
               ? tone.base
               : MochiColors.stateLayer(colors.surface, colors.foreground, st),
         ),
-        shape: RoundedSuperellipseBorder(
+        shape: theme.geometry.shape(
           borderRadius: full,
           side: BorderSide(
             width: theme.geometry.borderWidth,
@@ -268,7 +268,7 @@ class _RadioSurface extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: tone.onBase,
-              shape: RoundedSuperellipseBorder(borderRadius: full),
+              shape: theme.geometry.shape(borderRadius: full),
             ),
           ),
         ),
@@ -347,7 +347,7 @@ class _RadioSurface extends StatelessWidget {
               st,
             ),
           ),
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: g.radius.md,
             side: BorderSide(
               width: g.borderWidth,

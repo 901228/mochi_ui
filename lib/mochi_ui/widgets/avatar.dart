@@ -6,6 +6,7 @@ import "../theme/size.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
+import "clip.dart";
 import "overlap.dart";
 import "value_transition.dart";
 
@@ -139,9 +140,9 @@ class _MochiAvatarState extends State<MochiAvatar> {
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: colors.softOn(tone, colors.surface),
-            shape: RoundedSuperellipseBorder(borderRadius: radius),
+            shape: g.shape(borderRadius: radius),
           ),
-          child: ClipRSuperellipse(
+          child: MochiClip(
             borderRadius: radius,
             child: image == null || _failed
                 ? fallback()
@@ -232,7 +233,7 @@ class MochiAvatarGroup extends StatelessWidget {
       padding: EdgeInsets.all(theme.geometry.borderWidth * 2),
       decoration: ShapeDecoration(
         color: theme.colors.surface,
-        shape: RoundedSuperellipseBorder(
+        shape: theme.geometry.shape(
           borderRadius: shape == MochiAvatarShape.circle
               ? theme.geometry.radius.full
               : BorderRadius.all(Radius.circular(diameter / 4)),

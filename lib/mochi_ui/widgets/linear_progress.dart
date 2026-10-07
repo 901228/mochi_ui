@@ -5,6 +5,7 @@ import "../theme/size.dart";
 import "../theme/styles/progress_metrics.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
+import "clip.dart";
 import "value_transition.dart";
 
 /// A progress bar. Without [value] an indeterminate bar slides across the track.
@@ -94,9 +95,9 @@ class _MochiLinearProgressState extends State<MochiLinearProgress> with SingleTi
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: tone.soft,
-          shape: RoundedSuperellipseBorder(borderRadius: radius),
+          shape: context.theme.geometry.shape(borderRadius: radius),
         ),
-        child: ClipRSuperellipse(
+        child: MochiClip(
           borderRadius: radius,
           child: value != null
               ? Align(
@@ -137,7 +138,7 @@ class _MochiLinearProgressState extends State<MochiLinearProgress> with SingleTi
   Widget _bar(Color color, BorderRadius radius) => DecoratedBox(
     decoration: ShapeDecoration(
       color: color,
-      shape: RoundedSuperellipseBorder(borderRadius: radius),
+      shape: context.theme.geometry.shape(borderRadius: radius),
     ),
     child: const SizedBox.expand(),
   );

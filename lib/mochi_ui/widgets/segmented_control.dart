@@ -173,7 +173,7 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
               height: 2,
               decoration: ShapeDecoration(
                 color: neutral ? colors.foreground : tone.base,
-                shape: RoundedSuperellipseBorder(borderRadius: g.radius.full),
+                shape: g.shape(borderRadius: g.radius.full),
               ),
             ),
           )
@@ -184,7 +184,7 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
               decoration: ShapeDecoration(
                 // Raised out of the track, the way a chosen segment reads on iOS.
                 color: neutral ? colors.overlay : colors.softOn(tone, colors.surface),
-                shape: RoundedSuperellipseBorder(
+                shape: g.shape(
                   borderRadius: BorderRadius.all(
                     Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity)),
                   ),
@@ -220,7 +220,7 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
                       ? const Color(0x00000000)
                       : MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
                 ),
-                shape: RoundedSuperellipseBorder(
+                shape: g.shape(
                   borderRadius: BorderRadius.all(
                     Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity)),
                   ),
@@ -305,8 +305,8 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
       decoration: ShapeDecoration(
         color: underline ? null : colors.surface,
         shape: underline
-            ? const RoundedSuperellipseBorder()
-            : RoundedSuperellipseBorder(
+            ? g.shape()
+            : g.shape(
                 borderRadius: radius,
                 side: BorderSide(color: colors.border, width: g.borderWidth),
               ),

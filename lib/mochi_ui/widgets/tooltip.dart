@@ -112,7 +112,7 @@ class _TooltipBubble extends StatelessWidget {
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 color: tone.base,
-                shape: RoundedSuperellipseBorder(borderRadius: theme.geometry.radius.xs),
+                shape: theme.geometry.shape(borderRadius: theme.geometry.radius.xs),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

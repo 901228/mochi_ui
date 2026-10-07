@@ -6,6 +6,7 @@ import "package:flutter/widgets.dart";
 import "../theme/colors.dart";
 import "../theme/geometry.dart";
 import "../theme/size.dart";
+import "clip.dart";
 import "action_scale.dart";
 import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
@@ -275,7 +276,7 @@ class _CardSurface extends StatelessWidget {
               st,
             ),
           ),
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: radius,
             side: BorderSide(
               width: g.borderWidth,
@@ -308,7 +309,7 @@ class _CardSurface extends StatelessWidget {
             // a scrollbar's thumb still stop at the corners, and the padded content is never reached
             // by the clip at all. Inside the padding it would round the *content's* corners by the
             // card's radius instead, which bites a piece out of anything in one of them.
-            child: ClipRSuperellipse(
+            child: MochiClip(
               borderRadius: radius,
               child: Padding(
                 // The border's width is added the way a Container adds a decoration's own padding,

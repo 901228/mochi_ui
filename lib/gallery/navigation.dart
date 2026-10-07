@@ -31,12 +31,12 @@ class _SidebarSampleState extends State<_SidebarSample> {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: theme.colors.background,
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: g.radius.md,
             side: BorderSide(color: theme.colors.border, width: g.borderWidth),
           ),
         ),
-        child: ClipRSuperellipse(
+        child: MochiClip(
           borderRadius: g.radius.md,
           child: Row(
             children: [
@@ -251,12 +251,12 @@ class _BottomNavSampleState extends State<_BottomNavSample> {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: theme.colors.background,
-          shape: RoundedSuperellipseBorder(
+          shape: g.shape(
             borderRadius: g.radius.lg,
             side: BorderSide(color: theme.colors.border, width: g.borderWidth),
           ),
         ),
-        child: ClipRSuperellipse(
+        child: MochiClip(
           borderRadius: g.radius.lg,
           child: Column(
             children: [
@@ -389,7 +389,7 @@ class _MenubarSampleState extends State<_MenubarSample> {
         DecoratedBox(
           decoration: ShapeDecoration(
             color: theme.colors.surface,
-            shape: RoundedSuperellipseBorder(
+            shape: g.shape(
               borderRadius: g.radius.md,
               side: BorderSide(color: theme.colors.border, width: g.borderWidth),
             ),

@@ -630,7 +630,7 @@ class _Day extends StatelessWidget {
                     _ => MochiColors.stateLayer(colors.surface.withValues(alpha: 0), colors.foreground, st),
                   },
                 ),
-                shape: RoundedSuperellipseBorder(
+                shape: g.shape(
                   borderRadius: radius,
                   // Today keeps a ring around it whether or not it is the day being picked.
                   side: today

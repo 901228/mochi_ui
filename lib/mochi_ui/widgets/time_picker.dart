@@ -185,7 +185,7 @@ class _MochiTimeWheelState extends State<MochiTimeWheel> {
                 height: rowHeight,
                 decoration: ShapeDecoration(
                   color: theme.colors.softOn(theme.colors.of(widget.intent), theme.colors.surface),
-                  shape: RoundedSuperellipseBorder(borderRadius: g.radius.sm),
+                  shape: g.shape(borderRadius: g.radius.sm),
                 ),
               ),
             ),

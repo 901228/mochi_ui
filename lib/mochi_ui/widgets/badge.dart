@@ -112,7 +112,7 @@ class MochiBadge extends StatelessWidget {
       padding: EdgeInsetsDirectional.only(start: m.horizontalPadding, end: endPadding),
       decoration: ShapeDecoration(
         color: background,
-        shape: RoundedSuperellipseBorder(
+        shape: g.shape(
           borderRadius: radius,
           side: BorderSide(color: border, width: g.borderWidth),
         ),

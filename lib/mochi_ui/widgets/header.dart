@@ -121,7 +121,7 @@ class MochiHeader extends StatelessWidget {
         ),
         .floating => ShapeDecoration(
           color: theme.colors.surface,
-          shape: RoundedSuperellipseBorder(borderRadius: g.radius.md, side: border),
+          shape: g.shape(borderRadius: g.radius.md, side: border),
         ),
       },
       child: switch (alignment) {

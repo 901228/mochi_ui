@@ -7,6 +7,7 @@ import "package:flutter/widgets.dart";
 import "../theme/geometry.dart";
 import "../theme/responsive.dart";
 import "../theme/theme.dart";
+import "clip.dart";
 import "shape_shadow.dart";
 
 /// A page: an optional header, the content, and an optional footer, on the theme background —
@@ -597,13 +598,13 @@ class _DrawerLayerState extends State<_DrawerLayer> {
                                   child: DecoratedBox(
                                     decoration: ShapeDecoration(
                                       color: colors.overlay,
-                                      shape: RoundedSuperellipseBorder(
+                                      shape: g.shape(
                                         borderRadius: BorderRadiusDirectional.horizontal(
                                           end: g.radius.xl.topLeft,
                                         ).resolve(Directionality.of(context)),
                                       ),
                                     ),
-                                    child: ClipRSuperellipse(
+                                    child: MochiClip(
                                       borderRadius: BorderRadiusDirectional.horizontal(
                                         end: g.radius.xl.topLeft,
                                       ).resolve(Directionality.of(context)),

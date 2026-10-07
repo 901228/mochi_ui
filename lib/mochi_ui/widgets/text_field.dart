@@ -356,7 +356,7 @@ class _MochiTextFieldState extends State<MochiTextField>
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: colors.surface,
-            shape: RoundedSuperellipseBorder(
+            shape: g.shape(
               borderRadius: radius,
               side: BorderSide(
                 width: g.borderWidth,
