@@ -481,6 +481,46 @@ class _ScaffoldSample extends StatelessWidget {
             child: const Align(alignment: .topLeft, child: Text("content")),
           ),
         ),
+        // Taller, so there is a list to scroll behind the bars.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: g.space.xs,
+          children: [
+            SizedBox(
+              width: 300,
+              height: 360,
+              child: MochiCard(
+                padding: EdgeInsets.zero,
+                child: MochiScaffold(
+                  safeArea: false,
+                  extendBody: true,
+                  padding: EdgeInsets.zero,
+                  background: const Color(0x00000000),
+                  header: MochiHeader(variant: MochiHeaderVariant.bordered, title: const Text("Solves")),
+                  footer: MochiBottomNav<String>(
+                    value: "timer",
+                    onChanged: (_) {},
+                    items: const [
+                      MochiBottomNavItem(value: "timer", icon: Icon(TablerIcons.clock), label: Text("Timer")),
+                      MochiBottomNavItem(
+                        value: "stats",
+                        icon: Icon(TablerIcons.chartBar),
+                        label: Text("Stats"),
+                      ),
+                    ],
+                  ),
+                  child: ListView(
+                    children: [
+                      for (var i = 1; i <= 30; i++)
+                        MochiTile(title: Text("Solve $i"), details: Text("${10 + i % 7}.${i}4")),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const _ThemedText("extendBody: the list scrolls behind both bars", .muted),
+          ],
+        ),
         page(
           "title center, back action",
           MochiScaffold(

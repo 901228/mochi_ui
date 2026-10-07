@@ -43,7 +43,7 @@
 
 - [ ] **bottom nav**：touch 模式下離開螢幕邊緣，變成懸浮的膠囊；選中的那一格是一顆比較亮的膠囊
 - [ ] **header**：touch 模式下預設用 `floating` variant
-- [ ] **`MochiScaffold.extendBody`**：內容延伸到 header / footer 底下，並把量出來的高度加進 `MediaQuery.padding`，捲動區自動留空。預設關閉，先在比較頁和 app 各開一頁看
+- [x] **`MochiScaffold.extendBody`**：內容延伸到 header / footer 底下，並把量出來的高度加進 `MediaQuery.padding`，捲動區自動留空。預設關閉，先在比較頁和 app 各開一頁看
 - [ ] 浮起來的 bar 配 `md` 陰影，確認不被 `ClipRect` 裁掉
 
 ## 5. 手機才有的動作

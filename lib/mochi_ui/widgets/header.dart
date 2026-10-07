@@ -86,12 +86,19 @@ class MochiHeader extends StatelessWidget {
       child: title,
     );
 
+    // The status bar's room, when nothing above has already taken it: a scaffold with its bars
+    // over the content leaves it to the header, so the header's own fill reaches the top edge.
+    final inset = MediaQuery.paddingOf(context).top;
+
     return Container(
       margin: switch (variant) {
         .plain || .bordered => EdgeInsets.zero,
-        .floating => EdgeInsets.all(g.space.xs),
+        .floating => EdgeInsets.all(g.space.xs).add(EdgeInsets.only(top: inset)),
       },
-      padding: EdgeInsets.symmetric(horizontal: g.space.md, vertical: g.space.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: g.space.md,
+        vertical: g.space.sm,
+      ).add(EdgeInsets.only(top: variant == .floating ? 0 : inset)),
       decoration: switch (variant) {
         .plain => null,
         .bordered => BoxDecoration(
