@@ -161,6 +161,11 @@ class _BottomNavSampleState extends State<_BottomNavSample> {
       spacing: g.space.lg,
       runSpacing: g.space.lg,
       children: [
+        // A phone's bar: on a wide screen the same list goes in a MochiSidebar instead.
+        const SizedBox(
+          width: double.infinity,
+          child: _ThemedText("A phone's bar — a wide screen puts these in a sidebar instead.", .muted),
+        ),
         phone(
           MochiBottomNav<String>(
             value: _page,

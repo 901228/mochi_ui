@@ -9,6 +9,16 @@ import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
 
+/// How a [MochiBottomNav] sits at the bottom of the screen.
+enum MochiBottomNavVariant {
+  /// Across the whole width, against the bottom edge: a desktop's or a web page's bar.
+  docked,
+
+  /// Clear of the edges, rounded, standing over the content: a phone's bar. Each destination is
+  /// a rounded block of its own inside it, the chosen one filled.
+  floating,
+}
+
 /// One destination in a [MochiBottomNav].
 class MochiBottomNavItem<T> {
   const MochiBottomNavItem({
@@ -43,6 +53,11 @@ class MochiBottomNavItem<T> {
 /// and leaves the page to the app. Destinations share the width equally; the chosen one is
 /// tinted and carries a soft pill behind its icon.
 ///
+/// A phone's bar, not a desktop's: on a wide screen the same destinations belong in a
+/// [MochiSidebar], and an app switches between the two at a breakpoint (`context.responsive`).
+/// Docked is for what is left — a desktop window narrowed to a phone's layout, a phone's browser
+/// that does not count as touch.
+///
 /// It clears the system's bottom inset itself, so it goes straight at the bottom of a
 /// [MochiScaffold] without a `SafeArea` around it.
 class MochiBottomNav<T> extends StatelessWidget {
@@ -55,6 +70,7 @@ class MochiBottomNav<T> extends StatelessWidget {
     this.showLabels = true,
     this.background,
     this.border = true,
+    this.variant,
   });
 
   /// The destination the app is at.
@@ -72,8 +88,17 @@ class MochiBottomNav<T> extends StatelessWidget {
   /// Defaults to `colors.surface`, or `colors.overlay` in the raised look.
   final Color? background;
 
-  /// Whether to draw a line along its top edge, against the page. The raised look has none.
+  /// Whether to draw a line along its top edge, against the page. The raised look has none, and
+  /// neither does a floating bar, which is drawn as a whole shape instead.
   final bool border;
+
+  /// Null follows the theme's layering: floating when raised, docked when outlined — a raised bar
+  /// is the phone's, and a phone's bar stands clear of the edges.
+  final MochiBottomNavVariant? variant;
+
+  /// The widest a floating bar gets: on a tablet, a bar the whole width of the screen would be a
+  /// long thin strip with a few icons lost in it.
+  static const maxFloatingWidth = 480.0;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +109,67 @@ class MochiBottomNav<T> extends StatelessWidget {
     // is what sets it off the page.
     final raised = theme.layering == .raised;
     final ground = background ?? (raised ? colors.overlay : colors.surface);
+    final floating =
+        (variant ?? (raised ? MochiBottomNavVariant.floating : MochiBottomNavVariant.docked)) == .floating;
+
+    // A hair between destinations, so a hovered one beside the chosen one reads as two blocks
+    // rather than one.
+    Widget row({required bool floating}) => Row(
+      spacing: g.space.xs2,
+      children: [
+        for (final item in items)
+          Expanded(
+            child: _Destination<T>(
+              item: item,
+              selected: item.value == value,
+              intent: intent,
+              ground: ground,
+              showLabel: showLabels,
+              floating: floating,
+              onPress: onChanged == null || !item.enabled || item.value == value
+                  ? null
+                  : () => onChanged!(item.value),
+            ),
+          ),
+      ],
+    );
+
+    if (floating) {
+      // The destinations sit in by exactly the difference between the two corners, so a chosen
+      // one's curve runs alongside the bar's rather than cutting across it — whatever corners the
+      // theme has been given.
+      final inset = g.radius.xl.topLeft.x - g.radius.lg.topLeft.x;
+      final bottom = MediaQuery.paddingOf(context).bottom;
+
+      return Padding(
+        // Over the home indicator, not on it: the system's inset, and a little room above it.
+        padding: EdgeInsets.fromLTRB(
+          g.space.md,
+          g.space.xs,
+          g.space.md,
+          bottom + (bottom > 0 ? g.space.xs : g.space.md),
+        ),
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: maxFloatingWidth),
+            child: DecoratedBox(
+              decoration: ShapeDecoration(
+                color: ground,
+                shadows: raised ? g.shadows.raised(MochiElevation.lg, colors) : null,
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: g.radius.xl,
+                  side: raised || !border
+                      ? BorderSide(color: ground.withValues(alpha: 0), width: g.borderWidth)
+                      : BorderSide(color: colors.border, width: g.borderWidth),
+                ),
+              ),
+              child: Padding(padding: EdgeInsets.all(inset), child: row(floating: true)),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -99,23 +185,7 @@ class MochiBottomNav<T> extends StatelessWidget {
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
       // Not stretched: the bar sizes to its destinations, which are as tall as each other, and a
       // stretch would hand them the unbounded height of the column they sit at the bottom of.
-      child: Row(
-        children: [
-          for (final item in items)
-            Expanded(
-              child: _Destination<T>(
-                item: item,
-                selected: item.value == value,
-                intent: intent,
-                ground: ground,
-                showLabel: showLabels,
-                onPress: onChanged == null || !item.enabled || item.value == value
-                    ? null
-                    : () => onChanged!(item.value),
-              ),
-            ),
-        ],
-      ),
+      child: row(floating: false),
     );
   }
 }
@@ -127,6 +197,7 @@ class _Destination<T> extends StatelessWidget {
     required this.intent,
     required this.ground,
     required this.showLabel,
+    required this.floating,
     required this.onPress,
   });
 
@@ -137,6 +208,10 @@ class _Destination<T> extends StatelessWidget {
   /// What the bar is filled with, which the pill and its hover layer are mixed over.
   final Color ground;
   final bool showLabel;
+
+  /// In a floating bar the whole destination is the block that is filled; docked, only the pill
+  /// behind the icon.
+  final bool floating;
   final VoidCallback? onPress;
 
   @override
@@ -162,30 +237,42 @@ class _Destination<T> extends StatelessWidget {
             (st) => st.contains(WidgetState.selected) ? tone.onSoft : colors.mutedForeground,
           );
 
+          // The press and hover layers sit on top of the fill that marks the destination.
+          final fill = blend.color(
+            (st) => st.contains(WidgetState.selected)
+                ? MochiColors.stateLayer(colors.softOn(tone, ground), tone.onSoft, st)
+                : MochiColors.stateLayer(ground, colors.foreground, st),
+          );
+          final cell = floating ? g.radius.lg : g.radius.sm;
+
           return MochiFocusRing(
             visible: blend.contains(WidgetState.focused),
-            radius: g.radius.sm,
+            radius: cell,
             inset: true,
             child: Opacity(
               opacity: blend.contains(WidgetState.disabled) ? 0.4 : 1,
-              child: SizedBox(
+              child: Container(
                 height: height,
+                decoration: floating
+                    ? ShapeDecoration(
+                        color: fill,
+                        shape: RoundedSuperellipseBorder(borderRadius: cell),
+                      )
+                    : null,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   spacing: g.space.xs3,
                   children: [
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs3),
-                      decoration: ShapeDecoration(
-                        // The pill is what marks the destination; the press and hover layers sit
-                        // on top of it.
-                        color: blend.color(
-                          (st) => st.contains(WidgetState.selected)
-                              ? MochiColors.stateLayer(colors.softOn(tone, ground), tone.onSoft, st)
-                              : MochiColors.stateLayer(ground, colors.foreground, st),
-                        ),
-                        shape: RoundedSuperellipseBorder(borderRadius: g.radius.full),
-                      ),
+                      decoration: floating
+                          ? null
+                          : ShapeDecoration(
+                              color: fill,
+                              // `sm`, not the floating cell's `lg`: the block is little taller than
+                              // the icon, and a corner past half its height would round it into a pill.
+                              shape: RoundedSuperellipseBorder(borderRadius: g.radius.sm),
+                            ),
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [

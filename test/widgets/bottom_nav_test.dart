@@ -40,11 +40,13 @@ void main() {
     bool disableSettings = false,
     EdgeInsets padding = EdgeInsets.zero,
     bool touch = false,
+    MochiBottomNavVariant? variant,
   }) => app(
     MochiBottomNav<String>(
       value: value,
       onChanged: onChanged,
       showLabels: showLabels,
+      variant: variant,
       items: items(disableSettings: disableSettings),
     ),
     padding: padding,
@@ -78,19 +80,17 @@ void main() {
     await tester.pumpWidget(nav(onChanged: (_) {}));
     await tester.pumpAndSettle();
 
-    Color pillOf(String label) =>
-        (tester
-                    .widget<Container>(
-                      find
-                          .descendant(
-                            of: find.ancestor(of: find.text(label), matching: find.byType(MochiTappable)),
-                            matching: find.byType(Container),
-                          )
-                          .first,
-                    )
-                    .decoration!
-                as ShapeDecoration)
-            .color!;
+    Color pillOf(String label) => tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.ancestor(of: find.text(label), matching: find.byType(MochiTappable)),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((c) => c.decoration)
+        .whereType<ShapeDecoration>()
+        .first
+        .color!;
     expect(pillOf("Timer"), MochiColors.light.softOn(MochiColors.light.primary, MochiColors.light.surface));
     expect(pillOf("Statistics"), MochiColors.light.surface);
   });
@@ -156,8 +156,10 @@ void main() {
                 .decoration!
             as BoxDecoration;
 
-    testWidgets("has no line along its top, is the overlay colour, and is lit from below", (tester) async {
-      await tester.pumpWidget(nav(touch: true));
+    testWidgets("docked, has no line along its top, is the overlay colour, and is lit from below", (
+      tester,
+    ) async {
+      await tester.pumpWidget(nav(touch: true, variant: MochiBottomNavVariant.docked));
       await tester.pumpAndSettle();
       final d = barDecoration(tester);
       expect(d.border, isNull);
@@ -173,6 +175,119 @@ void main() {
       expect(d.border, isNotNull);
       expect(d.color, MochiColors.light.surface);
       expect(d.boxShadow, isNull);
+    });
+  });
+
+  testWidgets("destinations stand a little apart, and a docked block is not a pill", (tester) async {
+    await tester.pumpWidget(nav(onChanged: (_) {}));
+    await tester.pumpAndSettle();
+    final g = MochiTheme.light.geometry;
+    Rect cell(String label) =>
+        tester.getRect(find.ancestor(of: find.text(label), matching: find.byType(MochiTappable)));
+    expect(cell("Statistics").left - cell("Timer").right, g.space.xs2);
+
+    final block = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.ancestor(of: find.text("Timer"), matching: find.byType(MochiTappable)),
+            matching: find.byType(Container),
+          ),
+        )
+        .where((c) => c.decoration is ShapeDecoration)
+        .first;
+    final radius = ((block.decoration! as ShapeDecoration).shape as RoundedSuperellipseBorder).borderRadius;
+    final height = tester.getSize(find.byWidget(block)).height;
+    expect((radius as BorderRadius).topLeft.x, lessThan(height / 2));
+  });
+
+  group("floating", () {
+    ShapeDecoration barShape(WidgetTester tester) =>
+        tester
+                .widget<DecoratedBox>(
+                  find
+                      .descendant(
+                        of: find.byType(MochiBottomNav<String>),
+                        matching: find.byType(DecoratedBox),
+                      )
+                      .first,
+                )
+                .decoration
+            as ShapeDecoration;
+
+    Finder barBox() =>
+        find.descendant(of: find.byType(MochiBottomNav<String>), matching: find.byType(DecoratedBox)).first;
+
+    testWidgets("is what a raised theme gets: clear of the edges, rounded, no line", (tester) async {
+      await tester.pumpWidget(nav(touch: true, onChanged: (_) {}));
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(barBox());
+      final page = tester.getRect(find.byType(MochiBottomNav<String>));
+      final g = MochiTheme.light.geometry;
+      expect(bar.left, greaterThanOrEqualTo(page.left + g.space.md));
+      expect(bar.center.dx, page.center.dx);
+      expect(bar.bottom, page.bottom - g.space.md);
+
+      final shape = barShape(tester).shape as RoundedSuperellipseBorder;
+      expect(shape.borderRadius, g.radius.xl);
+      expect(shape.side.color.a, 0);
+      expect(barShape(tester).shadows, isNotEmpty);
+    });
+
+    testWidgets("the chosen destination is a block inside it, its corner following the bar's", (
+      tester,
+    ) async {
+      await tester.pumpWidget(nav(touch: true, onChanged: (_) {}));
+      await tester.pumpAndSettle();
+      final g = MochiTheme.light.geometry;
+
+      final cell = tester
+          .widgetList<Container>(
+            find.descendant(
+              of: find.ancestor(of: find.text("Timer"), matching: find.byType(MochiTappable)),
+              matching: find.byType(Container),
+            ),
+          )
+          .map((c) => c.decoration)
+          .whereType<ShapeDecoration>()
+          .first;
+      expect((cell.shape as RoundedSuperellipseBorder).borderRadius, g.radius.lg);
+
+      // In by the difference between the two corners.
+      final bar = tester.getRect(barBox());
+      final timer = tester.getRect(
+        find.ancestor(of: find.text("Timer"), matching: find.byType(MochiTappable)),
+      );
+      expect(timer.left - bar.left, g.radius.xl.topLeft.x - g.radius.lg.topLeft.x);
+    });
+
+    testWidgets("stands over the home indicator rather than on it", (tester) async {
+      await tester.pumpWidget(nav(touch: true, padding: const EdgeInsets.only(bottom: 34)));
+      await tester.pumpAndSettle();
+      final bar = tester.getRect(barBox());
+      final page = tester.getRect(find.byType(MochiBottomNav<String>));
+      expect(bar.bottom, page.bottom - 34 - MochiTheme.light.geometry.space.xs);
+    });
+
+    testWidgets("keeps to a phone's width on a wide screen", (tester) async {
+      await tester.pumpWidget(nav(touch: true));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(barBox()).width, MochiBottomNav.maxFloatingWidth);
+    });
+
+    testWidgets("can be asked for on an outlined theme, and docked on a raised one", (tester) async {
+      await tester.pumpWidget(nav(variant: MochiBottomNavVariant.floating));
+      await tester.pumpAndSettle();
+      expect(barShape(tester).shadows, isNull);
+      expect((barShape(tester).shape as RoundedSuperellipseBorder).side.color, MochiColors.light.border);
+
+      await tester.pumpWidget(nav(touch: true, variant: MochiBottomNavVariant.docked));
+      await tester.pumpAndSettle();
+      // Docked: the destinations run from the screen's very edge.
+      expect(
+        tester.getRect(find.ancestor(of: find.text("Timer"), matching: find.byType(MochiTappable))).left,
+        0,
+      );
     });
   });
 }
