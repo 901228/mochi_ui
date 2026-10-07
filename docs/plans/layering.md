@@ -46,6 +46,13 @@
 - [x] **`MochiScaffold.extendBody`**：內容延伸到 header / footer 底下，並把量出來的高度加進 `MediaQuery.padding`，捲動區自動留空。預設關閉，先在比較頁和 app 各開一頁看
 - [ ] 浮起來的 bar 配 `md` 陰影，確認不被 `ClipRect` 裁掉
 
+## 4.5 導覽跟著寬度換位置
+
+- [x] **`MochiScaffold` 的 `sidebar` / `drawer` / `footer`**：`sidebarFrom`（預設 tablet）以上 sidebar 常駐、footer 藏起來；以下 footer 顯示、drawer 可以打開。跨過斷點時 sidebar 從左邊滑進、footer 往下滑出，頁面的 state 保留
+- [x] **drawer**：不是 route，放在 scaffold 自己的 overlay（route 只 build 一次，選中狀態會卡住）；遮罩、拖曳關閉、Esc、focus 圈在裡面並在關閉時還回去；root 頁面可以從左邊緣拉出來（push 進來的頁面讓給返回手勢，並避開 `systemGestureInsets`）
+- [x] **`MochiScaffold.of(context)`**：`openDrawer` / `closeDrawer` / `isDrawerOpen` / `hasDrawer`，`maybeOf`
+- [x] **`MochiHeader.automaticPrefix`**：沒給 prefixes 且有 drawer 可開時，自己放一顆打開 drawer 的按鈕（`MochiIcons.menu`、`MochiStrings.openMenu`）
+
 ## 5. 手機才有的動作
 
 跟分層無關，任何時候都可以插進來：

@@ -22,6 +22,7 @@ class MochiStrings {
     required this.back,
     required this.close,
     required this.dismiss,
+    required this.openMenu,
     required this.remove,
     required this.listSeparator,
     required this.reorder,
@@ -73,6 +74,9 @@ class MochiStrings {
 
   /// The screen reader's name for the barrier behind a modal, which dismisses it when tapped.
   final String dismiss;
+
+  /// The button a header puts in front of its title when the scaffold has a drawer to open.
+  final String openMenu;
 
   /// Takes one item out of a set, such as the × on a badge.
   final String remove;
@@ -172,6 +176,7 @@ class MochiStrings {
     back: "Back",
     close: "Close",
     dismiss: "Dismiss",
+    openMenu: "Open menu",
     remove: "Remove",
     listSeparator: ", ",
     reorder: "Reorder",
@@ -224,6 +229,7 @@ class MochiStrings {
     back: "返回",
     close: "關閉",
     dismiss: "關閉",
+    openMenu: "開啟選單",
     remove: "移除",
     listSeparator: "、",
     reorder: "重新排序",
@@ -269,6 +275,7 @@ class MochiStrings {
     String? back,
     String? close,
     String? dismiss,
+    String? openMenu,
     String? remove,
     String? listSeparator,
     String? reorder,
@@ -310,6 +317,7 @@ class MochiStrings {
     back: back ?? this.back,
     close: close ?? this.close,
     dismiss: dismiss ?? this.dismiss,
+    openMenu: openMenu ?? this.openMenu,
     remove: remove ?? this.remove,
     listSeparator: listSeparator ?? this.listSeparator,
     reorder: reorder ?? this.reorder,
@@ -356,6 +364,7 @@ class MochiStrings {
           back == other.back &&
           close == other.close &&
           dismiss == other.dismiss &&
+          openMenu == other.openMenu &&
           remove == other.remove &&
           listSeparator == other.listSeparator &&
           reorder == other.reorder &&
@@ -400,6 +409,7 @@ class MochiStrings {
     back,
     close,
     dismiss,
+    openMenu,
     remove,
     listSeparator,
     reorder,

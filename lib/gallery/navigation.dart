@@ -106,6 +106,117 @@ class _SidebarSampleState extends State<_SidebarSample> {
   }
 }
 
+/// A home page the way an app would write it: a sidebar for a wide screen, and for a phone a
+/// bottom bar with a drawer beside it, each holding something different. Switch the viewport in
+/// the top bar to watch them trade places; the header's drawer button comes and goes by itself.
+class _ScaffoldNavigationSample extends StatefulWidget {
+  const _ScaffoldNavigationSample();
+
+  @override
+  State<_ScaffoldNavigationSample> createState() => _ScaffoldNavigationSampleState();
+}
+
+class _ScaffoldNavigationSampleState extends State<_ScaffoldNavigationSample> {
+  var _page = "timer";
+  var _session = "3x3";
+  final _note = TextEditingController(text: "typed before the switch");
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+
+    const pages = [("timer", TablerIcons.clock, "Timer"), ("stats", TablerIcons.chartBar, "Statistics")];
+    const sessions = [("3x3", TablerIcons.box, "3x3 main"), ("oh", TablerIcons.handStop, "3x3 OH")];
+
+    return LayoutBuilder(
+      builder: (context, constraints) => SizedBox(
+        width: constraints.maxWidth.clamp(0, 640).toDouble(),
+        height: 420,
+        child: MochiCard(
+          padding: EdgeInsets.zero,
+          child: MochiScaffold(
+            safeArea: false,
+            background: const Color(0x00000000),
+            header: MochiHeader(variant: MochiHeaderVariant.bordered, title: Text("$_page · $_session")),
+            // Wide: everything in one column.
+            sidebar: MochiSidebar(
+              width: 200,
+              children: [
+                for (final (value, icon, label) in pages)
+                  MochiSidebarItem(
+                    icon: Icon(icon),
+                    label: Text(label),
+                    selected: _page == value,
+                    onPress: () => setState(() => _page = value),
+                  ),
+                MochiSidebarGroup(
+                  label: const Text("Sessions"),
+                  children: [
+                    for (final (value, icon, label) in sessions)
+                      MochiSidebarItem(
+                        icon: Icon(icon),
+                        label: Text(label),
+                        selected: _session == value,
+                        onPress: () => setState(() => _session = value),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            // Narrow: the pages along the bottom, the sessions in the drawer.
+            footer: MochiBottomNav<String>(
+              value: _page,
+              onChanged: (value) => setState(() => _page = value),
+              items: [
+                for (final (value, icon, label) in pages)
+                  MochiBottomNavItem(value: value, icon: Icon(icon), label: Text(label)),
+              ],
+            ),
+            drawer: Builder(
+              builder: (context) => MochiSidebar(
+                border: false,
+                background: const Color(0x00000000),
+                children: [
+                  MochiSidebarGroup(
+                    label: const Text("Sessions"),
+                    children: [
+                      for (final (value, icon, label) in sessions)
+                        MochiSidebarItem(
+                          icon: Icon(icon),
+                          label: Text(label),
+                          selected: _session == value,
+                          onPress: () {
+                            setState(() => _session = value);
+                            MochiScaffold.of(context).closeDrawer();
+                          },
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: g.space.sm,
+              children: [
+                const _ThemedText("switch the viewport: the page below keeps its text", .muted),
+                MochiTextField(controller: _note),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BottomNavSample extends StatefulWidget {
   const _BottomNavSample();
 

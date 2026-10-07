@@ -6,6 +6,7 @@ import "package:flutter/widgets.dart";
 import "../theme/size.dart";
 import "../theme/theme.dart";
 import "action.dart";
+import "scaffold.dart";
 
 /// Where a header's title sits.
 enum MochiHeaderAlignment {
@@ -48,11 +49,13 @@ class MochiHeader extends StatelessWidget {
     this.actionSize,
     this.alignment = MochiHeaderAlignment.start,
     this.variant = MochiHeaderVariant.plain,
+    this.automaticPrefix = true,
   });
 
   final Widget title;
 
-  /// Leading actions, usually [MochiAction.back].
+  /// Leading actions, usually [MochiAction.back]. Left empty in a [MochiScaffold] with a drawer to
+  /// open, the header puts the button that opens it here — see [automaticPrefix].
   final List<MochiAction> prefixes;
   final List<MochiAction> suffixes;
 
@@ -67,12 +70,23 @@ class MochiHeader extends StatelessWidget {
 
   final MochiHeaderVariant variant;
 
+  /// Whether a header with no [prefixes] of its own opens the scaffold's drawer from there, when
+  /// it has one to open: the button comes and goes as the width crosses the breakpoint, which an
+  /// app would otherwise have to follow itself.
+  final bool automaticPrefix;
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
 
     final border = BorderSide(color: theme.colors.border, width: g.borderWidth);
+    final scaffold = automaticPrefix && this.prefixes.isEmpty ? MochiScaffold.maybeOf(context) : null;
+    final prefixes = [
+      ...this.prefixes,
+      if (scaffold != null && scaffold.hasDrawer)
+        MochiAction(icon: theme.icons.menu, label: theme.strings.openMenu, onPress: scaffold.openDrawer),
+    ];
     final leading = prefixes.isEmpty
         ? null
         : MochiActionBar(prefixes, maxVisible: maxVisibleActions, size: actionSize);

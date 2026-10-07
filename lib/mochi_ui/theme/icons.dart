@@ -18,6 +18,7 @@ class MochiIcons {
     this.chevronLeft = TablerIcons.chevronLeft,
     this.chevronRight = TablerIcons.chevronRight,
     this.more = TablerIcons.dots,
+    this.menu = TablerIcons.menu2,
     this.grip = TablerIcons.gripVertical,
     this.search = TablerIcons.search,
     this.user = TablerIcons.user,
@@ -43,6 +44,9 @@ class MochiIcons {
   final IconData chevronLeft;
   final IconData chevronRight;
   final IconData more;
+
+  /// What opens a scaffold's drawer, put in its header by itself.
+  final IconData menu;
 
   /// What a sortable row is dragged by.
   final IconData grip;
@@ -92,6 +96,7 @@ class MochiIcons {
           chevronLeft == other.chevronLeft &&
           chevronRight == other.chevronRight &&
           more == other.more &&
+          menu == other.menu &&
           grip == other.grip &&
           search == other.search &&
           user == other.user &&
@@ -114,6 +119,7 @@ class MochiIcons {
     chevronLeft,
     chevronRight,
     more,
+    menu,
     grip,
     search,
     user,

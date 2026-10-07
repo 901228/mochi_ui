@@ -208,6 +208,7 @@ class _GalleryState extends State<_Gallery> {
         ("menubar", _MenubarSample()),
         ("tree", _TreeSample()),
         ("scaffold + header", _ScaffoldSample()),
+        ("scaffold navigation", _ScaffoldNavigationSample()),
       ],
     ),
     _Page(
