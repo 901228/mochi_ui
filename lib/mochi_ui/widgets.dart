@@ -23,6 +23,7 @@ export "widgets/divider.dart";
 export "widgets/field_frame.dart";
 export "widgets/focus_ring.dart";
 export "widgets/header.dart";
+export "widgets/large_title.dart";
 export "widgets/linear_progress.dart";
 export "widgets/menu.dart";
 export "widgets/menubar.dart";

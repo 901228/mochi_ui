@@ -109,6 +109,58 @@ class _SidebarSampleState extends State<_SidebarSample> {
 /// A home page the way an app would write it: a sidebar for a wide screen, and for a phone a
 /// bottom bar with a drawer beside it, each holding something different. Switch the viewport in
 /// the top bar to watch them trade places; the header's drawer button comes and goes by itself.
+/// A page whose title starts large in its content and moves into the bar as it scrolls away.
+class _LargeTitleSample extends StatelessWidget {
+  const _LargeTitleSample();
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+
+    return SizedBox(
+      width: 360,
+      height: 480,
+      child: MochiCard(
+        padding: EdgeInsets.zero,
+        child: MochiScaffold(
+          safeArea: false,
+          extendBody: true,
+          padding: EdgeInsets.zero,
+          background: const Color(0x00000000),
+          header: MochiHeader(
+            variant: MochiHeaderVariant.bordered,
+            alignment: MochiHeaderAlignment.center,
+            title: const Text("Records"),
+            suffixes: [MochiAction(icon: TablerIcons.plus, label: "Add", onPress: () {})],
+          ),
+          child: Builder(
+            builder: (context) {
+              final inset = MediaQuery.paddingOf(context);
+              return ListView(
+                padding: EdgeInsets.fromLTRB(
+                  g.space.md,
+                  inset.top + g.space.sm,
+                  g.space.md,
+                  inset.bottom + g.space.md,
+                ),
+                children: [
+                  const MochiLargeTitle(Text("Records")),
+                  MochiTileGroup(
+                    children: [
+                      for (var i = 1; i <= 20; i++)
+                        MochiTile(title: Text("Solve $i"), details: Text("${10 + i % 7}.${i}4")),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ScaffoldNavigationSample extends StatefulWidget {
   const _ScaffoldNavigationSample();
 

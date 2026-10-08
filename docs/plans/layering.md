@@ -60,7 +60,7 @@
 - [x] **select / multi select 在手機上改成 bottom sheet**（規則同 date picker：平板寬度以上用 popover）。單選點一列就選中並關閉；多選勾進草稿，按 OK 才回傳，拖走或點 barrier 就丟掉
 - [x] **選單 / 右鍵選單在手機上改成 bottom sheet**：`MochiPopoverMenu` / `MochiContextMenu` 在手機寬度開 sheet（`sheet:` 可覆蓋），submenu 在 sheet 裡原地展開；menubar 維持 popover
 - [x] **`MochiSwipeActions`**：清單列滑開出現動作（例如紀錄列滑開出現刪除）。動作是 `MochiAction`；拖過一半停住、點動作執行並收回、`fullSwipe`（預設關）滑到底執行最外側那顆；一次只開一列；跟著 touch，桌面用右鍵選單；動作也給 screen reader
-- [ ] **大標題 header**：捲動時從大標題縮成 bar 上的小標題（等第 4 節完成）
+- [x] **大標題 header**：`MochiLargeTitle` 放在內容第一列跟著捲動，捲進 header 底下時 header 的小標題淡入（蓋住一半後開始，完全蓋住時全顯示）。header 高度不變、不需要 sliver，`extendBody` 開或關都能用。字級 `title.xl3`，收起後的位置沿用 header 的 `alignment`
 
 ## 效能
 

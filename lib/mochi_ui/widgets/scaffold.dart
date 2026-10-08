@@ -130,6 +130,25 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
   bool _sidebarShown = false;
   bool _initialised = false;
 
+  final _headerKey = GlobalKey(debugLabel: "MochiScaffold header");
+
+  /// How much of the page's `MochiLargeTitle` has gone under the header, 0 to 1, or null when the
+  /// page has none. The header fades its own title in from this.
+  final largeTitleCovered = ValueNotifier<double?>(null);
+
+  /// The large title that last wrote [largeTitleCovered], so one that leaves clears it only if no
+  /// other has taken over since — the next page's, say.
+  Object? largeTitleOwner;
+
+  /// The header's bottom edge in global coordinates: where a large title starts to be covered.
+  /// The body's top edge when there is no header.
+  double get headerBottom {
+    final box = _headerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) return box.localToGlobal(Offset(0, box.size.height)).dy;
+    final own = context.findRenderObject() as RenderBox?;
+    return own == null || !own.hasSize ? 0 : own.localToGlobal(Offset.zero).dy;
+  }
+
   /// Whether [openDrawer] would open something: there is a [MochiScaffold.drawer], and the
   /// screen is not wide enough for the sidebar that takes its place.
   bool get hasDrawer => widget.drawer != null && !_sidebarShown;
@@ -157,6 +176,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     _wide.dispose();
     _drawer.dispose();
     _drawerScope.dispose();
+    largeTitleCovered.dispose();
     super.dispose();
   }
 
@@ -251,7 +271,11 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
                 )
               : Padding(padding: padding, child: widget.child),
         ),
-        if (widget.header case final header?) LayoutId(id: _Slot.header, child: header),
+        if (widget.header case final header?)
+          LayoutId(
+            id: _Slot.header,
+            child: KeyedSubtree(key: _headerKey, child: header),
+          ),
         if (widget.footer case final footer?)
           LayoutId(
             id: _Slot.footer,

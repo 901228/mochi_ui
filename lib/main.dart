@@ -210,6 +210,7 @@ class _GalleryState extends State<_Gallery> {
         ("tree", _TreeSample()),
         ("scaffold + header", _ScaffoldSample()),
         ("scaffold navigation", _ScaffoldNavigationSample()),
+        ("large title", _LargeTitleSample()),
       ],
     ),
     _Page(

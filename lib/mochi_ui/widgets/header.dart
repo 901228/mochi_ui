@@ -98,12 +98,24 @@ class MochiHeader extends StatelessWidget {
     final trailing = suffixes.isEmpty
         ? null
         : MochiActionBar(suffixes, maxVisible: maxVisibleActions, size: actionSize);
-    final heading = DefaultTextStyle(
+    final text = DefaultTextStyle(
       style: theme.typography.title.lg.copyWith(color: theme.colors.foreground),
       overflow: TextOverflow.ellipsis,
       maxLines: 1,
       child: title,
     );
+    // Under a page with a `MochiLargeTitle`, the title waits for that one to scroll under the bar
+    // and fades in over the last half of it. Only this box listens: the bar is not rebuilt as the
+    // page scrolls.
+    final covered = MochiScaffold.maybeOf(context)?.largeTitleCovered;
+    final heading = covered == null
+        ? text
+        : ValueListenableBuilder(
+            valueListenable: covered,
+            builder: (context, covered, child) =>
+                Opacity(opacity: covered == null ? 1 : ((covered - 0.5) * 2).clamp(0.0, 1.0), child: child),
+            child: text,
+          );
 
     // The status bar's room, when nothing above has already taken it: a scaffold with its bars
     // over the content leaves it to the header, so the header's own fill reaches the top edge.
