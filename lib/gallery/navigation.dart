@@ -58,8 +58,10 @@ class _SidebarSampleState extends State<_SidebarSample> {
                   MochiSidebarGroup(
                     label: const Text("Sessions"),
                     collapsible: true,
-                    expanded: _sessionsOpen,
-                    onExpandedChanged: (open) => setState(() => _sessionsOpen = open),
+                    expanded: .lifted(
+                      value: _sessionsOpen,
+                      onChanged: (open) => setState(() => _sessionsOpen = open),
+                    ),
                     children: [
                       item("3x3", TablerIcons.box, "3x3 main"),
                       item("oh", TablerIcons.handStop, "3x3 OH"),

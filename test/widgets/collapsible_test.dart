@@ -62,9 +62,9 @@ void main() {
       expect(tester.getSize(find.byType(MochiCollapsible)).height, closed + 100);
     });
 
-    testWidgets("initiallyExpanded starts open", (tester) async {
+    testWidgets("managed, it can start open", (tester) async {
       await tester.pumpWidget(
-        app(const MochiCollapsible(title: Text("Title"), initiallyExpanded: true, child: body)),
+        app(const MochiCollapsible(title: Text("Title"), expanded: .managed(initial: true), child: body)),
       );
       expect(find.text("Body"), findsOneWidget);
     });
@@ -74,8 +74,7 @@ void main() {
       Widget build(bool expanded) => app(
         MochiCollapsible(
           title: const Text("Title"),
-          expanded: expanded,
-          onExpandedChanged: asked.add,
+          expanded: .lifted(value: expanded, onChanged: asked.add),
           child: body,
         ),
       );
@@ -87,6 +86,38 @@ void main() {
       expect(find.text("Body"), findsNothing, reason: "the parent hasn't said yes");
 
       await tester.pumpWidget(build(true));
+      await tester.pumpAndSettle();
+      expect(find.text("Body"), findsOneWidget);
+    });
+
+    testWidgets("managed, a press opens it and says so", (tester) async {
+      final seen = <bool>[];
+      await tester.pumpWidget(
+        app(
+          MochiCollapsible(
+            title: const Text("Title"),
+            expanded: .managed(onChanged: seen.add),
+            child: body,
+          ),
+        ),
+      );
+      await tester.tap(find.text("Title"));
+      await tester.pumpAndSettle();
+      expect(find.text("Body"), findsOneWidget);
+      expect(seen, [true]);
+    });
+
+    testWidgets("handed back from the app, it stays where the app left it", (tester) async {
+      await tester.pumpWidget(
+        app(
+          MochiCollapsible(
+            title: const Text("Title"),
+            expanded: .lifted(value: true, onChanged: (_) {}),
+            child: body,
+          ),
+        ),
+      );
+      await tester.pumpWidget(app(const MochiCollapsible(title: Text("Title"), child: body)));
       await tester.pumpAndSettle();
       expect(find.text("Body"), findsOneWidget);
     });
@@ -156,7 +187,7 @@ void main() {
         app(
           const MochiCollapsible(
             title: Text("Title"),
-            initiallyExpanded: true,
+            expanded: .managed(initial: true),
             radius: radius,
             divider: true,
             child: body,
@@ -194,7 +225,12 @@ void main() {
       const radius = BorderRadius.all(Radius.circular(10));
       await tester.pumpWidget(
         app(
-          const MochiCollapsible(title: Text("Title"), initiallyExpanded: true, radius: radius, child: body),
+          const MochiCollapsible(
+            title: Text("Title"),
+            expanded: .managed(initial: true),
+            radius: radius,
+            child: body,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -263,7 +299,9 @@ void main() {
 
     testWidgets("the title row reaches the card's edges, the body keeps the padding", (tester) async {
       await tester.pumpWidget(
-        app(const MochiCard.collapsible(title: Text("Stats"), initiallyExpanded: true, child: body)),
+        app(
+          const MochiCard.collapsible(title: Text("Stats"), expanded: .managed(initial: true), child: body),
+        ),
       );
       final card = tester.getRect(find.byType(MochiCard));
       final header = tester.getRect(

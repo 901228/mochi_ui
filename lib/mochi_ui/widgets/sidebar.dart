@@ -380,9 +380,7 @@ class MochiSidebarGroup extends StatelessWidget {
     required this.children,
     this.label,
     this.collapsible = false,
-    this.expanded,
-    this.initiallyExpanded = true,
-    this.onExpandedChanged,
+    this.expanded = const MochiControl.managed(initial: true),
   });
 
   final List<Widget> children;
@@ -393,10 +391,11 @@ class MochiSidebarGroup extends StatelessWidget {
   /// Whether pressing the heading folds the items away.
   final bool collapsible;
 
-  /// Owns the state when non-null, as [MochiCollapsible] does.
-  final bool? expanded;
-  final bool initiallyExpanded;
-  final ValueChanged<bool>? onExpandedChanged;
+  /// Whether a [collapsible] group is open, and who holds that, as [MochiCollapsible] has it: the
+  /// group by default, starting open.
+  final MochiControl<bool> expanded;
+
+  static final _forcedOpen = MochiControl<bool>.lifted(value: true, onChanged: (_) {});
 
   @override
   Widget build(BuildContext context) {
@@ -446,9 +445,7 @@ class MochiSidebarGroup extends StatelessWidget {
               headerVisibility: open,
               // On a rail the heading that folds them is gone, so the items are all there is:
               // hiding them would leave no way back to them.
-              expanded: open < 0.5 ? true : expanded,
-              initiallyExpanded: initiallyExpanded,
-              onExpandedChanged: onExpandedChanged,
+              expanded: open < 0.5 ? _forcedOpen : expanded,
               headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs2, vertical: g.space.xs3),
               radius: g.radius.sm,
               child: Padding(

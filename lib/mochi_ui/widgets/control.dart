@@ -6,8 +6,8 @@ import "package:flutter/widgets.dart";
 /// takes a `value` and an `onChanged` instead, as Flutter's own do.
 ///
 /// ```dart
-/// MochiSidebar(control: const .managed())                               // the sidebar keeps it
-/// MochiSidebar(control: .lifted(value: railed, onChanged: (v) => setState(() => railed = v)))
+/// MochiSidebar(collapsed: const .managed())                             // the sidebar keeps it
+/// MochiSidebar(collapsed: .lifted(value: railed, onChanged: (v) => setState(() => railed = v)))
 /// ```
 ///
 /// The names are forui's: "lifted" as in lifting state up, out of the widget into the app.

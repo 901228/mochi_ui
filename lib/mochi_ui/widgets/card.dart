@@ -12,6 +12,7 @@ import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "collapsible.dart";
+import "control.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "shape_shadow.dart";
@@ -61,19 +62,15 @@ class MochiCard extends StatelessWidget {
     this.onSecondaryPress,
     this.semanticLabel,
   }) : _collapsible = false,
-       expanded = null,
-       initiallyExpanded = false,
-       onExpandedChanged = null;
+       expanded = const MochiControl.managed();
 
   /// A card that shows only [title] until it is opened. The whole title row is the toggle; see
-  /// [MochiCollapsible] for [expanded] (controlled) versus [initiallyExpanded].
+  /// [MochiCollapsible] for who holds [expanded].
   const MochiCard.collapsible({
     super.key,
     required Widget this.title,
     required this.child,
-    this.expanded,
-    this.initiallyExpanded = false,
-    this.onExpandedChanged,
+    this.expanded = const MochiControl.managed(),
     this.padding,
     this.appearance = MochiCardAppearance.elevated,
     this.elevation = MochiElevation.sm,
@@ -103,9 +100,8 @@ class MochiCard extends StatelessWidget {
   /// keep in step with the theme.
   final double? titleGap;
 
-  final bool? expanded;
-  final bool initiallyExpanded;
-  final ValueChanged<bool>? onExpandedChanged;
+  /// Whether a [MochiCard.collapsible] is open, and who holds that.
+  final MochiControl<bool> expanded;
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -142,14 +138,7 @@ class MochiCard extends StatelessWidget {
         intent: intent,
         // The padding moves inside, so the title row's hover fill reaches the card's edges.
         padding: EdgeInsets.zero,
-        child: _CollapsibleBody(
-          padding: padding,
-          title: title!,
-          expanded: expanded,
-          initiallyExpanded: initiallyExpanded,
-          onExpandedChanged: onExpandedChanged,
-          child: child,
-        ),
+        child: _CollapsibleBody(padding: padding, title: title!, expanded: expanded, child: child),
       );
     }
 
@@ -490,16 +479,12 @@ class _CollapsibleBody extends StatelessWidget {
     required this.padding,
     required this.title,
     required this.expanded,
-    required this.initiallyExpanded,
-    required this.onExpandedChanged,
     required this.child,
   });
 
   final EdgeInsetsGeometry? padding;
   final Widget title;
-  final bool? expanded;
-  final bool initiallyExpanded;
-  final ValueChanged<bool>? onExpandedChanged;
+  final MochiControl<bool> expanded;
   final Widget child;
 
   @override
@@ -510,8 +495,6 @@ class _CollapsibleBody extends StatelessWidget {
     return MochiCollapsible(
       title: title,
       expanded: expanded,
-      initiallyExpanded: initiallyExpanded,
-      onExpandedChanged: onExpandedChanged,
       headerPadding: padding,
       // A rule under the title row, rather than the row's own bottom padding standing in for the
       // gap: that padding is inside the row, so the row's hover fill would run into the content.

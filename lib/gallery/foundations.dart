@@ -212,7 +212,7 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
               width: 260,
               child: MochiCard.collapsible(
                 title: const Text("Scramble"),
-                initiallyExpanded: true,
+                expanded: const .managed(initial: true),
                 child: const Text("R U R' U' F2 D L2 B' U2 R2 F' L D2"),
               ),
             ),

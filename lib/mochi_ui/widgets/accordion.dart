@@ -111,8 +111,7 @@ class _MochiAccordionState extends State<MochiAccordion> {
               // headings anyway.
               title: DefaultTextStyle.merge(style: theme.typography.title.md, child: item.title),
               enabled: item.enabled,
-              expanded: _expanded.contains(index),
-              onExpandedChanged: (open) => _toggle(index, open),
+              expanded: .lifted(value: _expanded.contains(index), onChanged: (open) => _toggle(index, open)),
               headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: g.space.xs),
               bodyPadding: EdgeInsets.only(left: g.space.xs, right: g.space.xs, top: g.space.xs3),
               radius: g.radius.sm,

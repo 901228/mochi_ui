@@ -4,6 +4,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
 import "../theme/theme.dart";
+import "control.dart";
 import "divider.dart";
 import "focus_ring.dart";
 import "reveal.dart";
@@ -16,9 +17,10 @@ import "tappable.dart";
 /// they all open alike: the body grows over `motion.sizeDuration` along `motion.sizeCurve` (a
 /// size that nothing is dragging wants to ease at both ends), and the chevron turns with it.
 ///
-/// Uncontrolled by default, starting from [initiallyExpanded]. Pass [expanded] to own the state
-/// instead: a press then only calls [onExpandedChanged], and the widget follows whatever it is
-/// rebuilt with — which is how an accordion keeps only one open.
+/// It keeps whether it is open itself by default (`expanded: .managed(initial: true)` to start
+/// open). Pass `expanded: .lifted(...)` to own the state instead: a press then only calls its
+/// `onChanged`, and the widget follows whatever it is rebuilt with — which is how an accordion
+/// keeps only one open.
 ///
 /// With nothing to press — opened by a switch or a choice elsewhere — use [MochiReveal], which
 /// is this body without the header.
@@ -27,9 +29,7 @@ class MochiCollapsible extends StatefulWidget {
     super.key,
     required this.title,
     required this.child,
-    this.expanded,
-    this.initiallyExpanded = false,
-    this.onExpandedChanged,
+    this.expanded = const MochiControl.managed(),
     this.enabled = true,
     this.maintainState = false,
     this.headerPadding = EdgeInsets.zero,
@@ -45,13 +45,9 @@ class MochiCollapsible extends StatefulWidget {
   /// The body.
   final Widget child;
 
-  /// Owns the state when non-null. See the class docs.
-  final bool? expanded;
-
-  /// Where an uncontrolled collapsible starts.
-  final bool initiallyExpanded;
-
-  final ValueChanged<bool>? onExpandedChanged;
+  /// Whether the body is open, and who holds that: the collapsible by default, starting closed.
+  /// See the class docs.
+  final MochiControl<bool> expanded;
 
   final bool enabled;
 
@@ -85,7 +81,10 @@ class MochiCollapsible extends StatefulWidget {
 }
 
 class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerProviderStateMixin {
-  late bool _open = widget.expanded ?? widget.initiallyExpanded;
+  late final _expanded = ControlledValue(widget.expanded, false);
+
+  // Where the body is headed: the control's value, which the animation then follows.
+  late bool _open = _expanded.value(widget.expanded);
 
   late final _controller = AnimationController(vsync: this, value: _open ? 1 : 0);
   // The curve is set from the theme on every build.
@@ -110,8 +109,14 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
   void didUpdateWidget(MochiCollapsible old) {
     super.didUpdateWidget(old);
 
+    _expanded.update(old.expanded, widget.expanded);
     // No setState: a build follows didUpdateWidget anyway.
-    if (widget.expanded case final expanded? when expanded != _open) _animateTo(_open = expanded);
+    _follow();
+  }
+
+  void _follow() {
+    final open = _expanded.value(widget.expanded);
+    if (open != _open) _animateTo(_open = open);
   }
 
   @override
@@ -123,13 +128,9 @@ class _MochiCollapsibleState extends State<MochiCollapsible> with SingleTickerPr
   }
 
   void _toggle() {
-    final next = !_open;
-    widget.onExpandedChanged?.call(next);
-    // A controlled collapsible waits to be rebuilt with the new value.
-    if (widget.expanded == null) {
-      setState(() => _open = next);
-      _animateTo(next);
-    }
+    // A lifted collapsible waits to be rebuilt with the new value.
+    _expanded.change(widget.expanded, !_open, setState);
+    _follow();
   }
 
   void _animateTo(bool open) {

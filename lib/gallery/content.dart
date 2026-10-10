@@ -239,7 +239,7 @@ class _CollapsibleSample extends StatelessWidget {
     return SizedBox(
       width: 320,
       child: MochiCollapsible(
-        initiallyExpanded: true,
+        expanded: const .managed(initial: true),
         title: const Text("Inspection"),
         radius: g.radius.md,
         headerPadding: EdgeInsets.symmetric(vertical: g.space.xs),
