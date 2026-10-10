@@ -144,7 +144,6 @@ class _Gallery extends StatefulWidget {
 
 class _GalleryState extends State<_Gallery> {
   int _page = 0;
-  bool _railed = false;
   var _viewport = _Viewport.full;
 
   MochiSize _size = MochiSize.md;
@@ -316,31 +315,20 @@ class _GalleryState extends State<_Gallery> {
     return Row(
       children: [
         MochiSidebar(
-          collapsed: _railed,
-          header: MochiSidebarHeading(
-            const Text("Mochi UI"),
-            trailing: MochiButton.icon(
-              size: MochiSize.sm,
-              intent: MochiIntent.neutral,
-              appearance: MochiButtonAppearance.ghost,
-              tooltip: _railed ? "Expand" : "Collapse",
-              onPress: () => setState(() => _railed = !_railed),
-              icon: Icon(
-                _railed ? TablerIcons.layoutSidebarRightCollapse : TablerIcons.layoutSidebarLeftCollapse,
+          header: const MochiSidebarHeading(Text("Mochi UI")),
+          footer: [
+            MochiSidebarItem(
+              icon: const Icon(TablerIcons.ruler),
+              label: const Text("sizing"),
+              tooltip: "Watch sizes ease between the two scales",
+              onPress: () => Navigator.of(context).push(
+                MochiPageRoute<void>(
+                  builder: (_) =>
+                      _SizingPage(onTouchChanged: widget.onTouchChanged, onModeChanged: widget.onModeChanged),
+                ),
               ),
             ),
-          ),
-          footer: MochiSidebarItem(
-            icon: const Icon(TablerIcons.ruler),
-            label: const Text("sizing"),
-            tooltip: "Watch sizes ease between the two scales",
-            onPress: () => Navigator.of(context).push(
-              MochiPageRoute<void>(
-                builder: (_) =>
-                    _SizingPage(onTouchChanged: widget.onTouchChanged, onModeChanged: widget.onModeChanged),
-              ),
-            ),
-          ),
+          ],
           children: [
             for (final (index, entry) in pages.indexed)
               MochiSidebarItem(

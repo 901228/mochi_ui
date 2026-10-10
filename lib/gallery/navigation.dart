@@ -9,7 +9,6 @@ class _SidebarSample extends StatefulWidget {
 
 class _SidebarSampleState extends State<_SidebarSample> {
   String _page = "timer";
-  bool _railed = false;
   bool _sessionsOpen = true;
 
   @override
@@ -40,25 +39,13 @@ class _SidebarSampleState extends State<_SidebarSample> {
           borderRadius: g.radius.md,
           child: Row(
             children: [
+              // The sidebar keeps whether it is a rail by default, and its heading carries the button.
               MochiSidebar(
-                collapsed: _railed,
-                header: MochiSidebarHeading(
-                  const Text("Mochi Timer"),
-                  collapsedChild: const Text("M"),
-                  trailing: MochiButton.icon(
-                    size: MochiSize.sm,
-                    appearance: MochiButtonAppearance.ghost,
-                    intent: MochiIntent.neutral,
-                    scaleOnPress: false,
-                    tooltip: _railed ? "Expand" : "Collapse",
-                    onPress: () => setState(() => _railed = !_railed),
-                    icon: Icon(
-                      _railed
-                          ? TablerIcons.layoutSidebarRightCollapse
-                          : TablerIcons.layoutSidebarLeftCollapse,
-                    ),
-                  ),
-                ),
+                header: const MochiSidebarHeading(Text("Mochi Timer"), collapsedChild: Text("M")),
+                footer: [
+                  item("account", TablerIcons.user, "Account"),
+                  item("help", TablerIcons.help, "Help"),
+                ],
                 children: [
                   item("timer", TablerIcons.clock, "Timer"),
                   item(

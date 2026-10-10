@@ -19,6 +19,8 @@ class MochiIcons {
     this.chevronRight = TablerIcons.chevronRight,
     this.more = TablerIcons.dots,
     this.menu = TablerIcons.menu2,
+    this.sidebarCollapse = TablerIcons.layoutSidebarLeftCollapse,
+    this.sidebarExpand = TablerIcons.layoutSidebarLeftExpand,
     this.grip = TablerIcons.gripVertical,
     this.search = TablerIcons.search,
     this.user = TablerIcons.user,
@@ -47,6 +49,10 @@ class MochiIcons {
 
   /// What opens a scaffold's drawer, put in its header by itself.
   final IconData menu;
+
+  /// The button a sidebar's heading carries to narrow it to a rail, and to widen it again.
+  final IconData sidebarCollapse;
+  final IconData sidebarExpand;
 
   /// What a sortable row is dragged by.
   final IconData grip;
@@ -97,6 +103,8 @@ class MochiIcons {
           chevronRight == other.chevronRight &&
           more == other.more &&
           menu == other.menu &&
+          sidebarCollapse == other.sidebarCollapse &&
+          sidebarExpand == other.sidebarExpand &&
           grip == other.grip &&
           search == other.search &&
           user == other.user &&
@@ -108,7 +116,8 @@ class MochiIcons {
           danger == other.danger;
 
   @override
-  int get hashCode => Object.hash(
+  // hashAll, not hash: there are more icons here than Object.hash takes.
+  int get hashCode => Object.hashAll([
     back,
     close,
     check,
@@ -120,6 +129,8 @@ class MochiIcons {
     chevronRight,
     more,
     menu,
+    sidebarCollapse,
+    sidebarExpand,
     grip,
     search,
     user,
@@ -129,5 +140,5 @@ class MochiIcons {
     success,
     warning,
     danger,
-  );
+  ]);
 }

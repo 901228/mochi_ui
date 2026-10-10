@@ -9,6 +9,7 @@ import "../theme/responsive.dart";
 import "../theme/theme.dart";
 import "clip.dart";
 import "shape_shadow.dart";
+import "fixed_sidebar.dart";
 
 /// A page: an optional header, the content, and an optional footer, on the theme background —
 /// and, for an app's home, the navigation around it.
@@ -633,7 +634,13 @@ class _DrawerLayerState extends State<_DrawerLayer> {
                                         end: g.radius.xl.topLeft,
                                       ).resolve(Directionality.of(context)),
                                       // It runs to the screen's top, bottom and leading edge.
-                                      child: SafeArea(right: _rtl, left: !_rtl, child: widget.child),
+                                      child: SafeArea(
+                                        right: _rtl,
+                                        left: !_rtl,
+                                        // A sidebar in here is the drawer's list, not a column to
+                                        // narrow: no rail, and no button for one.
+                                        child: FixedSidebar(child: widget.child),
+                                      ),
                                     ),
                                   ),
                                 ),

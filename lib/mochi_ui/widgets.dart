@@ -15,6 +15,7 @@ export "widgets/clip.dart";
 export "widgets/circular_progress.dart";
 export "widgets/close_button.dart";
 export "widgets/collapsible.dart";
+export "widgets/control.dart" show MochiControl, MochiLifted, MochiManaged;
 export "widgets/color_picker.dart";
 export "widgets/date_picker.dart";
 export "widgets/date_time_picker.dart";

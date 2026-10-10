@@ -19,10 +19,10 @@ void main() {
     List<String> pressed = const [],
     String selected = "timer",
     Widget? header,
-    Widget? footer,
+    List<Widget> footer = const [],
   }) => app(
     MochiSidebar(
-      collapsed: collapsed,
+      collapsed: .lifted(value: collapsed, onChanged: (_) {}),
       header: header,
       footer: footer,
       children: [
@@ -175,7 +175,9 @@ void main() {
   });
 
   testWidgets("the heading swaps for its short form on a rail", (tester) async {
-    Widget heading() => const MochiSidebarHeading(Text("Mochi UI"), collapsedChild: Text("M"));
+    // No button of its own, so the short form is what a rail shows.
+    Widget heading() =>
+        const MochiSidebarHeading(Text("Mochi UI"), collapsedChild: Text("M"), automaticTrailing: false);
     await tester.pumpWidget(sidebar(header: heading()));
     await tester.pumpAndSettle();
     expect(find.text("Mochi UI"), findsOneWidget);
@@ -214,7 +216,7 @@ void main() {
   group("groups", () {
     Widget grouped({bool collapsed = false, bool collapsible = false}) => app(
       MochiSidebar(
-        collapsed: collapsed,
+        collapsed: .lifted(value: collapsed, onChanged: (_) {}),
         children: [
           MochiSidebarGroup(
             label: const Text("Sessions"),
@@ -341,5 +343,179 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.getSize(find.byType(MochiSidebarItem).first).height, greaterThan(desktop));
+  });
+
+  group("footer", () {
+    final footer = [
+      MochiSidebarItem(icon: Icon(MochiIcons.standard.plus), label: const Text("Account"), onPress: () {}),
+      MochiSidebarItem(icon: Icon(MochiIcons.standard.minus), label: const Text("Help"), onPress: () {}),
+    ];
+    Rect row(WidgetTester tester, String label) =>
+        tester.getRect(find.ancestor(of: find.text(label), matching: find.byType(MochiSidebarItem)));
+
+    testWidgets("holds several rows, inset and spaced like the items", (tester) async {
+      await tester.pumpWidget(sidebar(footer: footer));
+      await tester.pumpAndSettle();
+      final g = MochiTheme.light.geometry;
+      final bar = tester.getRect(find.byType(MochiSidebar));
+
+      // Lined up with the items rather than running into the sidebar's edge.
+      expect(row(tester, "Account").left, row(tester, "Timer").left);
+      expect(row(tester, "Account").left - bar.left, g.space.xs2);
+      expect(bar.bottom - row(tester, "Help").bottom, g.space.xs2);
+      expect(row(tester, "Help").top - row(tester, "Account").bottom, g.space.xs3);
+    });
+
+    testWidgets("its icons find the same middle on a rail as the items' do", (tester) async {
+      await tester.pumpWidget(sidebar(collapsed: true, footer: footer));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getCenter(find.byIcon(MochiIcons.standard.plus)).dx,
+        closeTo(tester.getCenter(find.byIcon(MochiIcons.standard.check)).dx, 0.5),
+      );
+    });
+  });
+
+  group("control", () {
+    Widget heading() => const MochiSidebarHeading(Text("Mochi UI"), collapsedChild: Text("M"));
+    Widget sidebarWith(MochiControl<bool>? control, {Widget? header}) => app(
+      MochiSidebar(
+        collapsed: control,
+        header: header ?? heading(),
+        children: [
+          MochiSidebarItem(icon: Icon(MochiIcons.standard.check), label: const Text("Timer"), onPress: () {}),
+        ],
+      ),
+    );
+    double width(WidgetTester tester) => tester.getSize(find.byType(MochiSidebar)).width;
+    final collapse = find.byIcon(MochiIcons.standard.sidebarCollapse);
+    final expand = find.byIcon(MochiIcons.standard.sidebarExpand);
+
+    testWidgets("managed, its heading's button narrows it and widens it again", (tester) async {
+      final seen = <bool>[];
+      await tester.pumpWidget(sidebarWith(.managed(onChanged: seen.add)));
+      await tester.pumpAndSettle();
+      expect(width(tester), 240);
+
+      await tester.tap(collapse);
+      await tester.pumpAndSettle();
+      expect(width(tester), 56);
+      // On a rail the button is what the heading keeps: it is the way back.
+      expect(find.text("M"), findsNothing);
+
+      await tester.tap(expand);
+      await tester.pumpAndSettle();
+      expect(width(tester), 240);
+      expect(seen, [true, false]);
+    });
+
+    testWidgets("managed, it can start as a rail", (tester) async {
+      await tester.pumpWidget(sidebarWith(const .managed(initial: true)));
+      await tester.pumpAndSettle();
+      expect(width(tester), 56);
+    });
+
+    testWidgets("lifted, the button only asks; the app decides", (tester) async {
+      final seen = <bool>[];
+      await tester.pumpWidget(sidebarWith(.lifted(value: false, onChanged: seen.add)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(collapse);
+      await tester.pumpAndSettle();
+      expect(seen, [true]);
+      expect(width(tester), 240, reason: "nothing moves until the app rebuilds it");
+
+      await tester.pumpWidget(sidebarWith(.lifted(value: true, onChanged: seen.add)));
+      await tester.pumpAndSettle();
+      expect(width(tester), 56);
+    });
+
+    testWidgets("handed back to the sidebar, it stays where the app left it", (tester) async {
+      await tester.pumpWidget(sidebarWith(.lifted(value: true, onChanged: (_) {})));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(sidebarWith(const .managed()));
+      await tester.pumpAndSettle();
+      expect(width(tester), 56);
+    });
+
+    testWidgets("collapsed: null keeps it at its full width with no button", (tester) async {
+      await tester.pumpWidget(sidebarWith(null));
+      await tester.pumpAndSettle();
+      expect(width(tester), 240);
+      expect(collapse, findsNothing);
+    });
+
+    testWidgets("said nothing about, it collapses by itself", (tester) async {
+      await tester.pumpWidget(
+        app(
+          MochiSidebar(
+            header: heading(),
+            children: [
+              MochiSidebarItem(
+                icon: Icon(MochiIcons.standard.check),
+                label: const Text("Timer"),
+                onPress: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(width(tester), 240);
+      await tester.tap(collapse);
+      await tester.pumpAndSettle();
+      expect(width(tester), 56);
+    });
+
+    testWidgets("in a scaffold's drawer it is a list, with no rail and no button", (tester) async {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          home: ResponsiveScope(
+            size: MochiScreenSize.mobile,
+            child: MochiScaffold(
+              header: const MochiHeader(title: Text("Home")),
+              drawer: MochiSidebar(
+                header: heading(),
+                children: [
+                  MochiSidebarItem(
+                    icon: Icon(MochiIcons.standard.check),
+                    label: const Text("Timer"),
+                    onPress: () {},
+                  ),
+                ],
+              ),
+              child: const Text("page"),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      MochiScaffold.of(tester.element(find.text("page"))).openDrawer();
+      await tester.pumpAndSettle();
+      expect(find.text("Timer"), findsOneWidget);
+      expect(collapse, findsNothing);
+    });
+
+    testWidgets("a heading with a trailing of its own, or told not to, gets no button", (tester) async {
+      await tester.pumpWidget(
+        sidebarWith(
+          const .managed(),
+          header: const MochiSidebarHeading(Text("Mochi UI"), trailing: Text("mine")),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text("mine"), findsOneWidget);
+      expect(collapse, findsNothing);
+
+      await tester.pumpWidget(
+        sidebarWith(
+          const .managed(),
+          header: const MochiSidebarHeading(Text("Mochi UI"), automaticTrailing: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(collapse, findsNothing);
+    });
   });
 }

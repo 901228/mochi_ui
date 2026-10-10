@@ -3,10 +3,15 @@ import "dart:ui" show lerpDouble;
 import "package:flutter/widgets.dart";
 
 import "../theme/colors.dart";
+import "../theme/size.dart";
+import "../theme/styles/button_style.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
+import "button.dart";
 import "collapsible.dart";
+import "control.dart";
+import "fixed_sidebar.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
@@ -17,7 +22,13 @@ import "value_transition.dart";
 ///
 /// Items read it to know whether to show their labels, so the whole column moves as one.
 class _SidebarScope extends InheritedWidget {
-  const _SidebarScope({required this.open, required this.railContentWidth, required super.child});
+  const _SidebarScope({
+    required this.open,
+    required this.railContentWidth,
+    required this.collapsed,
+    required this.toggle,
+    required super.child,
+  });
 
   /// 1 while the sidebar is at its full width, 0 while it is a rail, and in between while it is
   /// on its way.
@@ -29,24 +40,39 @@ class _SidebarScope extends InheritedWidget {
   /// coming back.
   final double railContentWidth;
 
+  /// Where the sidebar is headed, which [open] is still travelling towards.
+  final bool collapsed;
+
+  /// Narrows or widens it; null when it cannot be collapsed (`collapsed: null`, or in a drawer).
+  final VoidCallback? toggle;
+
   static _SidebarScope? of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<_SidebarScope>();
 
   @override
-  bool updateShouldNotify(_SidebarScope old) => old.open != open || old.railContentWidth != railContentWidth;
+  bool updateShouldNotify(_SidebarScope old) =>
+      old.open != open ||
+      old.railContentWidth != railContentWidth ||
+      old.collapsed != collapsed ||
+      old.toggle != toggle;
 }
 
 /// The column of destinations down the side of an app: sessions, statistics, settings.
 ///
-/// [collapsed] narrows it to a rail of icons, and each item's label becomes its tooltip. The
-/// width is animated, so the page beside it slides over rather than jumping.
+/// It can narrow to a rail of icons, and each item's label becomes its tooltip. The width is
+/// animated, so the page beside it slides over rather than jumping. A [MochiSidebarHeading] in its
+/// [header] carries the button that does it, unless it is given a `trailing` of its own.
+///
+/// [collapsed] says who holds whether it is a rail: the sidebar itself by default
+/// ([MochiControl.managed]), or the app ([MochiControl.lifted]) for one that is saved or set from
+/// elsewhere. `collapsed: null` keeps it at its full width with no button, and so does a
+/// `MochiScaffold`'s drawer, where a rail would only be a thinner drawer.
 ///
 /// The app owns which item is chosen, the same way it owns the page: pass `selected` on the item
 /// that matches where you are.
 ///
 /// ```dart
 /// MochiSidebar(
-///   collapsed: railed,
 ///   header: const MochiSidebarHeading(Text("Mochi")),
 ///   children: [
 ///     MochiSidebarItem(
@@ -58,13 +84,13 @@ class _SidebarScope extends InheritedWidget {
 ///   ],
 /// )
 /// ```
-class MochiSidebar extends StatelessWidget {
+class MochiSidebar extends StatefulWidget {
   const MochiSidebar({
     super.key,
     required this.children,
     this.header,
-    this.footer,
-    this.collapsed = false,
+    this.footer = const [],
+    this.collapsed = const MochiControl.managed(),
     this.width = 240,
     this.railWidth,
     this.padding,
@@ -78,11 +104,13 @@ class MochiSidebar extends StatelessWidget {
   /// Above the items, outside the scroll: a logo, a workspace switcher.
   final Widget? header;
 
-  /// Below the items: an account row, a collapse button.
-  final Widget? footer;
+  /// Below the items, outside the scroll: settings, an account row. Spaced and inset like the
+  /// items, so they line up with them at full width and on a rail alike.
+  final List<Widget> footer;
 
-  /// Narrows it to [railWidth] and leaves only the icons.
-  final bool collapsed;
+  /// Whether it is a rail of icons (`true`) or at its full width, and who holds that: the sidebar
+  /// by default, starting at its full width. Null keeps it at its full width with no button.
+  final MochiControl<bool>? collapsed;
 
   /// The full width.
   final double width;
@@ -100,11 +128,34 @@ class MochiSidebar extends StatelessWidget {
   final bool border;
 
   @override
+  State<MochiSidebar> createState() => _MochiSidebarState();
+}
+
+class _MochiSidebarState extends State<MochiSidebar> {
+  static const _open = MochiControl<bool>.managed(initial: false);
+
+  late final _collapsed = ControlledValue(widget.collapsed ?? _open, false);
+
+  @override
+  void didUpdateWidget(MochiSidebar old) {
+    super.didUpdateWidget(old);
+    _collapsed.update(old.collapsed ?? _open, widget.collapsed ?? _open);
+  }
+
+  void _toggle() {
+    final control = widget.collapsed!;
+    _collapsed.change(control, !_collapsed.value(control), setState);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
-    final rail = railWidth ?? (theme.touch ? 64 : 56);
+    final rail = widget.railWidth ?? (theme.touch ? 64 : 56);
+    final control = FixedSidebar.of(context) ? null : widget.collapsed;
+    final collapsed = control != null && _collapsed.value(control);
+    final padding = (widget.padding ?? EdgeInsets.all(g.space.xs2)).resolve(Directionality.of(context));
 
     return MochiValueTransition(
       value: collapsed ? 0.0 : 1.0,
@@ -114,13 +165,14 @@ class MochiSidebar extends StatelessWidget {
       builder: (context, open, _) => _SidebarScope(
         open: open,
         // What is left of the rail once its border and the column's padding are taken out.
-        railContentWidth:
-            rail - (border ? g.borderWidth : 0) - (padding ?? EdgeInsets.all(g.space.xs2)).horizontal,
+        railContentWidth: rail - (widget.border ? g.borderWidth : 0) - padding.horizontal,
+        collapsed: collapsed,
+        toggle: control == null ? null : _toggle,
         child: Container(
-          width: lerpDouble(rail, width, open),
+          width: lerpDouble(rail, widget.width, open),
           decoration: BoxDecoration(
-            color: background ?? colors.surface,
-            border: border
+            color: widget.background ?? colors.surface,
+            border: widget.border
                 ? BorderDirectional(
                     end: BorderSide(color: colors.border, width: g.borderWidth),
                   )
@@ -129,19 +181,31 @@ class MochiSidebar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ?header,
+              ?widget.header,
               // The items scroll; the header and the footer stay put.
               Expanded(
                 child: SingleChildScrollView(
-                  padding: padding ?? EdgeInsets.all(g.space.xs2),
+                  padding: padding,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: g.space.xs3,
-                    children: children,
+                    children: widget.children,
                   ),
                 ),
               ),
-              ?footer,
+              // Inset as the items are, so a row down here lines up with the ones above — and
+              // its icon finds the same middle on a rail — rather than running into the
+              // sidebar's edge, which a window's rounded corner then cuts. Nothing on top: the
+              // items' own bottom padding is the gap between the two.
+              if (widget.footer.isNotEmpty)
+                Padding(
+                  padding: padding.copyWith(top: 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: g.space.xs3,
+                    children: widget.footer,
+                  ),
+                ),
             ],
           ),
         ),
@@ -411,7 +475,13 @@ class MochiSidebarGroup extends StatelessWidget {
 
 /// A sidebar's own heading or footer row: padded like the items, and cut down with them.
 class MochiSidebarHeading extends StatelessWidget {
-  const MochiSidebarHeading(this.child, {super.key, this.collapsedChild, this.trailing});
+  const MochiSidebarHeading(
+    this.child, {
+    super.key,
+    this.collapsedChild,
+    this.trailing,
+    this.automaticTrailing = true,
+  });
 
   final Widget child;
 
@@ -423,16 +493,39 @@ class MochiSidebarHeading extends StatelessWidget {
   /// A rail is one thing wide, and of the two this is the one worth keeping: it is what gets the
   /// sidebar back. So on a rail the heading shows this alone, centred, and the name waits until
   /// there is room for it again.
+  ///
+  /// Left null in a sidebar that can collapse, it is that button: see
+  /// [automaticTrailing].
   final Widget? trailing;
+
+  /// Whether a heading with no [trailing] of its own carries the button that narrows the sidebar
+  /// to a rail and back, when the sidebar can be collapsed at all.
+  final bool automaticTrailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
-    final open = _SidebarScope.of(context)?.open ?? 1;
+    final scope = _SidebarScope.of(context);
+    final open = scope?.open ?? 1;
     final metrics = _SidebarMetrics.of(theme);
     final railed = open < 0.5;
-    final trailing = this.trailing;
+    final toggle = scope?.toggle;
+    final collapsed = scope?.collapsed ?? false;
+    final trailing =
+        this.trailing ??
+        (automaticTrailing && toggle != null
+            ? MochiButton.icon(
+                size: MochiSize.sm,
+                intent: MochiIntent.neutral,
+                appearance: MochiButtonAppearance.ghost,
+                // It sits in the sidebar's own line; growing there reads as the sidebar moving.
+                scaleOnPress: false,
+                tooltip: collapsed ? theme.strings.expand : theme.strings.collapse,
+                onPress: toggle,
+                icon: Icon(collapsed ? theme.icons.sidebarExpand : theme.icons.sidebarCollapse),
+              )
+            : null);
 
     final name = DefaultTextStyle.merge(
       style: theme.typography.title.md.copyWith(color: theme.colors.foreground),
