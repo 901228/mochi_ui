@@ -31,8 +31,7 @@ void main() {
   }) => app(
     MochiAccordion(
       multiple: multiple,
-      initiallyExpanded: open,
-      onExpandedChanged: onExpandedChanged,
+      expanded: .managed(initial: open, onChanged: onExpandedChanged),
       divider: divider,
       items: items(disableThird: disableThird),
     ),
@@ -91,7 +90,12 @@ void main() {
   testWidgets("a controlled accordion only reports, and follows what it is given", (tester) async {
     final seen = <Set<int>>[];
     await tester.pumpWidget(
-      app(MochiAccordion(expanded: const {}, onExpandedChanged: seen.add, items: items())),
+      app(
+        MochiAccordion(
+          expanded: .lifted(value: const {}, onChanged: seen.add),
+          items: items(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 

@@ -7,7 +7,9 @@ import "../theme/colors.dart";
 import "../theme/theme.dart";
 import "../theme/tone.dart";
 import "../theme/typography.dart";
+import "control.dart";
 import "focus_ring.dart";
+import "reveal.dart";
 import "state_transition.dart";
 import "tappable.dart";
 import "value_transition.dart";
@@ -48,17 +50,17 @@ class MochiTreeNode<T> {
 /// between the rows that are showing, right opens a node or steps into it, left closes it or
 /// steps back out to its parent.
 ///
-/// Expansion is uncontrolled from [initiallyExpanded] unless [expanded] is given, the same rule
-/// as [MochiCollapsible]. Selection is always the app's.
+/// A node's children grow open and fold shut under it the way a collapsible's body does.
+///
+/// Which nodes are open is [expanded], a [MochiControl] like a collapsible's: the tree keeps it by
+/// default, all shut. Selection is always the app's.
 class MochiTree<T extends Object> extends StatefulWidget {
   const MochiTree({
     super.key,
     required this.nodes,
     this.selected,
     this.onSelected,
-    this.expanded,
-    this.onExpandedChanged,
-    this.initiallyExpanded = const {},
+    this.expanded = const MochiControl.managed(),
     this.indent = 16,
     this.showLines = true,
     this.intent = MochiIntent.primary,
@@ -72,14 +74,8 @@ class MochiTree<T extends Object> extends StatefulWidget {
   /// Called when a row is pressed or activated from the keyboard.
   final ValueChanged<T>? onSelected;
 
-  /// The open nodes. Non-null takes ownership: the tree then only reports what was asked for.
-  final Set<T>? expanded;
-
-  /// Called with the node and whether it was opened.
-  final void Function(T value, bool expanded)? onExpandedChanged;
-
-  /// Where an uncontrolled tree starts.
-  final Set<T> initiallyExpanded;
+  /// The open nodes, by value, and who holds them. `onChanged` is given the whole new set.
+  final MochiControl<Set<T>> expanded;
 
   /// How far each level is indented.
   final double indent;
@@ -94,7 +90,7 @@ class MochiTree<T extends Object> extends StatefulWidget {
 }
 
 class _MochiTreeState<T extends Object> extends State<MochiTree<T>> {
-  late final Set<T> _open = {...widget.initiallyExpanded};
+  late final _open = ControlledValue<Set<T>>(widget.expanded, const {});
 
   /// One per row, kept by value so a row keeps its focus as the tree above it opens and closes.
   final _focusNodes = <T, FocusNode>{};
@@ -102,7 +98,13 @@ class _MochiTreeState<T extends Object> extends State<MochiTree<T>> {
   /// The row the keyboard is on, so the arrows know where they are.
   T? _focused;
 
-  Set<T> get _expanded => widget.expanded ?? _open;
+  Set<T> get _expanded => _open.value(widget.expanded);
+
+  @override
+  void didUpdateWidget(MochiTree<T> old) {
+    super.didUpdateWidget(old);
+    _open.update(old.expanded, widget.expanded);
+  }
 
   @override
   void dispose() {
@@ -119,9 +121,7 @@ class _MochiTreeState<T extends Object> extends State<MochiTree<T>> {
     final next = open ?? !_expanded.contains(value);
     if (next == _expanded.contains(value)) return;
 
-    widget.onExpandedChanged?.call(value, next);
-    if (widget.expanded != null) return;
-    setState(() => next ? _open.add(value) : _open.remove(value));
+    _open.change(widget.expanded, next ? {..._expanded, value} : ({..._expanded}..remove(value)), setState);
   }
 
   /// The rows showing right now, in the order they are drawn.
@@ -204,33 +204,66 @@ class _MochiTreeState<T extends Object> extends State<MochiTree<T>> {
           ),
           _EdgeIntent: CallbackAction<_EdgeIntent>(onInvoke: (intent) => _end(last: intent.last)),
         },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final row in _rows)
-              _TreeRow<T>(
-                key: ValueKey(row.node.value),
-                row: row,
-                indent: widget.indent,
-                showLines: widget.showLines,
-                intent: widget.intent,
-                selected: row.node.value == widget.selected,
-                focusNode: _focusNodeFor(row.node.value),
-                onFocusChange: (focused) {
-                  if (focused) _focused = row.node.value;
-                },
-                onPress: () {
-                  widget.onSelected?.call(row.node.value);
-                  // A parent row is also the way to open it: the chevron is small, and the row
-                  // is what the pointer is already on.
-                  if (row.node.hasChildren) _toggle(row.node.value);
-                },
-                onToggle: row.node.hasChildren ? () => _toggle(row.node.value) : null,
-              ),
-          ],
-        ),
+        child: _branch(widget.nodes, 0, const [], null),
       ),
+    );
+  }
+
+  /// The rows at one level, each followed by its children in a [MochiReveal], so a node's
+  /// children grow out from under it rather than appearing all at once. [_rows] walks the same
+  /// tree flat, for the keyboard.
+  Widget _branch(List<MochiTreeNode<T>> nodes, int depth, List<bool> lines, T? parent) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final (index, node) in nodes.indexed)
+        KeyedSubtree(
+          key: ValueKey(node.value),
+          child: _node(
+            _Row(
+              node: node,
+              depth: depth,
+              lines: [...lines, index != nodes.length - 1],
+              parent: parent,
+              expanded: _expanded.contains(node.value),
+            ),
+          ),
+        ),
+    ],
+  );
+
+  Widget _node(_Row<T> row) {
+    final node = row.node;
+    final tile = _TreeRow<T>(
+      row: row,
+      indent: widget.indent,
+      showLines: widget.showLines,
+      intent: widget.intent,
+      selected: node.value == widget.selected,
+      focusNode: _focusNodeFor(node.value),
+      onFocusChange: (focused) {
+        if (focused) _focused = node.value;
+      },
+      onPress: () {
+        widget.onSelected?.call(node.value);
+        // A parent row is also the way to open it: the chevron is small, and the row is what the
+        // pointer is already on.
+        if (node.hasChildren) _toggle(node.value);
+      },
+      onToggle: node.hasChildren ? () => _toggle(node.value) : null,
+    );
+    if (!node.hasChildren) return tile;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        tile,
+        MochiReveal(
+          expanded: row.expanded,
+          child: _branch(node.children, row.depth + 1, row.lines, node.value),
+        ),
+      ],
     );
   }
 }
@@ -257,7 +290,6 @@ class _Row<T> {
 
 class _TreeRow<T extends Object> extends StatelessWidget {
   const _TreeRow({
-    super.key,
     required this.row,
     required this.indent,
     required this.showLines,

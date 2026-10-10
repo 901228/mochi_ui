@@ -539,7 +539,7 @@ class _TreeSampleState extends State<_TreeSample> {
             child: MochiTree<String>(
               nodes: _nodes,
               selected: _selected,
-              initiallyExpanded: const {"sessions", "3x3"},
+              expanded: const .managed(initial: {"sessions", "3x3"}),
               onSelected: (value) => setState(() => _selected = value),
             ),
           ),
@@ -553,7 +553,7 @@ class _TreeSampleState extends State<_TreeSample> {
               showLines: false,
               indent: 24,
               intent: MochiIntent.success,
-              initiallyExpanded: const {"sessions"},
+              expanded: const .managed(initial: {"sessions"}),
             ),
           ),
         ),

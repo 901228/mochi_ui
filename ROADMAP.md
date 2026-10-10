@@ -88,7 +88,7 @@
 - [x] Badge 的 `onDelete`（Bulma `is-delete`）：右側一個小叉，用上面的 `MochiCloseButton`，跟 badge 的端點同心；螢幕閱讀器念 `MochiStrings.remove`（新增的字）
 - [x] Tag addons（Bulma `has-addons`）— `MochiBadgeGroup`：Row 排列，中間的圓角打平、共用邊界，每個 badge 各自的 intent。做法照 `MochiTileGroup` 的 `_TileGroupScope`：group 用 InheritedWidget 告訴每個 badge 自己是第一個 / 中間 / 最後一個，badge 自己決定哪幾個角要打平
 - [x] Progress 加 `size`（Bulma 的 `is-small/normal/medium/large`）：linear 的高度、circular 的直徑與線寬，走 `MochiProgressMetrics`
-- [x] Card 加 collapsible — `MochiCard.collapsible(title:)`，底層是 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration` / `sizeCurve`，chevron 跟著轉）。可受控（`expanded:`）或不受控（`initiallyExpanded:`），`maintainState` 保留收起時的狀態，收起的內容 Tab 不到。之後 Accordion 和 Sidebar 也用它
+- [x] Card 加 collapsible — `MochiCard.collapsible(title:)`，底層是 `MochiCollapsible`（header + 可收合的 body，高度過渡走 `motion.sizeDuration` / `sizeCurve`，chevron 跟著轉）。開合狀態是 `expanded: MochiControl<bool>`（`.managed` 自己管、`.lifted` app 管），`maintainState` 保留收起時的狀態，收起的內容 Tab 不到。之後 Accordion 和 Sidebar 也用它
 - [x] ⭐ 三個全域外觀旋鈕（參考 shadcn_flutter，但**都做成純量 / 預設組，不做成第二張 metrics 表**），都開在 `MochiApp(radius:, density:, textScale:)`，gallery 標題下有一排可以切：
   - **圓角預設**：`MochiRadius.sharp` / `.subtle` / `.standard` / `.rounded` / `.pill`（`MochiRadius.scaled(factor)` 可自訂），`full` 不跟著縮（pill 就是 pill）
   - **`density`**（`MochiTheme.density`）：乘在 `MochiSpace`、page padding 和各 metrics 的高度 / padding 上，字、圖示、圓角、線不動；progress 和 switch 也不動（那是控制項本身的大小，不是鬆緊）。**不要加 density enum** — `touch` 已經是一個密度軸了（它管的是最小點擊區 48px），再加一個 enum 會讓每個 `XxxMetrics.of` 變成 touch × density 的矩陣；一個乘數就夠，而且乘數天生可以餵給 `MochiValueTransition`
@@ -117,7 +117,7 @@
 - [x] Breadcrumb — `MochiBreadcrumb` / `MochiBreadcrumbItem`：最後一階是「你在這」所以是純文字不是連結（語意上標成 header），分隔符跟著文字方向翻面，`maxItems` 超過就把中間折進 … 的選單裡（pagination 的 … 可以按，會跳出小 popover 輸入頁數，`jumpable` 可關；超出範圍會夾到最近的一端，空白或亂打就什麼都不做）
 - [x] ⭐ Pagination — `MochiPagination`：頁碼從 1 起算，目前這頁是 solid、其他是 ghost，`around` 決定左右各寫幾頁，中間折成 …（只差一頁時直接寫出來）。每頁的寬度都一樣：格數固定（靠邊時窗格會變長補回折掉的那格），每格寬度以最大頁碼為準，箭頭到頭到尾會 disable。… 可以按，會跳出小 popover 輸入頁數（`jumpable` 預設開）：… 代表的就是被折起來的那些頁，問路問在那裡最合理，而且不佔額外寬度。超出範圍夾到最近的一端，空白或亂打就什麼都不做。窄到放不下時先縮 `around`，連最少的五格都放不下才橫向捲動
 - [x] ⭐ Menubar — `MochiMenubar` / `MochiMenubarMenu`：一個 menu 一個 `MochiPopoverMenu`，加上「已經開著的時候 hover 到隔壁就直接換過去」（沒有延遲、不用再按）、方向鍵沿著列走且跳過 disabled 的、開著的那個字會保持 selected
-- [x] ⭐ Tree — `MochiTree` / `MochiTreeNode`：縮排、展開收合、縮排線（只畫在下面還有東西的那層）、鍵盤（↑↓ 走看得見的列、→ 先展開再進去、← 先收起再回父層、Home / End）。展開狀態預設自己管（`initiallyExpanded`），給 `expanded` 就換 app 管；選取一律是 app 的
+- [x] ⭐ Tree — `MochiTree` / `MochiTreeNode`：縮排、展開收合、縮排線（只畫在下面還有東西的那層）、鍵盤（↑↓ 走看得見的列、→ 先展開再進去、← 先收起再回父層、Home / End）。展開狀態是 `expanded: MochiControl<Set<T>>`（預設 `.managed`，`.lifted` 換 app 管），子層用 `MochiReveal` 長出來；選取一律是 app 的
 
 ## 8. P6：內容與日期
 

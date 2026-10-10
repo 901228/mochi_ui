@@ -204,7 +204,7 @@ class _AccordionSampleState extends State<_AccordionSample> {
             padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs2),
             child: MochiAccordion(
               multiple: _multiple,
-              initiallyExpanded: const {0},
+              expanded: const .managed(initial: {0}),
               items: const [
                 MochiAccordionItem(
                   title: Text("Inspection"),

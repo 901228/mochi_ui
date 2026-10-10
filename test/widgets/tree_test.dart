@@ -36,17 +36,16 @@ void main() {
     Set<String> open = const {},
     String? selected,
     ValueChanged<String>? onSelected,
-    void Function(String value, bool expanded)? onExpandedChanged,
+    ValueChanged<Set<String>>? onExpandedChanged,
     double indent = 16,
   }) => app(
     MochiTree<String>(
-      // A fresh tree per configuration: `initiallyExpanded` is read once, as its name says.
+      // A fresh tree per configuration: a managed control's `initial` is read once, as its name says.
       key: ValueKey(open.join()),
       nodes: nodes,
-      initiallyExpanded: open,
+      expanded: .managed(initial: open, onChanged: onExpandedChanged),
       selected: selected,
       onSelected: onSelected,
-      onExpandedChanged: onExpandedChanged,
       indent: indent,
     ),
   );
@@ -65,19 +64,24 @@ void main() {
   });
 
   testWidgets("the chevron opens a node, and the row does too", (tester) async {
-    final opened = <String>[];
-    await tester.pumpWidget(tree(onExpandedChanged: (value, open) => opened.add("$value $open")));
+    final opened = <Set<String>>[];
+    await tester.pumpWidget(tree(onExpandedChanged: opened.add));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(MochiTappable).first);
     await tester.pumpAndSettle();
     expect(find.text("3x3"), findsOneWidget);
-    expect(opened, ["sessions true"]);
+    expect(opened, [
+      {"sessions"},
+    ]);
 
     await tester.tap(find.text("Sessions"));
     await tester.pumpAndSettle();
     expect(find.text("3x3"), findsNothing);
-    expect(opened, ["sessions true", "sessions false"]);
+    expect(opened, [
+      {"sessions"},
+      <String>{},
+    ]);
   });
 
   testWidgets("pressing a row reports it", (tester) async {
@@ -175,14 +179,57 @@ void main() {
     expect(find.text("3x3"), findsNothing, reason: "an open node closes");
   });
 
-  testWidgets("a controlled tree only reports, and follows what it is given", (tester) async {
-    final asked = <String>[];
+  testWidgets("a branch grows open and folds shut, rather than appearing at once", (tester) async {
+    await tester.pumpWidget(tree());
+    await tester.pumpAndSettle();
+    double height() => tester.getSize(find.byType(MochiTree<String>)).height;
+    final shut = height();
+
+    await tester.tap(find.text("Sessions"));
+    await tester.pumpAndSettle();
+    final open = height();
+    expect(open, greaterThan(shut));
+
+    await tester.tap(find.text("Sessions"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(height(), allOf(greaterThan(shut), lessThan(open)), reason: "halfway shut");
+    // Still drawn while it folds, but no longer somewhere the keyboard can go.
+    expect(find.text("3x3"), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text("3x3"),
+        matching: find.byWidgetPredicate((w) => w is ExcludeFocus && w.excluding),
+      ),
+      findsWidgets,
+    );
+
+    await tester.pumpAndSettle();
+    expect(height(), shut);
+    expect(find.text("3x3"), findsNothing);
+  });
+
+  testWidgets("handed back from the app, it keeps the branches the app left open", (tester) async {
     await tester.pumpWidget(
       app(
         MochiTree<String>(
           nodes: nodes,
-          expanded: const {},
-          onExpandedChanged: (value, open) => asked.add("$value $open"),
+          expanded: .lifted(value: const {"sessions"}, onChanged: (_) {}),
+        ),
+      ),
+    );
+    await tester.pumpWidget(app(const MochiTree<String>(nodes: nodes)));
+    await tester.pumpAndSettle();
+    expect(find.text("3x3"), findsOneWidget);
+  });
+
+  testWidgets("a controlled tree only reports, and follows what it is given", (tester) async {
+    final asked = <Set<String>>[];
+    await tester.pumpWidget(
+      app(
+        MochiTree<String>(
+          nodes: nodes,
+          expanded: .lifted(value: const {}, onChanged: asked.add),
         ),
       ),
     );
@@ -190,7 +237,9 @@ void main() {
 
     await tester.tap(find.text("Sessions"));
     await tester.pumpAndSettle();
-    expect(asked, ["sessions true"]);
+    expect(asked, [
+      {"sessions"},
+    ]);
     expect(find.text("3x3"), findsNothing, reason: "the app owns it and hasn't said yes");
   });
 }

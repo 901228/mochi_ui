@@ -2,6 +2,7 @@ import "package:flutter/widgets.dart";
 
 import "../theme/theme.dart";
 import "collapsible.dart";
+import "control.dart";
 import "divider.dart";
 
 /// One row of a [MochiAccordion].
@@ -24,8 +25,9 @@ class MochiAccordionItem {
 /// only decides which of them are open. With [multiple] off, opening one closes the rest; with it
 /// on they are independent.
 ///
-/// Uncontrolled from [initiallyExpanded] unless [expanded] is given, the same rule as the
-/// collapsible itself.
+/// Which rows are open is [expanded], a [MochiControl] like the collapsible's own: the accordion
+/// keeps it by default, all shut (`.managed(initial: {0})` opens the first).
+
 ///
 /// ```dart
 /// MochiAccordion(
@@ -40,9 +42,7 @@ class MochiAccordion extends StatefulWidget {
     super.key,
     required this.items,
     this.multiple = false,
-    this.expanded,
-    this.initiallyExpanded = const {},
-    this.onExpandedChanged,
+    this.expanded = const MochiControl.managed(),
     this.divider = true,
   });
 
@@ -51,15 +51,9 @@ class MochiAccordion extends StatefulWidget {
   /// Whether more than one row can be open at a time.
   final bool multiple;
 
-  /// The open rows, by their place in [items]. Non-null takes ownership: the accordion then only
-  /// reports what was asked for.
-  final Set<int>? expanded;
-
-  /// Where an uncontrolled accordion starts.
-  final Set<int> initiallyExpanded;
-
-  /// Called with the whole new set of open rows.
-  final ValueChanged<Set<int>>? onExpandedChanged;
+  /// The open rows, by their place in [items], and who holds them. `onChanged` is given the whole
+  /// new set.
+  final MochiControl<Set<int>> expanded;
 
   /// Lines between the rows, and under the last one's header while it is open.
   final bool divider;
@@ -69,9 +63,15 @@ class MochiAccordion extends StatefulWidget {
 }
 
 class _MochiAccordionState extends State<MochiAccordion> {
-  late final Set<int> _own = {...widget.initiallyExpanded};
+  late final _value = ControlledValue<Set<int>>(widget.expanded, const {});
 
-  Set<int> get _expanded => widget.expanded ?? _own;
+  Set<int> get _expanded => _value.value(widget.expanded);
+
+  @override
+  void didUpdateWidget(MochiAccordion old) {
+    super.didUpdateWidget(old);
+    _value.update(old.expanded, widget.expanded);
+  }
 
   void _toggle(int index, bool open) {
     final next = switch ((open, widget.multiple)) {
@@ -81,13 +81,7 @@ class _MochiAccordionState extends State<MochiAccordion> {
       (false, _) => {..._expanded}..remove(index),
     };
 
-    widget.onExpandedChanged?.call(next);
-    if (widget.expanded != null) return;
-    setState(() {
-      _own
-        ..clear()
-        ..addAll(next);
-    });
+    _value.change(widget.expanded, next, setState);
   }
 
   @override
