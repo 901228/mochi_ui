@@ -50,6 +50,8 @@ class MochiHeader extends StatelessWidget {
     this.suffixes = const [],
     this.maxVisibleActions,
     this.actionSize,
+    this.prefixFoldFrom = MochiActionFold.end,
+    this.suffixFoldFrom = MochiActionFold.end,
     this.alignment = MochiHeaderAlignment.start,
     this.variant,
     this.automaticPrefix = true,
@@ -67,6 +69,13 @@ class MochiHeader extends StatelessWidget {
 
   /// The size of both groups' buttons, one size for the whole bar. Defaults to the action bar's own.
   final MochiSize? actionSize;
+
+  /// Which end of the leading group folds into its … once it runs out of slots. `start` keeps the
+  /// ones nearest the title written out.
+  final MochiActionFold prefixFoldFrom;
+
+  /// Which end of the trailing group folds into its … once it runs out of slots.
+  final MochiActionFold suffixFoldFrom;
 
   /// Where the title sits.
   final MochiHeaderAlignment alignment;
@@ -94,10 +103,10 @@ class MochiHeader extends StatelessWidget {
     ];
     final leading = prefixes.isEmpty
         ? null
-        : MochiActionBar(prefixes, maxVisible: maxVisibleActions, size: actionSize);
+        : MochiActionBar(prefixes, maxVisible: maxVisibleActions, size: actionSize, foldFrom: prefixFoldFrom);
     final trailing = suffixes.isEmpty
         ? null
-        : MochiActionBar(suffixes, maxVisible: maxVisibleActions, size: actionSize);
+        : MochiActionBar(suffixes, maxVisible: maxVisibleActions, size: actionSize, foldFrom: suffixFoldFrom);
     final text = DefaultTextStyle(
       style: theme.typography.title.lg.copyWith(color: theme.colors.foreground),
       overflow: TextOverflow.ellipsis,

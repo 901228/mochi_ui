@@ -183,10 +183,21 @@ Widget _menuRow(MochiAction action, MochiTheme theme) {
 
 enum _Builtin { back, close }
 
+/// Which end of a [MochiActionBar] gives way once it runs out of slots, following the text
+/// direction.
+enum MochiActionFold {
+  /// The last actions fold into a … at the end of the row.
+  end,
+
+  /// The first actions fold into a … at the start of the row, keeping the last ones written out —
+  /// the ones nearest a header's title when the bar is on its leading side.
+  start,
+}
+
 /// A row of [MochiAction]s that folds into a … once there are more of them than [maxVisible].
 ///
-/// The last slot is the …, so a row of four with a cap of three shows two buttons and a menu
-/// holding the other two — the row is [maxVisible] slots wide whatever it is given, which is the
+/// The last slot is the … (the first, with [foldFrom] at the start), so a row of four with a cap
+/// of three shows two buttons and a menu holding the other two — the row is [maxVisible] slots wide whatever it is given, which is the
 /// same bargain [MochiPagination] makes.
 ///
 /// The cap is a count rather than a measurement on purpose. The bar usually sits at one end of a
@@ -204,6 +215,7 @@ class MochiActionBar extends StatelessWidget {
     this.dense = false,
     this.scaleOnPress = true,
     this.menuLabel,
+    this.foldFrom = MochiActionFold.end,
   }) : assert(maxVisible == null || maxVisible > 0);
 
   final List<MochiAction> actions;
@@ -233,6 +245,10 @@ class MochiActionBar extends StatelessWidget {
   /// Names the … for a screen reader. Defaults to `strings.more`.
   final String? menuLabel;
 
+  /// Which actions fold away, and so which end of the row the … stands at. The menu keeps them in
+  /// the order they were given either way.
+  final MochiActionFold foldFrom;
+
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
@@ -241,9 +257,29 @@ class MochiActionBar extends StatelessWidget {
     final size = this.size ?? ActionScale.of(context) ?? MochiSize.sm;
     final metrics = dense ? _dense(theme) : null;
     final folded = actions.length > slots;
-    // The … takes the last slot, so what is written out is one fewer.
-    final shown = folded ? actions.take(slots - 1).toList() : actions;
-    final hidden = folded ? actions.skip(slots - 1).toList() : const <MochiAction>[];
+    final fromStart = foldFrom == MochiActionFold.start;
+    // The … takes one slot, so what is written out is one fewer.
+    final cut = !folded ? 0 : (fromStart ? actions.length - (slots - 1) : slots - 1);
+    final shown = !folded ? actions : (fromStart ? actions.sublist(cut) : actions.sublist(0, cut));
+    final hidden = !folded
+        ? const <MochiAction>[]
+        : (fromStart ? actions.sublist(0, cut) : actions.sublist(cut));
+    final more = hidden.isEmpty
+        ? null
+        : MochiPopoverMenu(
+            menuBuilder: (context) => [for (final action in hidden) _menuRow(action, theme)],
+            builder: (context, anchor, _) => MochiButton.icon(
+              size: size,
+              metrics: metrics,
+              appearance: appearance,
+              scaleOnPress: scaleOnPress,
+              intent: MochiIntent.neutral,
+              focusNode: anchor.focusNode,
+              onPress: anchor.toggle,
+              semanticLabel: menuLabel ?? theme.strings.more,
+              icon: Icon(theme.icons.more),
+            ),
+          );
 
     // The bar's own box is the bar's, gaps included: a press that lands between two buttons goes
     // to whatever is holding the bar otherwise — inside a search field's suffix that is the
@@ -262,6 +298,7 @@ class MochiActionBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: g.space.xs3,
           children: [
+            if (fromStart) ?more,
             for (final action in shown)
               _ActionButton(
                 action: action,
@@ -270,21 +307,7 @@ class MochiActionBar extends StatelessWidget {
                 appearance: appearance,
                 scaleOnPress: scaleOnPress,
               ),
-            if (hidden.isNotEmpty)
-              MochiPopoverMenu(
-                menuBuilder: (context) => [for (final action in hidden) _menuRow(action, theme)],
-                builder: (context, anchor, _) => MochiButton.icon(
-                  size: size,
-                  metrics: metrics,
-                  appearance: appearance,
-                  scaleOnPress: scaleOnPress,
-                  intent: MochiIntent.neutral,
-                  focusNode: anchor.focusNode,
-                  onPress: anchor.toggle,
-                  semanticLabel: menuLabel ?? theme.strings.more,
-                  icon: Icon(theme.icons.more),
-                ),
-              ),
+            if (!fromStart) ?more,
           ],
         ),
       ],

@@ -64,6 +64,64 @@ void main() {
     expect(find.byIcon(MochiIcons.standard.more), findsOneWidget);
   });
 
+  group("folding from the start", () {
+    Widget bar() => MochiActionBar(actions(5), maxVisible: 3, foldFrom: MochiActionFold.start);
+
+    testWidgets("puts the … first and the first ones in it, in order", (tester) async {
+      await tester.pumpWidget(app(bar()));
+
+      final buttons = find.byType(MochiButton);
+      expect(buttons, findsNWidgets(3));
+      expect(
+        tester.getCenter(find.byIcon(MochiIcons.standard.more)).dx,
+        lessThan(tester.getRect(buttons.at(1)).left),
+        reason: "the … is the first slot",
+      );
+
+      await tester.tap(find.byIcon(MochiIcons.standard.more));
+      await tester.pumpAndSettle();
+      for (final label in ["Action 1", "Action 2", "Action 3"]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.text("Action 4"), findsNothing, reason: "the last ones stay written out");
+      expect(tester.getRect(find.text("Action 1")).top, lessThan(tester.getRect(find.text("Action 3")).top));
+    });
+
+    testWidgets("mirrors in right-to-left", (tester) async {
+      await tester.pumpWidget(app(Directionality(textDirection: TextDirection.rtl, child: bar())));
+
+      final buttons = find.byType(MochiButton);
+      expect(
+        tester.getCenter(find.byIcon(MochiIcons.standard.more)).dx,
+        greaterThan(tester.getRect(buttons.at(1)).right),
+        reason: "the … stands at the right-hand end",
+      );
+    });
+
+    testWidgets("a header hands it to the group it is asked for", (tester) async {
+      await tester.pumpWidget(
+        app(
+          SizedBox(
+            width: 600,
+            child: MochiHeader(
+              title: const Text("Title"),
+              prefixes: actions(5),
+              maxVisibleActions: 3,
+              prefixFoldFrom: MochiActionFold.start,
+            ),
+          ),
+        ),
+      );
+
+      final bar = tester.widget<MochiActionBar>(find.byType(MochiActionBar));
+      expect(bar.foldFrom, MochiActionFold.start);
+      expect(
+        tester.getCenter(find.byIcon(MochiIcons.standard.more)).dx,
+        lessThan(tester.getRect(find.byType(MochiButton).at(1)).left),
+      );
+    });
+  });
+
   testWidgets("an icon action is named by its label, one that shows it writes it out", (tester) async {
     await tester.pumpWidget(
       app(

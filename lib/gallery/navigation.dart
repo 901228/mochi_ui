@@ -615,6 +615,21 @@ class _ScaffoldSample extends StatelessWidget {
       ],
     );
 
+    final records = [
+      MochiAction(icon: TablerIcons.search, label: "Search", onPress: () {}),
+      MochiAction(icon: TablerIcons.filter, label: "Filter", onPress: () {}),
+      MochiAction.menu(
+        icon: TablerIcons.download,
+        label: "Export",
+        children: [
+          MochiAction(icon: TablerIcons.fileTypeCsv, label: "CSV", onPress: () {}),
+          MochiAction(icon: TablerIcons.json, label: "JSON", onPress: () {}),
+          MochiAction(icon: TablerIcons.fileTypePdf, label: "PDF", onPress: () {}),
+        ],
+      ),
+      MochiAction(icon: TablerIcons.trash, label: "Delete", intent: MochiIntent.danger, onPress: () {}),
+    ];
+
     return Wrap(
       spacing: g.space.lg,
       runSpacing: g.space.md,
@@ -630,29 +645,27 @@ class _ScaffoldSample extends StatelessWidget {
               // More than the bar has slots for, so the last ones fold into the …: on a phone
               // that is two, from tablet width up four. Export is a menu: a dropdown while it is a
               // button, a submenu once it has been folded.
-              suffixes: [
-                MochiAction(icon: TablerIcons.search, label: "Search", onPress: () {}),
-                MochiAction(icon: TablerIcons.filter, label: "Filter", onPress: () {}),
-                MochiAction.menu(
-                  icon: TablerIcons.download,
-                  label: "Export",
-                  children: [
-                    MochiAction(icon: TablerIcons.fileTypeCsv, label: "CSV", onPress: () {}),
-                    MochiAction(icon: TablerIcons.json, label: "JSON", onPress: () {}),
-                    MochiAction(icon: TablerIcons.fileTypePdf, label: "PDF", onPress: () {}),
-                  ],
-                ),
-                MochiAction(
-                  icon: TablerIcons.trash,
-                  label: "Delete",
-                  intent: MochiIntent.danger,
-                  onPress: () {},
-                ),
-              ],
+              suffixes: records,
             ),
             footer: Padding(
               padding: EdgeInsets.all(g.space.sm),
               child: MochiButton(size: MochiSize.sm, onPress: () {}, child: const Text("Add solve")),
+            ),
+            child: const Align(alignment: .topLeft, child: Text("content")),
+          ),
+        ),
+        page(
+          "suffixFoldFrom: start",
+          MochiScaffold(
+            safeArea: false,
+            background: const Color(0x00000000),
+            header: MochiHeader(
+              variant: MochiHeaderVariant.bordered,
+              title: const Text("Records"),
+              // The same actions, folding from the other end: the first go into a … at the
+              // start of the group, and Delete stays written out.
+              suffixFoldFrom: MochiActionFold.start,
+              suffixes: records,
             ),
             child: const Align(alignment: .topLeft, child: Text("content")),
           ),
