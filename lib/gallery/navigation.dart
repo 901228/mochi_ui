@@ -160,6 +160,7 @@ class _ScaffoldNavigationSample extends StatefulWidget {
 class _ScaffoldNavigationSampleState extends State<_ScaffoldNavigationSample> {
   var _page = "timer";
   var _session = "3x3";
+  var _selecting = false;
   final _note = TextEditingController(text: "typed before the switch");
 
   @override
@@ -185,7 +186,38 @@ class _ScaffoldNavigationSampleState extends State<_ScaffoldNavigationSample> {
           child: MochiScaffold(
             safeArea: false,
             background: const Color(0x00000000),
-            header: MochiHeader(variant: MochiHeaderVariant.bordered, title: Text("$_page · $_session")),
+            header: MochiHeader(
+              variant: MochiHeaderVariant.bordered,
+              title: Text("$_page · $_session"),
+              suffixes: [
+                MochiAction(
+                  icon: TablerIcons.listCheck,
+                  label: "Select",
+                  selected: _selecting,
+                  onPress: () => setState(() => _selecting = !_selecting),
+                ),
+              ],
+            ),
+            // Over the header, and as wide as the page beside the sidebar however wide that is.
+            headerOverlay: _selecting
+                ? Padding(
+                    padding: EdgeInsets.all(g.space.sm),
+                    child: MochiCard(
+                      title: const Text("2 selected"),
+                      titleSuffix: MochiActionBar([
+                        MochiAction(
+                          icon: TablerIcons.x,
+                          label: "Done",
+                          onPress: () => setState(() => _selecting = false),
+                        ),
+                      ]),
+                      child: const _ThemedText(
+                        "headerOverlay: collapse the sidebar or switch the viewport",
+                        .muted,
+                      ),
+                    ),
+                  )
+                : null,
             // Wide: everything in one column.
             sidebar: MochiSidebar(
               width: 200,

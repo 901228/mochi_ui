@@ -41,6 +41,7 @@ class MochiScaffold extends StatefulWidget {
     super.key,
     required this.child,
     this.header,
+    this.headerOverlay,
     this.footer,
     this.sidebar,
     this.drawer,
@@ -54,6 +55,20 @@ class MochiScaffold extends StatefulWidget {
 
   final Widget child;
   final Widget? header;
+
+  /// Drawn over the [header], from the top of the content's column: as wide as the content, at
+  /// least as tall as the header and as tall beyond that as it likes, up to the whole page — a
+  /// selection bar that covers the header and whatever sits under it, say.
+  ///
+  /// It follows the [sidebar] as it slides, narrows to a rail or goes, which nothing outside the
+  /// scaffold can do. Only its own box takes presses; the header and the content stay live
+  /// everywhere else. Under [extendBody] the header clears the status bar by itself, and so must
+  /// this: `MediaQuery.paddingOf(context).top`.
+  ///
+  /// Given after the page is built, it slides in from the leading edge, over the sidebar, and a
+  /// press on it before it has arrived does nothing — it neither reaches the overlay nor the
+  /// header under it. Taken away, it slides back out before it goes, letting presses through.
+  final Widget? headerOverlay;
 
   /// Along the bottom: usually a `MochiBottomNav`. Hidden from [sidebarFrom] up when there is a
   /// [sidebar] to take over its job.
@@ -73,6 +88,12 @@ class MochiScaffold extends StatefulWidget {
   final bool drawerEdgeDrag;
 
   /// Defaults to [MochiGeometry.pagePadding]; pass [EdgeInsets.zero] for edge-to-edge content.
+  ///
+  /// Content that scrolls wants zero here and the same padding *inside* the scroll view
+  /// (`ListView(padding: context.theme.geometry.pagePadding)`): padded from outside, the view's
+  /// edge sits short of the page's, so rows are cut off in mid-air and a raised card's shadow is
+  /// clipped at the sides. The scaffold cannot do this by itself, since it cannot tell a list
+  /// from a column, which needs the padding outside.
   final EdgeInsetsGeometry? padding;
 
   /// Defaults to [MochiColors.background].
@@ -124,6 +145,13 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
   /// 0 shut, 1 all the way out.
   late final AnimationController _drawer = AnimationController(vsync: this);
 
+  /// 0 gone, 1 in place: the header overlay sliding in from the screen's leading edge. Run
+  /// linearly; the layout puts the theme's transition curves on it.
+  late final AnimationController _overlay = AnimationController(vsync: this);
+
+  /// The last header overlay given, kept on the tree while it slides out after being taken away.
+  Widget? _overlayChild;
+
   /// What had the focus before the drawer took it, to be given it back when the drawer shuts.
   FocusNode? _returnFocus;
   final _drawerScope = FocusScopeNode(debugLabel: "MochiScaffold drawer");
@@ -166,6 +194,25 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     // leaving; that is a rebuild at either end of a run, not on every tick.
     _wide.addStatusListener(_settled);
     _drawer.addStatusListener(_settled);
+    _overlay.addStatusListener(_settled);
+    // One the page is built with is already there; only one that arrives later slides in.
+    _overlayChild = widget.headerOverlay;
+    if (_overlayChild != null) _overlay.value = 1;
+  }
+
+  @override
+  void didUpdateWidget(MochiScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final overlay = widget.headerOverlay;
+    if (overlay != null) _overlayChild = overlay;
+    if ((overlay == null) == (oldWidget.headerOverlay == null)) return;
+    if (_animationsOff) {
+      _overlay.value = overlay == null ? 0 : 1;
+    } else if (overlay == null) {
+      _overlay.animateBack(0, duration: context.theme.motion.transitionReverseDuration);
+    } else {
+      _overlay.animateTo(1, duration: context.theme.motion.transitionDuration);
+    }
   }
 
   void _settled(AnimationStatus status) {
@@ -176,6 +223,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
   void dispose() {
     _wide.dispose();
     _drawer.dispose();
+    _overlay.dispose();
     _drawerScope.dispose();
     largeTitleCovered.dispose();
     super.dispose();
@@ -259,7 +307,14 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     );
 
     final page = CustomMultiChildLayout(
-      delegate: _ScaffoldLayout(wide: _wide, rtl: rtl, extendBody: widget.extendBody),
+      delegate: _ScaffoldLayout(
+        wide: _wide,
+        overlay: _overlay,
+        overlayCurve: theme.motion.transitionCurve,
+        overlayReverseCurve: theme.motion.transitionReverseCurve,
+        rtl: rtl,
+        extendBody: widget.extendBody,
+      ),
       children: [
         LayoutId(
           id: _Slot.body,
@@ -288,6 +343,22 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
           LayoutId(
             id: _Slot.sidebar,
             child: slot(sidebar, shown: _sidebarShown, gone: !_sidebarShown && _wide.value == 0),
+          ),
+        if (_overlayChild case final overlay? when !_overlay.isDismissed)
+          LayoutId(
+            id: _Slot.headerOverlay,
+            // Slid by the layout, over the sidebar; one on its way out takes nothing, and presses
+            // on one arriving go nowhere: not to it, half in place, nor to what it is covering.
+            child: ExcludeFocus(
+              excluding: widget.headerOverlay == null,
+              child: IgnorePointer(
+                ignoring: widget.headerOverlay == null,
+                child: AbsorbPointer(
+                  absorbing: widget.headerOverlay != null && !_overlay.isCompleted,
+                  child: overlay,
+                ),
+              ),
+            ),
           ),
       ],
     );
@@ -358,7 +429,7 @@ class _ScaffoldScope extends InheritedWidget {
   bool updateShouldNotify(_ScaffoldScope old) => old.state != state || old.hasDrawer != hasDrawer;
 }
 
-enum _Slot { body, header, footer, sidebar }
+enum _Slot { body, header, footer, sidebar, headerOverlay }
 
 /// Constraints that also say how tall the bars standing over the body came out.
 ///
@@ -381,9 +452,21 @@ class _BodyConstraints extends BoxConstraints {
 /// Lays out the page around a sidebar that slides in from the leading edge and a footer that
 /// slides down out of sight, both by [wide]: laid out again on every tick of it, never rebuilt.
 class _ScaffoldLayout extends MultiChildLayoutDelegate {
-  _ScaffoldLayout({required this.wide, required this.rtl, required this.extendBody}) : super(relayout: wide);
+  _ScaffoldLayout({
+    required this.wide,
+    required this.overlay,
+    required this.overlayCurve,
+    required this.overlayReverseCurve,
+    required this.rtl,
+    required this.extendBody,
+  }) : super(relayout: Listenable.merge([wide, overlay]));
 
   final Animation<double> wide;
+
+  /// The header overlay, 0 off the screen's leading edge and 1 in place.
+  final Animation<double> overlay;
+  final Curve overlayCurve;
+  final Curve overlayReverseCurve;
   final bool rtl;
   final bool extendBody;
 
@@ -418,6 +501,23 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
       bottom = height * (1 - t);
       positionChild(_Slot.footer, Offset(left, size.height - bottom));
     }
+    if (hasChild(_Slot.headerOverlay)) {
+      layoutChild(
+        _Slot.headerOverlay,
+        BoxConstraints(
+          minWidth: width,
+          maxWidth: width,
+          minHeight: math.min(top, size.height),
+          maxHeight: size.height,
+        ),
+      );
+      // All the way off the screen, not just its own width: that only gets it to the sidebar's
+      // edge, where it would be seen to stop and vanish, since it is drawn over the sidebar.
+      final curve = overlay.status == AnimationStatus.reverse ? overlayReverseCurve : overlayCurve;
+      final away = 1 - curve.transform(overlay.value);
+      final travel = rtl ? size.width - left : left + width;
+      positionChild(_Slot.headerOverlay, Offset(left + (rtl ? travel : -travel) * away, 0));
+    }
 
     if (extendBody) {
       layoutChild(_Slot.body, _BodyConstraints.tight(Size(width, size.height), top: top, bottom: bottom));
@@ -430,7 +530,12 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
 
   @override
   bool shouldRelayout(_ScaffoldLayout oldDelegate) =>
-      oldDelegate.wide != wide || oldDelegate.rtl != rtl || oldDelegate.extendBody != extendBody;
+      oldDelegate.wide != wide ||
+      oldDelegate.overlay != overlay ||
+      oldDelegate.overlayCurve != overlayCurve ||
+      oldDelegate.overlayReverseCurve != overlayReverseCurve ||
+      oldDelegate.rtl != rtl ||
+      oldDelegate.extendBody != extendBody;
 }
 
 class _ExtendedBody extends StatelessWidget {
