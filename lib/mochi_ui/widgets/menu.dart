@@ -166,8 +166,10 @@ class MochiMenuItem extends StatelessWidget {
       onPress: onPress == null
           ? null
           : () {
-              onPress!();
+              // Put away first, then run: a phone's menu is a sheet, popped off the top of the
+              // navigator, which after a handler that opens a modal would be that modal.
               close?.call();
+              onPress!();
             },
       builder: (context, states, _) =>
           _MenuItemSurface(states: states, intent: intent, prefix: prefix, title: title, suffix: suffix),

@@ -280,4 +280,64 @@ void main() {
     expect(events, ["select"]);
     expect(find.text("Rename"), findsNothing);
   });
+
+  group("a row that opens a modal", () {
+    Widget page(Size size, {required void Function(bool) onAnswer}) => MediaQuery(
+      data: MediaQueryData(size: size),
+      child: MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Builder(
+          builder: (page) => Center(
+            child: MochiPopoverMenu(
+              menuBuilder: (_) => [
+                MochiMenuItem(
+                  title: const Text("Delete"),
+                  onPress: () async =>
+                      onAnswer(await showMochiConfirm(page, title: "Delete it?", confirmLabel: "Yes")),
+                ),
+              ],
+              builder: (context, anchor, _) =>
+                  MochiButton(focusNode: anchor.focusNode, onPress: anchor.toggle, child: const Text("open")),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets("on a phone, puts the menu's sheet away before the modal comes up", (tester) async {
+      tester.view.physicalSize = const Size(390, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final answers = <bool>[];
+      await tester.pumpWidget(page(const Size(390, 780), onAnswer: answers.add));
+
+      await tester.tap(find.text("open"));
+      await tester.pumpAndSettle();
+      expect(find.byType(MochiSheet), findsOneWidget, reason: "a phone's menu is a sheet");
+      await tester.tap(find.text("Delete"));
+      await tester.pumpAndSettle();
+
+      // Popping the menu after the row ran popped the modal it had just pushed instead.
+      expect(find.text("Delete it?"), findsOneWidget);
+      expect(find.text("Delete"), findsNothing, reason: "the menu's sheet is gone");
+      await tester.tap(find.text("Yes"));
+      await tester.pumpAndSettle();
+      expect(answers, [true]);
+    });
+
+    testWidgets("on a wide screen, leaves the focus in the modal", (tester) async {
+      await tester.pumpWidget(page(const Size(800, 600), onAnswer: (_) {}));
+
+      await tester.tap(find.text("open"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Delete"), kind: PointerDeviceKind.mouse);
+      await tester.pumpAndSettle();
+
+      expect(find.text("Delete it?"), findsOneWidget);
+      // The panel hands its focus back to its button as it closes; the dialog still has to end
+      // up with it, whichever comes first.
+      final focus = FocusManager.instance.primaryFocus!.context!;
+      expect(ModalRoute.of(focus), same(ModalRoute.of(tester.element(find.text("Delete it?")))));
+    });
+  });
 }
