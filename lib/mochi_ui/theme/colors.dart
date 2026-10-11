@@ -1,5 +1,6 @@
 import "package:flutter/widgets.dart";
 
+import "contrast.dart";
 import "palette.dart";
 import "tone.dart";
 
@@ -66,6 +67,26 @@ class MochiColors {
   /// too dark there.
   Color softOn(MochiTone tone, Color background) =>
       Color.alphaBlend(tone.base.withValues(alpha: softAlpha), background);
+
+  /// [color] made quieter the way [mutedForeground] is quieter than [foreground]: moved a fifth of
+  /// the way towards the ground it sits on ([on], the page by default), opaque, so it looks the
+  /// same over whatever is underneath.
+  ///
+  /// Never quieter than readable: when the full step would drop it under [minContrast] against
+  /// [on], it stops where it still reaches that, and a colour already short of it is returned as
+  /// it is. Text on a fill often sits just over 4.5:1 and has no room to move at all; large text
+  /// and icons only need 3 (WCAG's own line for them), which is the caller's call to make.
+  Color muted(Color color, {Color? on, double minContrast = 4.5}) {
+    final ground = on ?? background;
+    for (var t = _mutedStep; t > 0; t -= 0.01) {
+      final mixed = Color.lerp(color, ground, t)!;
+      if (contrastRatio(ground, mixed) >= minContrast) return mixed;
+    }
+    return color;
+  }
+
+  /// How far [mutedForeground] sits from [foreground] towards the page, in both themes.
+  static const _mutedStep = 0.2;
 
   /// Blends [on] over [base] according to the interaction state.
   static Color stateLayer(Color base, Color on, Set<WidgetState> states) {
