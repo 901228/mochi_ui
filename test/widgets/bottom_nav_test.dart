@@ -4,19 +4,20 @@ import "package:mochi_ui/mochi_ui.dart";
 import "../support/surface.dart";
 
 void main() {
-  Widget app(Widget child, {EdgeInsets padding = EdgeInsets.zero, bool touch = false}) => MochiApp(
-    themeMode: MochiThemeMode.light,
-    touch: touch,
-    home: MediaQuery(
-      data: MediaQueryData(padding: padding),
-      child: Column(
-        children: [
-          const Expanded(child: SizedBox.shrink()),
-          child,
-        ],
-      ),
-    ),
-  );
+  Widget app(Widget child, {EdgeInsets padding = EdgeInsets.zero, bool touch = false, bool still = false}) =>
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: touch,
+        home: MediaQuery(
+          data: MediaQueryData(padding: padding, disableAnimations: still),
+          child: Column(
+            children: [
+              const Expanded(child: SizedBox.shrink()),
+              child,
+            ],
+          ),
+        ),
+      );
 
   List<MochiBottomNavItem<String>> items({bool disableSettings = false}) => [
     MochiBottomNavItem(value: "timer", icon: Icon(MochiIcons.standard.check), label: const Text("Timer")),
@@ -42,6 +43,7 @@ void main() {
     EdgeInsets padding = EdgeInsets.zero,
     bool touch = false,
     MochiBottomNavVariant? variant,
+    bool still = false,
   }) => app(
     MochiBottomNav<String>(
       value: value,
@@ -52,6 +54,17 @@ void main() {
     ),
     padding: padding,
     touch: touch,
+    still: still,
+  );
+
+  // Mixed over the bar's ground: the surface when outlined, the overlay when raised (on touch).
+  final c = MochiColors.light;
+  final chosenFills = {c.softOn(c.primary, c.surface), c.softOn(c.primary, c.overlay)};
+  Finder indicator() => find.byWidgetPredicate(
+    (w) =>
+        w is DecoratedBox &&
+        w.decoration is ShapeDecoration &&
+        chosenFills.contains((w.decoration as ShapeDecoration).color),
   );
 
   testWidgets("pressing a destination reports it; the one it is on does nothing", (tester) async {
@@ -92,8 +105,81 @@ void main() {
         .whereType<ShapeDecoration>()
         .first
         .color!;
-    expect(pillOf("Timer"), MochiColors.light.softOn(MochiColors.light.primary, MochiColors.light.surface));
-    expect(pillOf("Statistics"), MochiColors.light.surface);
+    // The destinations draw only their hover and press layers; the chosen one's fill is the
+    // indicator behind them.
+    expect(pillOf("Timer").a, 0);
+    expect(pillOf("Statistics").a, 0);
+    expect(indicator(), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text("Timer")).style?.color ??
+          DefaultTextStyle.of(tester.element(find.text("Timer"))).style.color,
+      MochiColors.light.primary.onSoft,
+    );
+  });
+
+  testWidgets("the chosen one is not faded, though pressing it does nothing", (tester) async {
+    await tester.pumpWidget(nav(onChanged: (_) {}, disableSettings: true));
+    await tester.pumpAndSettle();
+    double opacityOf(String label) => tester
+        .widget<Opacity>(find.ancestor(of: find.text(label), matching: find.byType(Opacity)).first)
+        .opacity;
+    expect(opacityOf("Timer"), 1);
+    expect(opacityOf("Statistics"), 1);
+    expect(opacityOf("Settings"), 0.4);
+  });
+
+  group("the indicator", () {
+    Rect cellOf(WidgetTester tester, String label) =>
+        tester.getRect(find.ancestor(of: find.text(label), matching: find.byType(MochiTappable)));
+
+    Rect pillOf(WidgetTester tester, String label) => tester.getRect(
+      find
+          .descendant(
+            of: find.ancestor(of: find.text(label), matching: find.byType(MochiTappable)),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+
+    testWidgets("sits exactly behind the chosen block, docked and floating", (tester) async {
+      await tester.pumpWidget(nav(onChanged: (_) {}, value: "stats"));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(indicator()), rectMoreOrLessEquals(pillOf(tester, "Statistics")));
+
+      await tester.pumpWidget(nav(onChanged: (_) {}, value: "stats", touch: true));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(indicator()), rectMoreOrLessEquals(cellOf(tester, "Statistics")));
+    });
+
+    testWidgets("slides from one destination to the next", (tester) async {
+      await tester.pumpWidget(nav(onChanged: (_) {}, touch: true));
+      await tester.pumpAndSettle();
+      final from = cellOf(tester, "Timer").center.dx;
+
+      await tester.pumpWidget(nav(onChanged: (_) {}, touch: true, value: "settings"));
+      await tester.pump();
+      final motion = MochiTheme.light.motion;
+      await tester.pump(motion.transitionDuration ~/ 2);
+      final to = cellOf(tester, "Settings").center.dx;
+      final middle = tester.getCenter(indicator()).dx;
+      // At the page's own pace: halfway through the transition is where its curve says, and the
+      // rest of it lands there.
+      expect(
+        (middle - from) / (to - from),
+        moreOrLessEquals(motion.transitionCurve.transform(0.5), epsilon: 0.01),
+      );
+      await tester.pump(motion.transitionDuration ~/ 2);
+      expect(tester.getCenter(indicator()).dx, moreOrLessEquals(to));
+    });
+
+    testWidgets("jumps when animations are off", (tester) async {
+      Widget still(String value) => nav(onChanged: (_) {}, touch: true, value: value, still: true);
+      await tester.pumpWidget(still("timer"));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(still("settings"));
+      await tester.pump();
+      expect(tester.getCenter(indicator()).dx, moreOrLessEquals(cellOf(tester, "Settings").center.dx));
+    });
   });
 
   testWidgets("without labels, only the chosen one says what it is", (tester) async {

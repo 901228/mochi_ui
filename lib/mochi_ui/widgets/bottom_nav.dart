@@ -8,6 +8,7 @@ import "../theme/typography.dart";
 import "focus_ring.dart";
 import "state_transition.dart";
 import "tappable.dart";
+import "value_transition.dart";
 import "shape_shadow.dart";
 
 /// How a [MochiBottomNav] sits at the bottom of the screen.
@@ -113,25 +114,45 @@ class MochiBottomNav<T> extends StatelessWidget {
     final floating =
         (variant ?? (raised ? MochiBottomNavVariant.floating : MochiBottomNavVariant.docked)) == .floating;
 
+    final chosen = items.indexWhere((item) => item.value == value);
+
     // A hair between destinations, so a hovered one beside the chosen one reads as two blocks
     // rather than one.
-    Widget row({required bool floating}) => Row(
-      spacing: g.space.xs2,
+    Widget row({required bool floating}) => Stack(
       children: [
-        for (final item in items)
-          Expanded(
-            child: _Destination<T>(
-              item: item,
-              selected: item.value == value,
-              intent: intent,
-              ground: ground,
-              showLabel: showLabels,
+        if (chosen >= 0)
+          Positioned.fill(
+            child: _Indicator(
+              at: chosen,
+              count: items.length,
+              gap: g.space.xs2,
+              color: colors.softOn(colors.of(intent), ground),
               floating: floating,
-              onPress: onChanged == null || !item.enabled || item.value == value
-                  ? null
-                  : () => onChanged!(item.value),
+              faded: onChanged == null,
             ),
           ),
+        Row(
+          spacing: g.space.xs2,
+          children: [
+            for (final item in items)
+              Expanded(
+                child: _Destination<T>(
+                  item: item,
+                  selected: item.value == value,
+                  intent: intent,
+                  ground: ground,
+                  showLabel: showLabels,
+                  floating: floating,
+                  // The chosen one has nothing to do when pressed, which is not the same as being
+                  // unavailable: only a bar or a destination that is switched off is faded.
+                  faded: onChanged == null || !item.enabled,
+                  onPress: onChanged == null || !item.enabled || item.value == value
+                      ? null
+                      : () => onChanged!(item.value),
+                ),
+              ),
+          ],
+        ),
       ],
     );
 
@@ -202,8 +223,19 @@ class _Destination<T> extends StatelessWidget {
     required this.ground,
     required this.showLabel,
     required this.floating,
+    required this.faded,
     required this.onPress,
   });
+
+  static double heightOf(MochiTheme theme) => theme.touch ? 60.0 : 52.0;
+  static double iconSizeOf(MochiTheme theme) => theme.touch ? 24.0 : 22.0;
+
+  /// The block behind the icon when docked: the icon and a little room either side of it.
+  static EdgeInsets pillPadding(MochiGeometry g) =>
+      EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs3);
+
+  static TextStyle labelStyle(MochiTheme theme, {required bool selected}) =>
+      theme.typography.body.xs2.withWeight(selected ? FontWeight.w600 : FontWeight.w400);
 
   final MochiBottomNavItem<T> item;
   final bool selected;
@@ -216,6 +248,7 @@ class _Destination<T> extends StatelessWidget {
   /// In a floating bar the whole destination is the block that is filled; docked, only the pill
   /// behind the icon.
   final bool floating;
+  final bool faded;
   final VoidCallback? onPress;
 
   @override
@@ -224,8 +257,8 @@ class _Destination<T> extends StatelessWidget {
     final colors = theme.colors;
     final g = theme.geometry;
     final tone = colors.of(intent);
-    final height = theme.touch ? 60.0 : 52.0;
-    final iconSize = theme.touch ? 24.0 : 22.0;
+    final height = heightOf(theme);
+    final iconSize = iconSizeOf(theme);
 
     return MochiTappable(
       enabled: item.enabled && onPress != null,
@@ -241,11 +274,13 @@ class _Destination<T> extends StatelessWidget {
             (st) => st.contains(WidgetState.selected) ? tone.onSoft : colors.mutedForeground,
           );
 
-          // The press and hover layers sit on top of the fill that marks the destination.
+          // Only the press and hover layers: the chosen one is lit by the indicator behind it.
           final fill = blend.color(
-            (st) => st.contains(WidgetState.selected)
-                ? MochiColors.stateLayer(colors.softOn(tone, ground), tone.onSoft, st)
-                : MochiColors.stateLayer(ground, colors.foreground, st),
+            (st) => MochiColors.stateLayer(
+              ground.withValues(alpha: 0),
+              st.contains(WidgetState.selected) ? tone.onSoft : colors.foreground,
+              st,
+            ),
           );
           final cell = floating ? g.radius.lg : g.radius.sm;
 
@@ -254,7 +289,7 @@ class _Destination<T> extends StatelessWidget {
             radius: cell,
             inset: true,
             child: Opacity(
-              opacity: blend.contains(WidgetState.disabled) ? 0.4 : 1,
+              opacity: faded ? 0.4 : 1,
               child: Container(
                 height: height,
                 decoration: floating
@@ -268,7 +303,7 @@ class _Destination<T> extends StatelessWidget {
                   spacing: g.space.xs3,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: g.space.sm, vertical: g.space.xs3),
+                      padding: pillPadding(g),
                       decoration: floating
                           ? null
                           : ShapeDecoration(
@@ -291,9 +326,7 @@ class _Destination<T> extends StatelessWidget {
                     ),
                     if (showLabel || selected)
                       DefaultTextStyle(
-                        style: theme.typography.body.xs2
-                            .withWeight(selected ? FontWeight.w600 : FontWeight.w400)
-                            .copyWith(color: foreground),
+                        style: labelStyle(theme, selected: selected).copyWith(color: foreground),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         child: item.label,
@@ -301,6 +334,85 @@ class _Destination<T> extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// The chosen destination's fill, drawn once behind the row so it slides from one destination to
+/// the next, at the theme's transition speed, instead of fading out of one and into another. Floating, it is the whole cell; docked,
+/// it is the block behind the icon, found by laying out the chosen cell again with that block and
+/// an empty line where the label goes.
+class _Indicator extends StatelessWidget {
+  const _Indicator({
+    required this.at,
+    required this.count,
+    required this.gap,
+    required this.color,
+    required this.floating,
+    required this.faded,
+  });
+
+  final int at;
+  final int count;
+  final double gap;
+  final Color color;
+  final bool floating;
+  final bool faded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.theme;
+    final g = theme.geometry;
+    final iconSize = _Destination.iconSizeOf(theme);
+
+    final body = floating
+        ? DecoratedBox(
+            decoration: ShapeDecoration(
+              color: color,
+              shape: g.shape(borderRadius: g.radius.lg),
+            ),
+          )
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: g.space.xs3,
+            children: [
+              Container(
+                padding: _Destination.pillPadding(g),
+                decoration: ShapeDecoration(
+                  color: color,
+                  shape: g.shape(borderRadius: g.radius.sm),
+                ),
+                child: SizedBox.square(dimension: iconSize),
+              ),
+              // A line of the label's style, which is what holds the icon up off centre: an empty one
+              // is as tall as a full one, and is not a second copy of the words for anything to find.
+              Text("", style: _Destination.labelStyle(theme, selected: true)),
+            ],
+          );
+
+    return Opacity(
+      opacity: faded ? 0.4 : 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // The cells share what is left once the gaps are taken out, as the row's do.
+          final width = (constraints.maxWidth - gap * (count - 1)) / count;
+
+          return MochiValueTransition<double>(
+            value: at.toDouble(),
+            lerp: (a, b, t) => a + (b - a) * t,
+            // The page's own movement rather than a segmented control's: a bottom bar switches whole
+            // pages, and its fill should arrive with the page that slides in beside it.
+            duration: theme.motion.transitionDuration,
+            curve: theme.motion.transitionCurve,
+            child: SizedBox(width: width, height: constraints.maxHeight, child: body),
+            // -1 is flush with the start and 1 with the end; between them a cell and a gap apart.
+            builder: (context, at, child) => Align(
+              alignment: AlignmentDirectional(count == 1 ? 0 : 2 * at / (count - 1) - 1, 0),
+              child: child,
             ),
           );
         },
