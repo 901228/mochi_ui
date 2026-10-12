@@ -40,6 +40,31 @@ void main() {
     await mouse.removePointer();
   });
 
+  testWidgets("goes below rather than under the padding above", (tester) async {
+    // As under a header that the body extends beneath: the room above is the header's.
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(padding: const EdgeInsets.only(top: 200)),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(padding: const EdgeInsets.only(top: 210), child: button()),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.longPress(find.text("Save"));
+    await tester.pump();
+    expect(
+      tester.getTopLeft(find.text("Tip Save")).dy,
+      greaterThan(tester.getBottomLeft(find.text("Save")).dy),
+    );
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+  });
+
   testWidgets("touch long press shows the tooltip without pressing the button", (tester) async {
     await tester.pumpWidget(app(button()));
     await tester.longPress(find.text("Save"));

@@ -40,15 +40,27 @@ class MochiTooltip extends StatefulWidget {
 class _MochiTooltipState extends State<MochiTooltip> {
   final _tooltipKey = GlobalKey<RawTooltipState>();
 
+  /// The padding of the [MediaQuery] around the tooltip, read at build.
+  EdgeInsets _insets = EdgeInsets.zero;
+
   // Passed as a tear-off: tear-offs of the same method on the same object are ==,
   // so RawTooltip doesn't relayout on every rebuild.
-  Offset _position(TooltipPositionContext c) => positionDependentBox(
-    size: c.overlaySize,
-    childSize: c.tooltipSize,
-    target: c.target,
-    preferBelow: widget.preferBelow,
-    verticalOffset: c.targetSize.height / 2 + widget.gap,
-  );
+  Offset _position(TooltipPositionContext c) {
+    // RawTooltip draws on the nearest overlay, which sits under whatever the padding stands for —
+    // the bars of a scaffold that extends its body, the status bar — so a side that only fits
+    // under it does not count. Taken as measured from the overlay's edges, as it is for one that
+    // fills the page.
+    final offset = c.targetSize.height / 2 + widget.gap;
+    final fitsAbove = c.target.dy - offset - c.tooltipSize.height >= _insets.top;
+    final fitsBelow = c.target.dy + offset + c.tooltipSize.height <= c.overlaySize.height - _insets.bottom;
+    return positionDependentBox(
+      size: c.overlaySize,
+      childSize: c.tooltipSize,
+      target: c.target,
+      preferBelow: widget.preferBelow ? fitsBelow || !fitsAbove : !fitsAbove && fitsBelow,
+      verticalOffset: offset,
+    );
+  }
 
   // RawTooltip has no focus handling and no per-instance hide, so focus is bridged here.
   void _handleFocusChange(bool focused) {
@@ -70,6 +82,7 @@ class _MochiTooltipState extends State<MochiTooltip> {
 
   @override
   Widget build(BuildContext context) {
+    _insets = MediaQuery.paddingOf(context);
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
