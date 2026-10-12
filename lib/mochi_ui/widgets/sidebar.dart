@@ -156,6 +156,7 @@ class _MochiSidebarState extends State<MochiSidebar> {
     final control = FixedSidebar.of(context) ? null : widget.collapsed;
     final collapsed = control != null && _collapsed.value(control);
     final padding = (widget.padding ?? EdgeInsets.all(g.space.xs2)).resolve(Directionality.of(context));
+    final insets = MediaQuery.paddingOf(context);
 
     return MochiValueTransition(
       value: collapsed ? 0.0 : 1.0,
@@ -178,35 +179,44 @@ class _MochiSidebarState extends State<MochiSidebar> {
                   )
                 : null,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ?widget.header,
-              // The items scroll; the header and the footer stay put.
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: padding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: g.space.xs3,
-                    children: widget.children,
+          // Its fill runs under the status bar and the home indicator when it reaches them, in a
+          // drawer or beside a body that extends under the bars; its rows stop short of them.
+          padding: EdgeInsets.only(top: insets.top, bottom: insets.bottom),
+          // Taken out for the rows, which the padding above already keeps clear.
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            removeBottom: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ?widget.header,
+                // The items scroll; the header and the footer stay put.
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: padding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: g.space.xs3,
+                      children: widget.children,
+                    ),
                   ),
                 ),
-              ),
-              // Inset as the items are, so a row down here lines up with the ones above — and
-              // its icon finds the same middle on a rail — rather than running into the
-              // sidebar's edge, which a window's rounded corner then cuts. Nothing on top: the
-              // items' own bottom padding is the gap between the two.
-              if (widget.footer.isNotEmpty)
-                Padding(
-                  padding: padding.copyWith(top: 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: g.space.xs3,
-                    children: widget.footer,
+                // Inset as the items are, so a row down here lines up with the ones above — and
+                // its icon finds the same middle on a rail — rather than running into the
+                // sidebar's edge, which a window's rounded corner then cuts. Nothing on top: the
+                // items' own bottom padding is the gap between the two.
+                if (widget.footer.isNotEmpty)
+                  Padding(
+                    padding: padding.copyWith(top: 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: g.space.xs3,
+                      children: widget.footer,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

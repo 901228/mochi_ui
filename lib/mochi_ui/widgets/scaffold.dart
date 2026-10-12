@@ -738,10 +738,15 @@ class _DrawerLayerState extends State<_DrawerLayer> {
                                       borderRadius: BorderRadiusDirectional.horizontal(
                                         end: g.radius.xl.topLeft,
                                       ).resolve(Directionality.of(context)),
-                                      // It runs to the screen's top, bottom and leading edge.
+                                      // It runs to the screen's top, bottom and leading edge. Only
+                                      // the edge is cleared here: the top and bottom insets are the
+                                      // drawer's own to keep clear, under its own fill, as a
+                                      // sidebar or a list does.
                                       child: SafeArea(
                                         right: _rtl,
                                         left: !_rtl,
+                                        top: false,
+                                        bottom: false,
                                         // A sidebar in here is the drawer's list, not a column to
                                         // narrow: no rail, and no button for one.
                                         child: FixedSidebar(child: widget.child),

@@ -188,6 +188,41 @@ void main() {
     expect(showing(tester, "drawer"), isFalse);
   });
 
+  testWidgets("a sidebar in the drawer fills under the system's insets, and its rows stay clear", (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(padding: const EdgeInsets.only(top: 40, bottom: 30)),
+            child: MochiScaffold(
+              header: const MochiHeader(title: Text("Home")),
+              drawer: MochiSidebar(
+                children: [
+                  MochiSidebarItem(
+                    icon: Icon(MochiIcons.standard.check),
+                    label: const Text("row"),
+                    onPress: () {},
+                  ),
+                ],
+              ),
+              child: const Text("page"),
+            ),
+          ),
+        ),
+      ),
+    );
+    MochiScaffold.of(tester.element(find.text("page"))).openDrawer();
+    await tester.pumpAndSettle();
+
+    final screen = tester.getSize(find.byType(MochiScaffold));
+    final sidebar = tester.getRect(find.byType(MochiSidebar));
+    expect(sidebar.top, 0);
+    expect(sidebar.bottom, screen.height);
+    expect(tester.getRect(find.text("row")).top, greaterThanOrEqualTo(40));
+  });
+
   testWidgets("hidden parts take no focus", (tester) async {
     await tester.pumpWidget(app(scaffold()));
     await tester.pumpAndSettle();
