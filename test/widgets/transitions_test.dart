@@ -356,4 +356,59 @@ void main() {
       expect(find.text("pushed"), findsOneWidget);
     });
   });
+
+  group("a page covered by another route", () {
+    late NavigatorState navigator;
+
+    Future<void> openBase(WidgetTester tester) async {
+      await tester.pumpWidget(
+        MochiApp(
+          themeMode: MochiThemeMode.light,
+          home: Builder(
+            builder: (context) {
+              navigator = Navigator.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      navigator.push(
+        MochiPageRoute<void>(
+          transition: MochiTransition.slide,
+          builder: (_) => const Center(child: Text("base")),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("stays put under a see-through one, which is a dialog over it", (tester) async {
+      await openBase(tester);
+      final before = tester.getRect(find.text("base"));
+
+      // A dialog dressed as a page, as an app does to fly a hero into it.
+      navigator.push(
+        PageRouteBuilder<void>(opaque: false, pageBuilder: (_, _, _) => const Center(child: Text("dialog"))),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.getRect(find.text("base")), before);
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.text("base")), before);
+    });
+
+    testWidgets("gives way to an opaque page", (tester) async {
+      await openBase(tester);
+      final before = tester.getRect(find.text("base"));
+
+      navigator.push(
+        MochiPageRoute<void>(
+          transition: MochiTransition.slide,
+          builder: (_) => const Center(child: Text("next")),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.getRect(find.text("base")).left, lessThan(before.left));
+    });
+  });
 }

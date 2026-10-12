@@ -270,6 +270,12 @@ class MochiPageRoute<T> extends PageRoute<T> {
   @override
   bool get opaque => true;
 
+  /// Only a page that covers this one makes it give way. A see-through one on top — a dialog
+  /// dressed as a page so a hero can fly into it — leaves this page in view, and moving it aside
+  /// slid a scaffold's sidebar clean off the screen behind the dialog.
+  @override
+  bool canTransitionTo(TransitionRoute<dynamic> nextRoute) => nextRoute is PageRoute && nextRoute.opaque;
+
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondary) =>
       builder(context);
