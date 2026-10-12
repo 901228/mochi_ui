@@ -51,6 +51,7 @@ class MochiScaffold extends StatefulWidget {
     this.background,
     this.safeArea = true,
     this.extendBody = false,
+    this.immersive = false,
   });
 
   final Widget child;
@@ -118,6 +119,12 @@ class MochiScaffold extends StatefulWidget {
   /// variant — lets the content show through: pair this with `bordered` or `floating`.
   final bool extendBody;
 
+  /// Whether the header, the footer and the sidebar step aside, sliding off their edges, and leave
+  /// the whole page to the content — a timer while it runs, say. The content grows into the room
+  /// they leave and keeps clear of only the system's insets; the bars stay on the tree, so taking
+  /// it back brings them as they were.
+  final bool immersive;
+
   /// The nearest scaffold above [context]. Asserts when there is none — which is the case in the
   /// very `build` that creates the scaffold: put a `Builder` under it.
   static MochiScaffoldState of(BuildContext context) {
@@ -148,6 +155,9 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
   /// 0 gone, 1 in place: the header overlay sliding in from the screen's leading edge. Run
   /// linearly; the layout puts the theme's transition curves on it.
   late final AnimationController _overlay = AnimationController(vsync: this);
+
+  /// 0 with the bars in place, 1 with them all gone off the page for [MochiScaffold.immersive].
+  late final AnimationController _immersive = AnimationController(vsync: this);
 
   /// The last header overlay given, kept on the tree while it slides out after being taken away.
   Widget? _overlayChild;
@@ -195,6 +205,8 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     _wide.addStatusListener(_settled);
     _drawer.addStatusListener(_settled);
     _overlay.addStatusListener(_settled);
+    _immersive.addStatusListener(_settled);
+    _immersive.value = widget.immersive ? 1 : 0;
     // One the page is built with is already there; only one that arrives later slides in.
     _overlayChild = widget.headerOverlay;
     if (_overlayChild != null) _overlay.value = 1;
@@ -203,6 +215,20 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
   @override
   void didUpdateWidget(MochiScaffold oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.immersive != oldWidget.immersive) {
+      final motion = context.theme.motion;
+      if (_animationsOff) {
+        _immersive.value = widget.immersive ? 1 : 0;
+      } else if (widget.immersive) {
+        _immersive.animateTo(1, duration: motion.transitionDuration, curve: motion.transitionCurve);
+      } else {
+        _immersive.animateBack(
+          0,
+          duration: motion.transitionReverseDuration,
+          curve: motion.transitionReverseCurve,
+        );
+      }
+    }
     final overlay = widget.headerOverlay;
     if (overlay != null) _overlayChild = overlay;
     if ((overlay == null) == (oldWidget.headerOverlay == null)) return;
@@ -224,6 +250,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     _wide.dispose();
     _drawer.dispose();
     _overlay.dispose();
+    _immersive.dispose();
     _drawerScope.dispose();
     largeTitleCovered.dispose();
     super.dispose();
@@ -295,6 +322,8 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     final padding = widget.padding ?? theme.geometry.pagePadding;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final swaps = widget.sidebar != null;
+    final immersive = widget.immersive;
+    final away = immersive && _immersive.isCompleted;
 
     // Kept on the tree whichever is showing — a slot that came and went would take the page's
     // state with it — and only taken off paint and focus once it has finished leaving.
@@ -310,6 +339,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
       delegate: _ScaffoldLayout(
         wide: _wide,
         overlay: _overlay,
+        immersive: _immersive,
         overlayCurve: theme.motion.transitionCurve,
         overlayReverseCurve: theme.motion.transitionReverseCurve,
         rtl: rtl,
@@ -330,19 +360,29 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
         if (widget.header case final header?)
           LayoutId(
             id: _Slot.header,
-            child: KeyedSubtree(key: _headerKey, child: header),
+            child: slot(
+              KeyedSubtree(key: _headerKey, child: header),
+              shown: !immersive,
+              gone: away,
+            ),
           ),
         if (widget.footer case final footer?)
           LayoutId(
             id: _Slot.footer,
-            child: swaps
-                ? slot(footer, shown: !_sidebarShown, gone: _sidebarShown && _wide.value == 1)
-                : footer,
+            child: slot(
+              footer,
+              shown: !(swaps && _sidebarShown) && !immersive,
+              gone: (swaps && _sidebarShown && _wide.value == 1) || away,
+            ),
           ),
         if (widget.sidebar case final sidebar?)
           LayoutId(
             id: _Slot.sidebar,
-            child: slot(sidebar, shown: _sidebarShown, gone: !_sidebarShown && _wide.value == 0),
+            child: slot(
+              sidebar,
+              shown: _sidebarShown && !immersive,
+              gone: (!_sidebarShown && _wide.value == 0) || away,
+            ),
           ),
         if (_overlayChild case final overlay? when !_overlay.isDismissed)
           LayoutId(
@@ -455,13 +495,17 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
   _ScaffoldLayout({
     required this.wide,
     required this.overlay,
+    required this.immersive,
     required this.overlayCurve,
     required this.overlayReverseCurve,
     required this.rtl,
     required this.extendBody,
-  }) : super(relayout: Listenable.merge([wide, overlay]));
+  }) : super(relayout: Listenable.merge([wide, overlay, immersive]));
 
   final Animation<double> wide;
+
+  /// The bars, 0 in place and 1 gone off their edges.
+  final Animation<double> immersive;
 
   /// The header overlay, 0 off the screen's leading edge and 1 in place.
   final Animation<double> overlay;
@@ -473,12 +517,13 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
   @override
   void performLayout(Size size) {
     final t = wide.value;
+    final shown = 1 - immersive.value;
 
     // The sidebar as tall as the page and as wide as it likes; the room it takes grows with t.
     var beside = 0.0;
     if (hasChild(_Slot.sidebar)) {
       final width = layoutChild(_Slot.sidebar, BoxConstraints.tightFor(height: size.height)).width;
-      beside = width * t;
+      beside = width * t * shown;
       positionChild(_Slot.sidebar, Offset(rtl ? size.width - beside : beside - width, 0));
     }
     final left = rtl ? 0.0 : beside;
@@ -491,14 +536,15 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
 
     var top = 0.0;
     if (hasChild(_Slot.header)) {
-      top = layoutChild(_Slot.header, bar).height;
-      positionChild(_Slot.header, Offset(left, 0));
+      final height = layoutChild(_Slot.header, bar).height;
+      top = height * shown;
+      positionChild(_Slot.header, Offset(left, top - height));
     }
     var bottom = 0.0;
     if (hasChild(_Slot.footer)) {
       final height = layoutChild(_Slot.footer, bar).height;
       // Down and out of sight as the sidebar comes in; only what still shows is kept clear.
-      bottom = height * (1 - t);
+      bottom = height * (1 - t) * shown;
       positionChild(_Slot.footer, Offset(left, size.height - bottom));
     }
     if (hasChild(_Slot.headerOverlay)) {
@@ -532,6 +578,7 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
   bool shouldRelayout(_ScaffoldLayout oldDelegate) =>
       oldDelegate.wide != wide ||
       oldDelegate.overlay != overlay ||
+      oldDelegate.immersive != immersive ||
       oldDelegate.overlayCurve != overlayCurve ||
       oldDelegate.overlayReverseCurve != overlayReverseCurve ||
       oldDelegate.rtl != rtl ||
@@ -561,12 +608,13 @@ class _ExtendedBody extends StatelessWidget {
         final bars = constraints as _BodyConstraints;
 
         // A side with a bar is cleared by the bar's height, which already holds the system's
-        // inset; a side without one keeps the system's inset as it was.
+        // inset; a side without one, or with one sliding away, keeps at least the system's inset.
         return MediaQuery(
           data: media.copyWith(
             padding: media.padding.copyWith(
-              top: (header ? bars.top : media.padding.top) + page.top,
-              bottom: (footer && bars.bottom > 0 ? bars.bottom : media.padding.bottom) + page.bottom,
+              top: (header ? math.max(bars.top, media.padding.top) : media.padding.top) + page.top,
+              bottom:
+                  (footer ? math.max(bars.bottom, media.padding.bottom) : media.padding.bottom) + page.bottom,
             ),
           ),
           child: Padding(
