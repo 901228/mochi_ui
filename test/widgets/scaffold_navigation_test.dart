@@ -149,6 +149,28 @@ void main() {
     expect(showing(tester, "drawer"), isTrue);
   });
 
+  testWidgets("the first page's route leaves its edge to the drawer", (tester) async {
+    // As a router builds a home page on iOS: a sliding MochiPageRoute, with nothing under it to go back to.
+    await tester.pumpWidget(
+      app(
+        Navigator(
+          onGenerateRoute: (_) =>
+              MochiPageRoute<void>(transition: MochiTransition.slide, builder: (_) => scaffold()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(const Offset(4, 300), kind: PointerDeviceKind.touch);
+    for (var i = 0; i < 10; i++) {
+      await gesture.moveBy(const Offset(30, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(showing(tester, "drawer"), isTrue);
+  });
+
   testWidgets("on a pushed page the edge is the back drag's, not the drawer's", (tester) async {
     await tester.pumpWidget(app(const Text("root")));
     tester

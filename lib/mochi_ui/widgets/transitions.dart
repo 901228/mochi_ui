@@ -397,6 +397,10 @@ class _EdgeDragState extends State<_EdgeDrag> {
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
     final rtl = Directionality.of(context) == TextDirection.rtl;
+    // Nothing to go back to: the edge is left to whatever else wants it, such as a scaffold's drawer,
+    // which a strip that only refused the drag would still have beaten to it. The strip stays on the
+    // tree either way, so the page keeps its state should the one under it come or go.
+    final back = !widget.route.isFirst;
 
     return Stack(
       fit: StackFit.passthrough,
@@ -418,10 +422,10 @@ class _EdgeDragState extends State<_EdgeDrag> {
               PointerDeviceKind.stylus,
               PointerDeviceKind.invertedStylus,
             },
-            onHorizontalDragStart: _start,
-            onHorizontalDragUpdate: _update,
-            onHorizontalDragEnd: _end,
-            onHorizontalDragCancel: _cancel,
+            onHorizontalDragStart: back ? _start : null,
+            onHorizontalDragUpdate: back ? _update : null,
+            onHorizontalDragEnd: back ? _end : null,
+            onHorizontalDragCancel: back ? _cancel : null,
           ),
         ),
       ],
