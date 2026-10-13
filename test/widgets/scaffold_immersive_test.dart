@@ -96,6 +96,28 @@ void main() {
     expect(seen, insets);
     expect(find.byType(MochiBottomNav<String>).hitTestable(), findsNothing);
   });
+
+  testWidgets("bars inside a safe area slide past it, not just out of the page", (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // Not extending the body, so the safe area stands between the page and the clip.
+    Widget plain({required bool immersive}) => MochiScaffold(
+      immersive: immersive,
+      header: header,
+      footer: footer,
+      child: const SizedBox.expand(key: content),
+    );
+    await tester.pumpWidget(app(plain(immersive: false)));
+    await tester.pumpAndSettle();
+    final screen = tester.getRect(find.byType(MochiScaffold));
+
+    await tester.pumpWidget(app(plain(immersive: true)));
+    // Just before it ends, within a pixel of out of sight rather than stopped at the safe area.
+    await tester.pump(const Duration(milliseconds: 310));
+    expect(tester.getRect(find.byType(MochiHeader)).bottom, lessThan(screen.top + 1));
+    expect(tester.getRect(find.byType(MochiBottomNav<String>)).top, greaterThan(screen.bottom - 1));
+    await tester.pumpAndSettle();
+  });
 }
 
 class _Counter extends StatefulWidget {

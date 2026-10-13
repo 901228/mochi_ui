@@ -335,6 +335,15 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
       ),
     );
 
+    // What the safe area below puts between the page's edges and the clip around it: a part sliding
+    // away has to cross it as well, or it stops in plain sight there and then vanishes.
+    final insets = MediaQuery.paddingOf(context);
+    final margin = !widget.safeArea
+        ? EdgeInsets.zero
+        : widget.extendBody
+        ? EdgeInsets.only(left: insets.left, right: insets.right)
+        : insets;
+
     final page = CustomMultiChildLayout(
       delegate: _ScaffoldLayout(
         wide: _wide,
@@ -344,6 +353,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
         overlayReverseCurve: theme.motion.transitionReverseCurve,
         rtl: rtl,
         extendBody: widget.extendBody,
+        margin: margin,
       ),
       children: [
         LayoutId(
@@ -500,6 +510,7 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
     required this.overlayReverseCurve,
     required this.rtl,
     required this.extendBody,
+    required this.margin,
   }) : super(relayout: Listenable.merge([wide, overlay, immersive]));
 
   final Animation<double> wide;
@@ -514,6 +525,9 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
   final bool rtl;
   final bool extendBody;
 
+  /// How far outside the page the clip is on each side, for a part sliding off it to go past.
+  final EdgeInsets margin;
+
   @override
   void performLayout(Size size) {
     final t = wide.value;
@@ -523,8 +537,13 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
     var beside = 0.0;
     if (hasChild(_Slot.sidebar)) {
       final width = layoutChild(_Slot.sidebar, BoxConstraints.tightFor(height: size.height)).width;
-      beside = width * t * shown;
-      positionChild(_Slot.sidebar, Offset(rtl ? size.width - beside : beside - width, 0));
+      final shownPart = t * shown;
+      beside = width * shownPart;
+      final away = 1 - shownPart;
+      positionChild(
+        _Slot.sidebar,
+        Offset(rtl ? size.width - width + (width + margin.right) * away : -(width + margin.left) * away, 0),
+      );
     }
     final left = rtl ? 0.0 : beside;
     final width = math.max(0.0, size.width - beside);
@@ -538,14 +557,15 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
     if (hasChild(_Slot.header)) {
       final height = layoutChild(_Slot.header, bar).height;
       top = height * shown;
-      positionChild(_Slot.header, Offset(left, top - height));
+      positionChild(_Slot.header, Offset(left, -(height + margin.top) * (1 - shown)));
     }
     var bottom = 0.0;
     if (hasChild(_Slot.footer)) {
       final height = layoutChild(_Slot.footer, bar).height;
       // Down and out of sight as the sidebar comes in; only what still shows is kept clear.
-      bottom = height * (1 - t) * shown;
-      positionChild(_Slot.footer, Offset(left, size.height - bottom));
+      final shownPart = (1 - t) * shown;
+      bottom = height * shownPart;
+      positionChild(_Slot.footer, Offset(left, size.height - bottom + margin.bottom * (1 - shownPart)));
     }
     if (hasChild(_Slot.headerOverlay)) {
       layoutChild(
@@ -582,7 +602,8 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
       oldDelegate.overlayCurve != overlayCurve ||
       oldDelegate.overlayReverseCurve != overlayReverseCurve ||
       oldDelegate.rtl != rtl ||
-      oldDelegate.extendBody != extendBody;
+      oldDelegate.extendBody != extendBody ||
+      oldDelegate.margin != margin;
 }
 
 class _ExtendedBody extends StatelessWidget {
