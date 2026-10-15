@@ -111,22 +111,22 @@ void main() {
     expect(shape().side.color.a, 0);
   });
 
-  testWidgets("a raised card in the dark theme is lit by a pale halo, and in the light one is not", (
-    tester,
-  ) async {
+  testWidgets("a raised card in the dark theme casts a deeper shadow, with no halo", (tester) async {
     Widget themed(MochiThemeMode mode) => MochiApp(
       themeMode: mode,
       touch: true,
       home: const Center(child: MochiCard(child: SizedBox(width: 20, height: 20))),
     );
-    bool hasHalo() => shadowsOf(tester, find.byType(MochiCard))!.any((s) => s.color.computeLuminance() > 0.9);
+    final card = find.byType(MochiCard);
+    double darkest() => shadowsOf(tester, card)!.map((s) => s.color.a).reduce((a, b) => a > b ? a : b);
 
     await tester.pumpWidget(themed(MochiThemeMode.dark));
     await tester.pumpAndSettle();
-    expect(hasHalo(), isTrue);
+    expect(haloOf(tester, card), isFalse);
+    final dark = darkest();
 
     await tester.pumpWidget(themed(MochiThemeMode.light));
     await tester.pumpAndSettle();
-    expect(hasHalo(), isFalse);
+    expect(dark, greaterThan(darkest() * 2));
   });
 }

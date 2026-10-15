@@ -11,7 +11,7 @@
 - **`layering` 跟著 `touch` 走**：touch 是 `raised`，否則是 `outlined`；`MochiDefaults(layering:)` 可以覆蓋。
 - **field 不加陰影**，維持框線。
 - 陰影只給浮起來的東西；平放的東西靠框線。
-- 深色背景太暗，黑色陰影不明顯：深色的 raised card 另外加一層白色光暈。
+- 深色背景太暗，黑色陰影不明顯：深色的 raised 表面陰影加深 2.5 倍。
 
 ---
 
@@ -28,9 +28,10 @@
 - [x] **soft card**：raised 時圓角 `md` → `lg`、完全不畫框（含 selected）、不加陰影；`outlined` 不動
 - [x] 在 iPhone 上看過（web 版，淺色），決定陰影深度夠不夠（可能需要 touch 專用的陰影層）
 - [x] 深色模式的陰影：黑影在暗背景看不見，改在黑影上加白色光暈（alpha 0.5、模糊 12、spread 1；原本 0.35 / 24 太糊，並排的 card 會黏在一起）。試過頂端亮線，看起來怪；光暈 0.12 / 0.22 太淡
+- [x] 光暈改掉：並排的 card 光暈連成一片、背景糊成白色。改成深色時陰影乘 2.5，其他都不加。試過上緣內側亮光（inset shadow 在 web 幀數掉一半、漸層版兩側沒光）、下緣暗面（太立體）、Material 色階（dialog 用 surface1），都不如單純的陰影搭
 - [x] **tile group**：整組一塊、底色 `overlay`、沒有框，用 `MochiShadows.raised` 托起、圓角 `lg`；列的底色跟著組；分隔線保留
-- [x] **bottom nav**：不畫上緣那條線，底色用 `overlay`，改用向上的陰影（深色一樣有光暈；`MochiShadows.raised` 是 card 和 bar 共用的）
-- [x] **dialog / sheet / popover / toast**：底色本來就是 `overlay`；raised 時框線改透明、陰影改用 `MochiShadows.raised`（深色有光暈）。toast 有 intent 的保留 intent 色的框。tooltip 不動（反相色小氣泡）
+- [x] **bottom nav**：不畫上緣那條線，底色用 `overlay`，改用向上的陰影（深色陰影加深；`MochiShadows.raised` 是 card 和 bar 共用的）
+- [x] **dialog / sheet / popover / toast**：底色本來就是 `overlay`；raised 時框線改透明、陰影改用 `MochiShadows.raised`（深色陰影加深）。toast 有 intent 的保留 intent 色的框。tooltip 不動（反相色小氣泡）
 - [ ] 每改一個元件就補一個 raised 的測試，並確認 outlined 的原有測試不動
 
 ## 3. gallery 比較頁

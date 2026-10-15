@@ -186,27 +186,28 @@ class MochiShadows {
   final List<MochiShadowLayer> lg;
 
   /// The shadow of a surface in the raised look (see `MochiLayering`): [of], and in the dark theme
-  /// a pale halo over it, since black on a dark page is invisible. [up] casts it towards the top
-  /// of the screen, for a bar standing along the bottom edge.
-  List<BoxShadow> raised(MochiElevation elevation, MochiColors colors, {bool up = false}) => [
-    for (final layer in switch (elevation) {
-      .sm => sm,
-      .md => md,
-      .lg => lg,
-    })
-      up
-          ? MochiShadowLayer(
-              offset: Offset(layer.offset.dx, -layer.offset.dy),
-              blur: layer.blur,
-              spread: layer.spread,
-              opacity: layer.opacity,
-            ).resolve(colors.shadow)
-          : layer.resolve(colors.shadow),
-    if (colors.brightness == Brightness.dark) _darkGlow,
-  ];
+  /// [darkStrength] times as dark, since a black shadow at the light theme's strength is lost on a
+  /// dark page. Not a pale halo around it, which it once was: halos on cards side by side ran
+  /// together and greyed the page. [up]
+  /// casts it towards the top of the screen, for a bar standing along the bottom edge.
+  List<BoxShadow> raised(MochiElevation elevation, MochiColors colors, {bool up = false}) {
+    final strength = colors.brightness == Brightness.dark ? darkStrength : 1.0;
+    return [
+      for (final layer in switch (elevation) {
+        .sm => sm,
+        .md => md,
+        .lg => lg,
+      })
+        MochiShadowLayer(
+          offset: up ? Offset(layer.offset.dx, -layer.offset.dy) : layer.offset,
+          blur: layer.blur,
+          spread: layer.spread,
+          opacity: layer.opacity * strength,
+        ).resolve(colors.shadow),
+    ];
+  }
 
-  /// 50% white, tight enough that cards set side by side do not run together.
-  static const _darkGlow = BoxShadow(color: Color(0x80FFFFFF), blurRadius: 12, spreadRadius: 1);
+  static const darkStrength = 2.5;
 
   List<BoxShadow> of(MochiElevation elevation, Color color) => [
     for (final layer in switch (elevation) {

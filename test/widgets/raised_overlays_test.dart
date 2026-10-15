@@ -37,16 +37,11 @@ void main() {
       expect(lineAlpha(surface(tester, within)), 0);
     });
 
-    testWidgets("a $key is lit by a halo in the dark theme only when raised", (tester) async {
-      bool halo() => shadowsOf(tester, within)!.any((s) => s.color.computeLuminance() > 0.9);
-
+    testWidgets("a raised $key casts a plain shadow in the dark theme, with no halo", (tester) async {
       await tester.pumpWidget(app(value(), touch: true, mode: MochiThemeMode.dark));
       await tester.pumpAndSettle();
-      expect(halo(), isTrue);
-
-      await tester.pumpWidget(app(value(), touch: false, mode: MochiThemeMode.dark));
-      await tester.pumpAndSettle();
-      expect(halo(), isFalse);
+      expect(shadowsOf(tester, within), isNotEmpty);
+      expect(haloOf(tester, within), isFalse);
     });
   }
 

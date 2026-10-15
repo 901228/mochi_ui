@@ -13,3 +13,7 @@ ShapeDecoration surfaceOf(WidgetTester tester, Finder within) => tester
 /// rounded rectangle under it, which the web can blur cheaply (see `ShapeShadow`).
 List<BoxShadow>? shadowsOf(WidgetTester tester, Finder within) =>
     tester.widget<ShapeShadow>(find.descendant(of: within, matching: find.byType(ShapeShadow)).first).shadows;
+
+/// Whether any of the shadows a surface inside [within] casts is pale: a halo rather than a shadow.
+bool haloOf(WidgetTester tester, Finder within) =>
+    shadowsOf(tester, within)?.any((s) => s.color.computeLuminance() > 0.5) ?? false;
