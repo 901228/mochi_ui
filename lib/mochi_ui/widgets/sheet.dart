@@ -155,7 +155,8 @@ class MochiSheet extends StatelessWidget {
     final p = MediaQuery.paddingOf(context);
 
     return switch (side) {
-      MochiSheetSide.bottom => EdgeInsets.only(left: p.left, right: p.right, bottom: p.bottom),
+      // shortcut: no clearance for the home indicator while trying the sheets without it, put p.bottom back if it crowds a button
+      MochiSheetSide.bottom => EdgeInsets.only(left: p.left, right: p.right),
       MochiSheetSide.top => EdgeInsets.only(left: p.left, right: p.right, top: p.top),
       MochiSheetSide.left => EdgeInsets.only(left: p.left, top: p.top, bottom: p.bottom),
       MochiSheetSide.right => EdgeInsets.only(right: p.right, top: p.top, bottom: p.bottom),
