@@ -404,6 +404,65 @@ class _SkeletonSample extends StatelessWidget {
   }
 }
 
+class _AnimatedNumberSample extends StatefulWidget {
+  const _AnimatedNumberSample();
+
+  @override
+  State<_AnimatedNumberSample> createState() => _AnimatedNumberSampleState();
+}
+
+class _AnimatedNumberSampleState extends State<_AnimatedNumberSample> {
+  double? _value = 12.34;
+  var _fallback = "--";
+  var _generation = 0;
+
+  void _set(double? value, {String fallback = "--"}) => setState(() {
+    _value = value;
+    _fallback = fallback;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final g = context.theme.geometry;
+    final style = context.theme.typography.title.xl3;
+
+    return Wrap(
+      spacing: g.space.md,
+      runSpacing: g.space.md,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SizedBox(
+          width: 160,
+          // A new key counts from zero again, as switching session or puzzle would.
+          child: MochiAnimatedNumber(
+            key: ValueKey(_generation),
+            value: _value,
+            fallback: _fallback,
+            style: style,
+            format: (v) => v.toStringAsFixed(2),
+          ),
+        ),
+        MochiButton(
+          appearance: .soft,
+          onPress: () => _set(10 + math.Random().nextDouble() * 20),
+          child: const Text("random"),
+        ),
+        MochiButton(appearance: .soft, onPress: () => _set(null), child: const Text("--")),
+        MochiButton(
+          appearance: .soft,
+          onPress: () => _set(double.infinity, fallback: "DNF"),
+          child: const Text("DNF"),
+        ),
+        MochiButton(
+          appearance: .outlined,
+          onPress: () => setState(() => _generation++),
+          child: const Text("count again"),
+        ),
+      ],
+    );
+  }
+}
+
 class _SortableSample extends StatefulWidget {
   const _SortableSample();
 

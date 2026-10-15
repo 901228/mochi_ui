@@ -60,4 +60,5 @@ export "widgets/tooltip.dart";
 export "widgets/toast.dart";
 export "widgets/transitions.dart";
 export "widgets/tree.dart";
+export "widgets/animated_number.dart";
 export "widgets/value_transition.dart";

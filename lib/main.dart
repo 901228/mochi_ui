@@ -1,3 +1,5 @@
+import "dart:math" as math;
+
 import "package:flutter/rendering.dart";
 import "package:flutter/scheduler.dart";
 
@@ -223,6 +225,7 @@ class _GalleryState extends State<_Gallery> {
         ("reveal", _RevealSample()),
         ("avatar", _AvatarSample()),
         ("skeleton", _SkeletonSample()),
+        ("animated number", _AnimatedNumberSample()),
         ("sortable", _SortableSample()),
         ("resizable", _ResizableSample()),
         ("refresh", _RefreshSample()),
