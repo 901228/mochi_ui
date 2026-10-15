@@ -283,7 +283,8 @@ enum MochiModalForm {
 /// doubt.
 ///
 /// [sheetConstraints] is handed to the [MochiSheet] on a phone, which is how a modal asks for a
-/// shorter cap than the default nine tenths of the screen. [titleSuffix] puts something at the end of the
+/// shorter cap than the default nine tenths of the screen. [safeEdge] is handed on with it: false drops
+/// the room kept for the home indicator under a sheet. [titleSuffix] puts something at the end of the
 /// title's line, which is where anything that isn't an answer belongs.
 ///
 /// This takes the parts of the question rather than a built widget on purpose: the two containers
@@ -296,6 +297,7 @@ Future<T?> showMochiModal<T>(
   List<Widget> actions = const [],
   MochiModalForm? form,
   BoxConstraints? sheetConstraints,
+  bool safeEdge = true,
   bool barrierDismissible = true,
   String? barrierLabel,
   String? semanticLabel,
@@ -333,6 +335,7 @@ Future<T?> showMochiModal<T>(
         // A sheet is as tall as its content up to nine tenths of the screen; this is how a modal
         // asks for less than that.
         constraints: sheetConstraints,
+        safeEdge: safeEdge,
         semanticLabel: semanticLabel,
         child: _ModalColumn(
           title: title,

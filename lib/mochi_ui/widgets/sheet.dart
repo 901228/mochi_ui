@@ -25,6 +25,7 @@ class MochiSheet extends StatelessWidget {
     this.handle,
     this.constraints,
     this.padding,
+    this.safeEdge = true,
     this.semanticLabel,
   });
 
@@ -48,6 +49,11 @@ class MochiSheet extends StatelessWidget {
   final BoxConstraints? constraints;
 
   final EdgeInsetsGeometry? padding;
+
+  /// Whether the padding also clears what the system puts along the edge the sheet comes from —
+  /// the home indicator under a bottom sheet. Turn it off for a sheet whose content ends in a way
+  /// that needs no room there, such as a read-only panel; the sides still clear the cutouts.
+  final bool safeEdge;
   final String? semanticLabel;
 
   bool get _vertical => side == MochiSheetSide.top || side == MochiSheetSide.bottom;
@@ -154,12 +160,13 @@ class MochiSheet extends StatelessWidget {
   EdgeInsets _safeArea(BuildContext context) {
     final p = MediaQuery.paddingOf(context);
 
+    final edge = safeEdge ? 1.0 : 0.0;
+
     return switch (side) {
-      // shortcut: no clearance for the home indicator while trying the sheets without it, put p.bottom back if it crowds a button
-      MochiSheetSide.bottom => EdgeInsets.only(left: p.left, right: p.right),
-      MochiSheetSide.top => EdgeInsets.only(left: p.left, right: p.right, top: p.top),
-      MochiSheetSide.left => EdgeInsets.only(left: p.left, top: p.top, bottom: p.bottom),
-      MochiSheetSide.right => EdgeInsets.only(right: p.right, top: p.top, bottom: p.bottom),
+      MochiSheetSide.bottom => EdgeInsets.only(left: p.left, right: p.right, bottom: p.bottom * edge),
+      MochiSheetSide.top => EdgeInsets.only(left: p.left, right: p.right, top: p.top * edge),
+      MochiSheetSide.left => EdgeInsets.only(left: p.left * edge, top: p.top, bottom: p.bottom),
+      MochiSheetSide.right => EdgeInsets.only(right: p.right * edge, top: p.top, bottom: p.bottom),
     };
   }
 }

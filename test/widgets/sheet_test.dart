@@ -35,6 +35,32 @@ void main() {
     ),
   );
 
+  testWidgets("a bottom sheet clears the home indicator unless safeEdge is off", (tester) async {
+    Future<double> gap({required bool safeEdge}) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(800, 600), padding: EdgeInsets.only(bottom: 34)),
+          child: MochiApp(
+            themeMode: MochiThemeMode.light,
+            home: Align(
+              alignment: Alignment.bottomCenter,
+              child: MochiSheet(
+                padding: EdgeInsets.zero,
+                safeEdge: safeEdge,
+                child: const SizedBox(key: Key("content"), height: 20),
+              ),
+            ),
+          ),
+        ),
+      );
+      return tester.getBottomLeft(find.byType(MochiSheet)).dy -
+          tester.getBottomLeft(find.byKey(const Key("content"))).dy;
+    }
+
+    expect(await gap(safeEdge: true), 34);
+    expect(await gap(safeEdge: false), 0);
+  });
+
   testWidgets("a title is drawn exactly as a dialog's, with the same gap under it", (tester) async {
     Widget host(Widget panel) => MochiApp(
       themeMode: MochiThemeMode.light,
