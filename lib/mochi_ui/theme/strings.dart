@@ -1,3 +1,5 @@
+import "dart:ui" show Locale;
+
 import "package:flutter/foundation.dart";
 
 import "icons.dart";
@@ -5,8 +7,8 @@ import "icons.dart";
 /// The handful of words components say themselves, so an app can put them in its own language.
 /// Labels an app passes in are its own business, the same rule as [MochiIcons].
 ///
-/// Not a `LocalizationsDelegate`: an app picks one of these for its locale and hands it to
-/// `MochiApp(strings:)`.
+/// Not a `LocalizationsDelegate`: `MochiApp` picks the one for its locale with [forLocale], or an
+/// app hands its own to `MochiApp(strings:)`.
 ///
 /// ```dart
 /// MochiApp(
@@ -268,6 +270,10 @@ class MochiStrings {
   );
 
   static const standard = en;
+
+  /// The words for [locale]: Chinese gets [zhHant], the only Chinese there is, and anything else
+  /// [en].
+  static MochiStrings forLocale(Locale? locale) => locale?.languageCode == "zh" ? zhHant : en;
 
   MochiStrings copyWith({
     String? ok,

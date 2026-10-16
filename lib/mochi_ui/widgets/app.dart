@@ -27,6 +27,9 @@ class MochiApp extends StatelessWidget {
     this.darkTheme,
     this.touch,
     this.strings,
+    this.locale,
+    this.supportedLocales = const [Locale("en", "US")],
+    this.localizationsDelegates,
     this.radius,
     this.corners,
     this.density,
@@ -46,6 +49,9 @@ class MochiApp extends StatelessWidget {
     this.darkTheme,
     this.touch,
     this.strings,
+    this.locale,
+    this.supportedLocales = const [Locale("en", "US")],
+    this.localizationsDelegates,
     this.radius,
     this.corners,
     this.density,
@@ -72,6 +78,15 @@ class MochiApp extends StatelessWidget {
   /// Overrides [MochiTheme.strings] of both themes: the words components say themselves, such as
   /// a confirmation's OK and Cancel. Pick the one for the app's locale.
   final MochiStrings? strings;
+
+  /// The language to use, or null to follow the device.
+  final Locale? locale;
+
+  /// The languages the app has translations for; the device's is matched against these.
+  final Iterable<Locale> supportedLocales;
+
+  /// What loads the app's own translations, such as a generated `AppLocalizations`.
+  final Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates;
 
   /// Overrides `geometry.radius` of both themes: the app's corners, from [MochiRadius.sharp]
   /// through [MochiRadius.standard] to [MochiRadius.pill].
@@ -117,7 +132,12 @@ class MochiApp extends StatelessWidget {
       curve: theme.motion.themeCurve,
       theme: theme.copyWith(
         touch: touch ?? MochiTheme.defaultTouch,
-        strings: strings,
+        // Given by the app, or else the language the app is in, unless the theme brought its own.
+        strings:
+            strings ??
+            (identical(theme.strings, MochiStrings.standard)
+                ? MochiStrings.forLocale(Localizations.maybeLocaleOf(context))
+                : null),
         density: density,
         radius: radius,
         corners: corners,
@@ -159,11 +179,22 @@ class MochiApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final routerConfig = this.routerConfig;
     if (routerConfig != null) {
-      return WidgetsApp.router(color: _color, title: title, routerConfig: routerConfig, builder: _builder);
+      return WidgetsApp.router(
+        color: _color,
+        title: title,
+        locale: locale,
+        supportedLocales: supportedLocales,
+        localizationsDelegates: localizationsDelegates,
+        routerConfig: routerConfig,
+        builder: _builder,
+      );
     }
     return WidgetsApp(
       color: _color,
       title: title,
+      locale: locale,
+      supportedLocales: supportedLocales,
+      localizationsDelegates: localizationsDelegates,
       home: home,
       pageRouteBuilder: <T>(settings, builder) => MochiPageRoute<T>(settings: settings, builder: builder),
       builder: _builder,
