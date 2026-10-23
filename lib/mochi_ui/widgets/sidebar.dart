@@ -25,6 +25,7 @@ class _SidebarScope extends InheritedWidget {
   const _SidebarScope({
     required this.open,
     required this.railContentWidth,
+    required this.size,
     required this.collapsed,
     required this.toggle,
     required super.child,
@@ -40,6 +41,9 @@ class _SidebarScope extends InheritedWidget {
   /// coming back.
   final double railContentWidth;
 
+  /// What its rows measure; see [MochiSidebar.size].
+  final MochiSize size;
+
   /// Where the sidebar is headed, which [open] is still travelling towards.
   final bool collapsed;
 
@@ -53,6 +57,7 @@ class _SidebarScope extends InheritedWidget {
   bool updateShouldNotify(_SidebarScope old) =>
       old.open != open ||
       old.railContentWidth != railContentWidth ||
+      old.size != size ||
       old.collapsed != collapsed ||
       old.toggle != toggle;
 }
@@ -91,6 +96,7 @@ class MochiSidebar extends StatefulWidget {
     this.header,
     this.footer = const [],
     this.collapsed = const MochiControl.managed(),
+    this.size = MochiSize.md,
     this.width = 240,
     this.railWidth,
     this.padding,
@@ -111,6 +117,10 @@ class MochiSidebar extends StatefulWidget {
   /// Whether it is a rail of icons (`true`) or at its full width, and who holds that: the sidebar
   /// by default, starting at its full width. Null keeps it at its full width with no button.
   final MochiControl<bool>? collapsed;
+
+  /// How tall its rows are and how big their icons are: the same step in the header and the groups'
+  /// headings, so the column keeps one rhythm.
+  final MochiSize size;
 
   /// The full width.
   final double width;
@@ -167,6 +177,7 @@ class _MochiSidebarState extends State<MochiSidebar> {
         open: open,
         // What is left of the rail once its border and the column's padding are taken out.
         railContentWidth: rail - (widget.border ? g.borderWidth : 0) - padding.horizontal,
+        size: widget.size,
         collapsed: collapsed,
         toggle: control == null ? null : _toggle,
         child: Container(
@@ -272,7 +283,7 @@ class MochiSidebarItem extends StatelessWidget {
     final tone = colors.of(intent);
     final scope = _SidebarScope.of(context);
     final open = scope?.open ?? 1;
-    final metrics = _SidebarMetrics.of(theme);
+    final metrics = _SidebarMetrics.of(theme, scope?.size ?? MochiSize.md);
     // Where the icon sits: at the row's start while there are labels, in the middle of the rail
     // once there aren't.
     final railLead = (((scope?.railContentWidth ?? 0) - metrics.iconSize) / 2).clamp(0.0, double.infinity);
@@ -515,7 +526,7 @@ class MochiSidebarHeading extends StatelessWidget {
     final g = theme.geometry;
     final scope = _SidebarScope.of(context);
     final open = scope?.open ?? 1;
-    final metrics = _SidebarMetrics.of(theme);
+    final metrics = _SidebarMetrics.of(theme, scope?.size ?? MochiSize.md);
     final railed = open < 0.5;
     final toggle = scope?.toggle;
     final collapsed = scope?.collapsed ?? false;
@@ -569,13 +580,29 @@ class _SidebarMetrics {
     required this.iconSize,
   });
 
-  factory _SidebarMetrics.of(MochiTheme theme) => _SidebarMetrics(
-    height: (theme.touch ? 44 : 34) * theme.density,
-    // Half the icon's box, so an icon sits in the middle of a rail.
-    inset: theme.touch ? 14 : 11,
-    gap: theme.geometry.space.xs,
-    iconSize: theme.touch ? 20 : 18,
-  );
+  factory _SidebarMetrics.of(MochiTheme theme, MochiSize size) {
+    // The middle step is what the sidebar always was.
+    final (height, icon, inset) = theme.touch
+        ? switch (size) {
+            .xs => (36.0, 16.0, 12.0),
+            .sm => (40.0, 18.0, 13.0),
+            .md => (44.0, 20.0, 14.0),
+            .lg => (52.0, 24.0, 16.0),
+          }
+        : switch (size) {
+            .xs => (26.0, 14.0, 9.0),
+            .sm => (30.0, 16.0, 10.0),
+            .md => (34.0, 18.0, 11.0),
+            .lg => (40.0, 20.0, 12.0),
+          };
+    return _SidebarMetrics(
+      height: height * theme.density,
+      // Half the icon's box, so an icon sits in the middle of a rail.
+      inset: inset,
+      gap: theme.geometry.space.xs,
+      iconSize: icon,
+    );
+  }
 
   final double height;
   final double inset;

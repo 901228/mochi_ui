@@ -119,6 +119,39 @@ void main() {
     expect(icon.width, icon.height, reason: "and it is still square");
   });
 
+  testWidgets("size sets the row height and the icon, and a rail still centres the icon", (tester) async {
+    Future<(double, double)> measure(MochiSize size, {bool collapsed = false}) async {
+      await tester.pumpWidget(
+        app(
+          MochiSidebar(
+            size: size,
+            collapsed: .lifted(value: collapsed, onChanged: (_) {}),
+            children: [
+              MochiSidebarItem(
+                icon: Icon(MochiIcons.standard.check),
+                label: const Text("Timer"),
+                onPress: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final icon = tester.getRect(find.byIcon(MochiIcons.standard.check));
+      if (collapsed) expect(icon.center.dx, closeTo(tester.getRect(find.byType(MochiSidebar)).center.dx, 1));
+      return (tester.getSize(find.byType(MochiTappable)).height, icon.width);
+    }
+
+    final (smallHeight, smallIcon) = await measure(.xs);
+    final (height, icon) = await measure(.md);
+    final (largeHeight, largeIcon) = await measure(.lg);
+    expect(smallHeight, lessThan(height));
+    expect(largeHeight, greaterThan(height));
+    expect(smallIcon, lessThan(icon));
+    expect(largeIcon, greaterThan(icon));
+    await measure(.lg, collapsed: true);
+  });
+
   testWidgets("the width is animated, not switched", (tester) async {
     await tester.pumpWidget(sidebar());
     await tester.pumpAndSettle();

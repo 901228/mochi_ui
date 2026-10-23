@@ -10,6 +10,7 @@ class _SidebarSample extends StatefulWidget {
 class _SidebarSampleState extends State<_SidebarSample> {
   String _page = "timer";
   bool _sessionsOpen = true;
+  var _size = MochiSize.md;
 
   @override
   Widget build(BuildContext context) {
@@ -24,73 +25,87 @@ class _SidebarSampleState extends State<_SidebarSample> {
       onPress: () => setState(() => _page = value),
     );
 
-    return SizedBox(
-      height: 420,
-      width: 640,
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: theme.colors.background,
-          shape: g.shape(
-            borderRadius: g.radius.md,
-            side: BorderSide(color: theme.colors.border, width: g.borderWidth),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: g.space.sm,
+      children: [
+        MochiSegmentedControl<MochiSize>(
+          expanded: false,
+          size: MochiSize.sm,
+          value: _size,
+          onChanged: (v) => setState(() => _size = v),
+          children: [for (final s in MochiSize.values) MochiSegment(value: s, label: Text(s.name))],
         ),
-        child: MochiClip(
-          borderRadius: g.radius.md,
-          child: Row(
-            children: [
-              // The sidebar keeps whether it is a rail by default, and its heading carries the button.
-              MochiSidebar(
-                header: const MochiSidebarHeading(Text("Mochi Timer"), collapsedChild: Text("M")),
-                footer: [
-                  item("account", TablerIcons.user, "Account"),
-                  item("help", TablerIcons.help, "Help"),
-                ],
+        SizedBox(
+          height: 420,
+          width: 640,
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              color: theme.colors.background,
+              shape: g.shape(
+                borderRadius: g.radius.md,
+                side: BorderSide(color: theme.colors.border, width: g.borderWidth),
+              ),
+            ),
+            child: MochiClip(
+              borderRadius: g.radius.md,
+              child: Row(
                 children: [
-                  item("timer", TablerIcons.clock, "Timer"),
-                  item(
-                    "stats",
-                    TablerIcons.chartBar,
-                    "Statistics",
-                    trailing: const MochiBadge(child: Text("12")),
-                  ),
-                  item("settings", TablerIcons.settings, "Settings"),
-                  MochiSidebarGroup(
-                    label: const Text("Sessions"),
-                    collapsible: true,
-                    expanded: .lifted(
-                      value: _sessionsOpen,
-                      onChanged: (open) => setState(() => _sessionsOpen = open),
-                    ),
+                  // The sidebar keeps whether it is a rail by default, and its heading carries the button.
+                  MochiSidebar(
+                    size: _size,
+                    header: const MochiSidebarHeading(Text("Mochi Timer"), collapsedChild: Text("M")),
+                    footer: [
+                      item("account", TablerIcons.user, "Account"),
+                      item("help", TablerIcons.help, "Help"),
+                    ],
                     children: [
-                      item("3x3", TablerIcons.box, "3x3 main"),
-                      item("oh", TablerIcons.handStop, "3x3 OH"),
-                      item("mega", TablerIcons.diamond, "Megaminx"),
+                      item("timer", TablerIcons.clock, "Timer"),
+                      item(
+                        "stats",
+                        TablerIcons.chartBar,
+                        "Statistics",
+                        trailing: const MochiBadge(child: Text("12")),
+                      ),
+                      item("settings", TablerIcons.settings, "Settings"),
+                      MochiSidebarGroup(
+                        label: const Text("Sessions"),
+                        collapsible: true,
+                        expanded: .lifted(
+                          value: _sessionsOpen,
+                          onChanged: (open) => setState(() => _sessionsOpen = open),
+                        ),
+                        children: [
+                          item("3x3", TablerIcons.box, "3x3 main"),
+                          item("oh", TablerIcons.handStop, "3x3 OH"),
+                          item("mega", TablerIcons.diamond, "Megaminx"),
+                        ],
+                      ),
+                      MochiSidebarGroup(
+                        label: const Text("Archive"),
+                        children: [item("old", TablerIcons.archive, "Last year")],
+                      ),
                     ],
                   ),
-                  MochiSidebarGroup(
-                    label: const Text("Archive"),
-                    children: [item("old", TablerIcons.archive, "Last year")],
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(g.space.lg),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: g.space.sm,
+                        children: [
+                          _ThemedText(_page, .section),
+                          const _ThemedText("the page the sidebar points at", .muted),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(g.space.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: g.space.sm,
-                    children: [
-                      _ThemedText(_page, .section),
-                      const _ThemedText("the page the sidebar points at", .muted),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
