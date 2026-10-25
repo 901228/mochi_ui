@@ -501,6 +501,43 @@ void main() {
     }
   });
 
+  testWidgets("a prompt on a phone on its side, with the keyboard up, keeps its field to type in", (
+    tester,
+  ) async {
+    // An iPhone on its side, logical pixels, with the keyboard taking over half the height.
+    tester.view.physicalSize = const Size(844, 390);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 210);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MochiApp(
+        themeMode: MochiThemeMode.light,
+        touch: true,
+        home: Builder(
+          builder: (context) => Center(
+            child: MochiButton(
+              onPress: () => showMochiPrompt(context, title: "Enter scramble", form: MochiModalForm.dialog),
+              child: const Text("open"),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text("open"));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // The field was squeezed to nothing between a title and a column of buttons that held still.
+    final field = tester.getRect(find.byType(EditableText));
+    expect(field.height, greaterThan(16));
+    expect(field.bottom, lessThanOrEqualTo(390 - 210));
+    // The buttons share a row, where there is no room for one under the other.
+    final cancel = tester.getCenter(find.text("Cancel"));
+    final ok = tester.getCenter(find.text("OK"));
+    expect(cancel.dy, moreOrLessEquals(ok.dy));
+  });
+
   testWidgets("a prompt can ask for a paragraph, where Enter is a new line", (tester) async {
     String? answer;
 

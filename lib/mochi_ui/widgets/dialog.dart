@@ -64,6 +64,12 @@ class MochiDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) => _dialog(context, short: box.maxHeight < _shortModalHeight),
+    );
+  }
+
+  Widget _dialog(BuildContext context, {required bool short}) {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
@@ -84,7 +90,7 @@ class MochiDialog extends StatelessWidget {
               ? g.shadows.raised(MochiElevation.lg, colors)
               : g.shadows.of(MochiElevation.lg, colors.shadow),
           child: Container(
-            padding: padding ?? EdgeInsets.all(theme.touch ? g.space.lg : g.space.md),
+            padding: padding ?? EdgeInsets.all(short ? g.space.sm : (theme.touch ? g.space.lg : g.space.md)),
             decoration: ShapeDecoration(
               // The same ground as a popover: a dialog floats above the page rather than being part
               // of it.
@@ -112,6 +118,11 @@ class MochiDialog extends StatelessWidget {
   }
 }
 
+/// Below this height a modal's actions go in a row and its title scrolls with its body: a phone on
+/// its side with the keyboard up leaves about this much, and a title and a column of buttons held
+/// still would squeeze the body, a prompt's field with it, down to nothing.
+const _shortModalHeight = 360.0;
+
 /// Title, body and actions, laid out the same way whichever container they end up in.
 class _ModalColumn extends StatelessWidget {
   const _ModalColumn({
@@ -129,10 +140,25 @@ class _ModalColumn extends StatelessWidget {
   final Axis actionsAxis;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => _column(context, short: constraints.maxHeight < _shortModalHeight),
+  );
+
+  Widget _column(BuildContext context, {required bool short}) {
     final theme = context.theme;
     final colors = theme.colors;
     final g = theme.geometry;
+    final axis = short ? Axis.horizontal : actionsAxis;
+    final heading = title != null || titleSuffix != null
+        ? ModalHeading(title: title, suffix: titleSuffix)
+        : null;
+    final text = body == null
+        ? null
+        : DefaultTextStyle(
+            style: theme.typography.body.sm.copyWith(color: colors.mutedForeground),
+            child: body!,
+          );
+    final gap = SizedBox(height: ModalHeading.gapOf(context));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -141,21 +167,28 @@ class _ModalColumn extends StatelessWidget {
         // No line at all when there is nothing to put in it: a panel that is not a question has a
         // body and nothing to call it. A suffix on its own — a lone close button — keeps the line
         // and sits at its end.
-        if (title != null || titleSuffix != null) ModalHeading(title: title, suffix: titleSuffix),
-        if (body case final body?) ...[
-          if (title != null || titleSuffix != null) SizedBox(height: ModalHeading.gapOf(context)),
+        if (short)
+          // The title scrolls away with the body, which would otherwise have no room left; a focused
+          // field scrolls itself into view, so it can still be typed in.
           Flexible(
             child: SingleChildScrollView(
-              child: DefaultTextStyle(
-                style: theme.typography.body.sm.copyWith(color: colors.mutedForeground),
-                child: body,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [?heading, if (heading != null && text != null) gap, ?text],
               ),
             ),
-          ),
+          )
+        else ...[
+          ?heading,
+          if (text != null) ...[
+            if (heading != null) gap,
+            Flexible(child: SingleChildScrollView(child: text)),
+          ],
         ],
         if (actions.isNotEmpty) ...[
-          SizedBox(height: g.space.lg),
-          if (actionsAxis == Axis.horizontal)
+          SizedBox(height: short ? g.space.sm : g.space.lg),
+          if (axis == Axis.horizontal)
             Row(mainAxisAlignment: MainAxisAlignment.end, spacing: g.space.xs, children: actions)
           else
             Column(
@@ -220,9 +253,12 @@ class MochiDialogRoute<T> extends PopupRoute<T> {
     // left rather than behind the keys, which is where a dialog with a field in it would sit.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
+    // Closer to the edges when there is little height left, as on a phone on its side with the keys up.
+    final short = MediaQuery.sizeOf(context).height - keyboard < _shortModalHeight + 2 * g.space.lg;
+
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(g.space.lg) + EdgeInsets.only(bottom: keyboard),
+        padding: EdgeInsets.all(short ? g.space.xs : g.space.lg) + EdgeInsets.only(bottom: keyboard),
         child: builder(context),
       ),
     );
