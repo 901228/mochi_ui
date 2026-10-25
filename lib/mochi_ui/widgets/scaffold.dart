@@ -754,9 +754,10 @@ class _DrawerLayerState extends State<_DrawerLayer> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final lead = _rtl ? media.padding.right : media.padding.left;
         // As wide as a phone's drawers are: most of the screen, never all of it, so the page
         // that dismisses it is always there to press.
-        _panelWidth = math.min(320.0, constraints.maxWidth * 0.85);
+        _panelWidth = math.min(320.0 + lead, constraints.maxWidth * 0.85);
 
         return AnimatedBuilder(
           animation: widget.animation,
@@ -827,19 +828,10 @@ class _DrawerLayerState extends State<_DrawerLayer> {
                                       borderRadius: BorderRadiusDirectional.horizontal(
                                         end: g.radius.xl.topLeft,
                                       ).resolve(Directionality.of(context)),
-                                      // It runs to the screen's top, bottom and leading edge. Only
-                                      // the edge is cleared here: the top and bottom insets are the
-                                      // drawer's own to keep clear, under its own fill, as a
-                                      // sidebar or a list does.
-                                      child: SafeArea(
-                                        right: _rtl,
-                                        left: !_rtl,
-                                        top: false,
-                                        bottom: false,
-                                        // A sidebar in here is the drawer's list, not a column to
-                                        // narrow: no rail, and no button for one.
-                                        child: FixedSidebar(child: widget.child),
-                                      ),
+                                      // It runs to the screen's top, bottom and leading edge: the
+                                      // insets there are the drawer's own to keep clear, under its
+                                      // own fill, as a sidebar or a list does.
+                                      child: FixedSidebar(child: widget.child),
                                     ),
                                   ),
                                 ),

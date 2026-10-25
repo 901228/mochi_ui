@@ -195,7 +195,8 @@ void main() {
       app(
         Builder(
           builder: (context) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(padding: const EdgeInsets.only(top: 40, bottom: 30)),
+            data: MediaQuery.of(context)
+                .copyWith(padding: const EdgeInsets.only(top: 40, bottom: 30, left: 50)),
             child: MochiScaffold(
               header: const MochiHeader(title: Text("Home")),
               drawer: MochiSidebar(
@@ -220,7 +221,9 @@ void main() {
     final sidebar = tester.getRect(find.byType(MochiSidebar));
     expect(sidebar.top, 0);
     expect(sidebar.bottom, screen.height);
+    expect(sidebar.left, 0);
     expect(tester.getRect(find.text("row")).top, greaterThanOrEqualTo(40));
+    expect(tester.getRect(find.text("row")).left, greaterThanOrEqualTo(50));
   });
 
   testWidgets("hidden parts take no focus", (tester) async {
