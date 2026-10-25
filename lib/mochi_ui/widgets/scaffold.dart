@@ -338,11 +338,7 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
     // What the safe area below puts between the page's edges and the clip around it: a part sliding
     // away has to cross it as well, or it stops in plain sight there and then vanishes.
     final insets = MediaQuery.paddingOf(context);
-    final margin = !widget.safeArea
-        ? EdgeInsets.zero
-        : widget.extendBody
-        ? EdgeInsets.only(left: insets.left, right: insets.right)
-        : insets;
+    final margin = !widget.safeArea || widget.extendBody ? EdgeInsets.zero : insets;
 
     final page = CustomMultiChildLayout(
       delegate: _ScaffoldLayout(
@@ -413,13 +409,9 @@ class MochiScaffoldState extends State<MochiScaffold> with TickerProviderStateMi
       ],
     );
 
-    final framed = !widget.safeArea
-        ? page
-        // With the body under the bars, only the sides: the top and bottom insets are the bars'
-        // to clear, under their own fill.
-        : widget.extendBody
-        ? SafeArea(top: false, bottom: false, child: page)
-        : SafeArea(child: page);
+    // With the body under the bars, none at all: every part clears the insets inside its own fill,
+    // so the header's and the sidebar's grounds reach the screen's edges, past a notch on its side.
+    final framed = !widget.safeArea || widget.extendBody ? page : SafeArea(child: page);
 
     final canEdgeDrag =
         hasDrawer &&
@@ -486,17 +478,33 @@ enum _Slot { body, header, footer, sidebar, headerOverlay }
 /// That is how the measurement gets from layout to the body's build without a frame's delay: the
 /// body is a `LayoutBuilder`, which builds during layout with whatever constraints it is handed.
 class _BodyConstraints extends BoxConstraints {
-  _BodyConstraints.tight(super.size, {required this.top, required this.bottom}) : super.tight();
+  _BodyConstraints.tight(
+    super.size, {
+    required this.top,
+    required this.bottom,
+    required this.left,
+    required this.right,
+  }) : super.tight();
 
   final double top;
   final double bottom;
 
-  @override
-  bool operator ==(Object other) =>
-      other is _BodyConstraints && super == other && top == other.top && bottom == other.bottom;
+  /// How far the body stands in from the page's left and right edges: a sidebar's width, which
+  /// already keeps it clear of the system's inset on that side.
+  final double left;
+  final double right;
 
   @override
-  int get hashCode => Object.hash(super.hashCode, top, bottom);
+  bool operator ==(Object other) =>
+      other is _BodyConstraints &&
+      super == other &&
+      top == other.top &&
+      bottom == other.bottom &&
+      left == other.left &&
+      right == other.right;
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, top, bottom, left, right);
 }
 
 /// Lays out the page around a sidebar that slides in from the leading edge and a footer that
@@ -586,7 +594,16 @@ class _ScaffoldLayout extends MultiChildLayoutDelegate {
     }
 
     if (extendBody) {
-      layoutChild(_Slot.body, _BodyConstraints.tight(Size(width, size.height), top: top, bottom: bottom));
+      layoutChild(
+        _Slot.body,
+        _BodyConstraints.tight(
+          Size(width, size.height),
+          top: top,
+          bottom: bottom,
+          left: left,
+          right: size.width - left - width,
+        ),
+      );
       positionChild(_Slot.body, Offset(left, 0));
     } else {
       layoutChild(_Slot.body, BoxConstraints.tight(Size(width, math.max(0.0, size.height - top - bottom))));
@@ -630,12 +647,15 @@ class _ExtendedBody extends StatelessWidget {
 
         // A side with a bar is cleared by the bar's height, which already holds the system's
         // inset; a side without one, or with one sliding away, keeps at least the system's inset.
+        // The left and right insets are left to the body too, less what a sidebar takes of them.
         return MediaQuery(
           data: media.copyWith(
             padding: media.padding.copyWith(
               top: (header ? math.max(bars.top, media.padding.top) : media.padding.top) + page.top,
               bottom:
                   (footer ? math.max(bars.bottom, media.padding.bottom) : media.padding.bottom) + page.bottom,
+              left: math.max(0.0, media.padding.left - bars.left),
+              right: math.max(0.0, media.padding.right - bars.right),
             ),
           ),
           child: Padding(

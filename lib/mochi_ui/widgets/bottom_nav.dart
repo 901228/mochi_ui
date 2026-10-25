@@ -161,14 +161,15 @@ class MochiBottomNav<T> extends StatelessWidget {
       // one's curve runs alongside the bar's rather than cutting across it — whatever corners the
       // theme has been given.
       final inset = g.radius.xl.topLeft.x - g.radius.lg.topLeft.x;
-      final bottom = MediaQuery.paddingOf(context).bottom;
+      final insets = MediaQuery.paddingOf(context);
+      final bottom = insets.bottom;
 
       return Padding(
         // Over the home indicator, not on it: the system's inset, and a little room above it.
         padding: EdgeInsets.fromLTRB(
-          g.space.md,
+          insets.left + g.space.md,
           g.space.xs,
-          g.space.md,
+          insets.right + g.space.md,
           bottom + (bottom > 0 ? g.space.xs : g.space.md),
         ),
         child: Center(
@@ -206,8 +207,8 @@ class MochiBottomNav<T> extends StatelessWidget {
               )
             : null,
       ),
-      // The bar runs to the bottom of the screen, so the inset is its own to clear.
-      padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+      // The bar runs to the bottom and the sides of the screen, so the insets are its own to clear.
+      padding: MediaQuery.paddingOf(context).copyWith(top: 0),
       // Not stretched: the bar sizes to its destinations, which are as tall as each other, and a
       // stretch would hand them the unbounded height of the column they sit at the bottom of.
       child: row(floating: false),

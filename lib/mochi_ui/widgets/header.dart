@@ -128,17 +128,21 @@ class MochiHeader extends StatelessWidget {
 
     // The status bar's room, when nothing above has already taken it: a scaffold with its bars
     // over the content leaves it to the header, so the header's own fill reaches the top edge.
-    final inset = MediaQuery.paddingOf(context).top;
+    final insets = MediaQuery.paddingOf(context);
+    final inset = insets.top;
     final raised = theme.layering == .raised;
     final variant = this.variant ?? (raised ? MochiHeaderVariant.floating : MochiHeaderVariant.plain);
     final floating = variant == .floating;
     final ground = raised ? theme.colors.overlay : theme.colors.surface;
 
     final bar = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: g.space.md,
-        vertical: g.space.sm,
-      ).add(EdgeInsets.only(top: floating ? 0 : inset)),
+      padding: EdgeInsets.symmetric(horizontal: g.space.md, vertical: g.space.sm).add(
+        EdgeInsets.only(
+          top: floating ? 0 : inset,
+          left: floating ? 0 : insets.left,
+          right: floating ? 0 : insets.right,
+        ),
+      ),
       decoration: switch (variant) {
         .plain => null,
         .bordered => BoxDecoration(
@@ -177,7 +181,12 @@ class MochiHeader extends StatelessWidget {
     // Clear of the edges by what a floating bottom bar keeps, so the two line up; under the status
     // bar rather than behind it.
     return Padding(
-      padding: EdgeInsets.fromLTRB(g.space.md, inset + g.space.xs, g.space.md, g.space.xs),
+      padding: EdgeInsets.fromLTRB(
+        insets.left + g.space.md,
+        inset + g.space.xs,
+        insets.right + g.space.md,
+        g.space.xs,
+      ),
       child: ShapeShadow(
         radius: g.radius.xl,
         shadows: raised ? g.shadows.raised(MochiElevation.lg, theme.colors) : null,

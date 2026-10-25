@@ -167,6 +167,8 @@ class _MochiSidebarState extends State<MochiSidebar> {
     final collapsed = control != null && _collapsed.value(control);
     final padding = (widget.padding ?? EdgeInsets.all(g.space.xs2)).resolve(Directionality.of(context));
     final insets = MediaQuery.paddingOf(context);
+    // On the leading edge, so a notch there is its to clear; its fill grows over it.
+    final edge = Directionality.of(context) == TextDirection.rtl ? insets.right : insets.left;
 
     return MochiValueTransition(
       value: collapsed ? 0.0 : 1.0,
@@ -181,7 +183,7 @@ class _MochiSidebarState extends State<MochiSidebar> {
         collapsed: collapsed,
         toggle: control == null ? null : _toggle,
         child: Container(
-          width: lerpDouble(rail, widget.width, open),
+          width: lerpDouble(rail, widget.width, open)! + edge,
           decoration: BoxDecoration(
             color: widget.background ?? colors.surface,
             border: widget.border
@@ -192,12 +194,14 @@ class _MochiSidebarState extends State<MochiSidebar> {
           ),
           // Its fill runs under the status bar and the home indicator when it reaches them, in a
           // drawer or beside a body that extends under the bars; its rows stop short of them.
-          padding: EdgeInsets.only(top: insets.top, bottom: insets.bottom),
+          padding: EdgeInsetsDirectional.only(top: insets.top, bottom: insets.bottom, start: edge),
           // Taken out for the rows, which the padding above already keeps clear.
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
             removeBottom: true,
+            removeLeft: true,
+            removeRight: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
