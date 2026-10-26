@@ -13,28 +13,36 @@ class MochiDivider extends StatelessWidget {
     this.axis = Axis.horizontal,
     this.thickness,
     this.color,
+    this.gap = 0,
     this.indent = 0,
-    this.endIndent = 0,
+    this.endIndent,
   });
 
   final Axis axis;
   final double? thickness;
   final Color? color;
 
+  /// Padding perpendicular to the line: top and bottom for a horizontal divider, left and right
+  /// for a vertical one.
+  final double gap;
+
   /// Empty space before the line: on the left of a horizontal divider, above a vertical one.
   final double indent;
-  final double endIndent;
+
+  /// Empty space after the line. When null, defaults to [indent].
+  final double? endIndent;
 
   @override
   Widget build(BuildContext context) {
     final theme = context.theme;
     final line = ColoredBox(color: color ?? theme.colors.border);
     final size = thickness ?? theme.geometry.borderWidth;
+    final trailingIndent = endIndent ?? indent;
 
     return Padding(
       padding: switch (axis) {
-        .horizontal => EdgeInsets.only(left: indent, right: endIndent),
-        .vertical => EdgeInsets.only(top: indent, bottom: endIndent),
+        .horizontal => EdgeInsets.only(left: indent, right: trailingIndent, top: gap, bottom: gap),
+        .vertical => EdgeInsets.only(top: indent, bottom: trailingIndent, left: gap, right: gap),
       },
       // Expands along its axis, so it needs a bounded parent in that direction: a horizontal
       // divider in a Column, a vertical one in a Row (or anything with a bounded height).

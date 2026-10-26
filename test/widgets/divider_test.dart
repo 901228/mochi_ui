@@ -36,4 +36,18 @@ void main() {
       70,
     );
   });
+
+  testWidgets("gap pads perpendicularly and indent defaults to symmetric", (tester) async {
+    await tester.pumpWidget(app(const Column(children: [MochiDivider(thickness: 2, gap: 5, indent: 20)])));
+
+    final dividerSize = tester.getSize(find.byType(MochiDivider));
+    expect(dividerSize.width, 200);
+    expect(dividerSize.height, 12); // thickness 2 + gap 5*2
+
+    final line = tester.getSize(
+      find.descendant(of: find.byType(MochiDivider), matching: find.byType(ColoredBox)),
+    );
+    expect(line.width, 160); // 200 - indent 20 - endIndent 20
+    expect(line.height, 2);
+  });
 }
