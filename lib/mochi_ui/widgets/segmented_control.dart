@@ -182,8 +182,13 @@ class _MochiSegmentedControlState<T> extends State<MochiSegmentedControl<T>> {
             shadows: neutral ? g.shadows.of(MochiElevation.sm, colors.shadow) : const [],
             child: Container(
               decoration: ShapeDecoration(
-                // Raised out of the track, the way a chosen segment reads on iOS.
-                color: neutral ? colors.overlay : colors.softOn(tone, colors.surface),
+                // Raised out of the track, the way a chosen segment reads on iOS. Where the theme
+                // gives overlay and surface one colour (dark), it is lifted so it still shows.
+                color: neutral
+                    ? (colors.overlay == colors.surface
+                          ? Color.alphaBlend(colors.foreground.withValues(alpha: 0.18), colors.overlay)
+                          : colors.overlay)
+                    : colors.softOn(tone, colors.surface),
                 shape: g.shape(
                   borderRadius: BorderRadius.all(
                     Radius.circular((radius.topLeft.x - inset).clamp(0.0, double.infinity)),
