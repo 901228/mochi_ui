@@ -44,6 +44,8 @@ class MochiAccordion extends StatefulWidget {
     this.multiple = false,
     this.expanded = const MochiControl.managed(),
     this.divider = true,
+    this.spacing,
+    this.contentSpacing,
   });
 
   final List<MochiAccordionItem> items;
@@ -57,6 +59,13 @@ class MochiAccordion extends StatefulWidget {
 
   /// Lines between the rows, and under the last one's header while it is open.
   final bool divider;
+
+  /// Distance between two rows, divider included. Not applied above the first row or below the last.
+  /// Defaults to `geometry.space.xs2`.
+  final double? spacing;
+
+  /// Distance between a row's header and its expanded content. Defaults to `geometry.space.xs3`.
+  final double? contentSpacing;
 
   @override
   State<MochiAccordion> createState() => _MochiAccordionState();
@@ -88,6 +97,8 @@ class _MochiAccordionState extends State<MochiAccordion> {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final g = theme.geometry;
+    final rowSpacing = widget.spacing ?? g.space.xs2;
+    final bodySpacing = widget.contentSpacing ?? g.space.xs3;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -98,7 +109,12 @@ class _MochiAccordionState extends State<MochiAccordion> {
           // A margin around each row, so the header's hover fill stops short of the line between
           // them instead of running into it.
           Padding(
-            padding: EdgeInsets.symmetric(vertical: g.space.xs2),
+            // Half each side, so two rows stand [spacing] apart and the ends are left to the
+            // accordion's own padding.
+            padding: EdgeInsets.only(
+              top: index > 0 ? rowSpacing / 2 : 0,
+              bottom: index < widget.items.length - 1 ? rowSpacing / 2 : 0,
+            ),
             child: MochiCollapsible(
               // The heading typeface, not a bolder body one: Comfortaa's 600 next to its 400 is
               // a whisper at this size, and `title` is the weight this system reserves for
@@ -107,7 +123,7 @@ class _MochiAccordionState extends State<MochiAccordion> {
               enabled: item.enabled,
               expanded: .lifted(value: _expanded.contains(index), onChanged: (open) => _toggle(index, open)),
               headerPadding: EdgeInsets.symmetric(horizontal: g.space.xs, vertical: g.space.xs),
-              bodyPadding: EdgeInsets.only(left: g.space.xs, right: g.space.xs, top: g.space.xs3),
+              bodyPadding: EdgeInsets.only(left: g.space.xs, right: g.space.xs, top: bodySpacing),
               radius: g.radius.sm,
               child: item.child,
             ),

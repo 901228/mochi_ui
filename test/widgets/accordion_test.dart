@@ -71,6 +71,53 @@ void main() {
     expect(find.text("What the timer shows."), findsOneWidget);
   });
 
+  testWidgets("spacing goes between the rows only, not above the first or below the last", (tester) async {
+    Future<(double, double, double)> measure(double spacing) async {
+      await tester.pumpWidget(
+        app(MochiAccordion(spacing: spacing, expanded: const .managed(), items: items())),
+      );
+      await tester.pumpAndSettle();
+      final all = tester.getRect(find.byType(MochiAccordion));
+      Rect header(String t) =>
+          tester.getRect(find.ancestor(of: find.text(t), matching: find.byType(MochiTappable)).first);
+      final first = header("Inspection");
+      final last = header("Advanced");
+      // Each header carries its own padding, so what is left over is the accordion's margin.
+      return (
+        first.top - all.top,
+        all.bottom - last.bottom,
+        tester.getRect(find.byType(MochiDivider).first).top - first.bottom,
+      );
+    }
+
+    final (topSmall, bottomSmall, gapSmall) = await measure(0);
+    final (topBig, bottomBig, gapBig) = await measure(20);
+    expect(topBig, topSmall, reason: "nothing added above the first row");
+    expect(bottomBig, bottomSmall, reason: "nothing added below the last row");
+    expect(gapBig - gapSmall, 10, reason: "half the spacing each side of a divider");
+  });
+
+  testWidgets("contentSpacing sets the gap between a header and its body", (tester) async {
+    Future<double> gap(double contentSpacing) async {
+      await tester.pumpWidget(
+        app(
+          MochiAccordion(
+            contentSpacing: contentSpacing,
+            expanded: const .managed(initial: {0}),
+            items: items(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final header = tester.getRect(
+        find.ancestor(of: find.text("Inspection"), matching: find.byType(MochiTappable)).first,
+      );
+      return tester.getRect(find.text("Count down first.")).top - header.bottom;
+    }
+
+    expect(await gap(16) - await gap(0), 16);
+  });
+
   testWidgets("it reports the whole set", (tester) async {
     final seen = <Set<int>>[];
     await tester.pumpWidget(accordion(multiple: true, open: {0}, onExpandedChanged: seen.add));
