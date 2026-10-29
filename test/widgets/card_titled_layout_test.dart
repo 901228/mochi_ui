@@ -103,5 +103,82 @@ void main() {
         greaterThan(tester.getRect(find.text("Short")).bottom + 30),
       );
     });
+
+    testWidgets("a footer stands at the bottom of a card given more height than it needs", (tester) async {
+      await tester.pumpWidget(
+        app(
+          Center(
+            child: SizedBox(
+              width: 200,
+              height: 300,
+              child: MochiCard(
+                padding: EdgeInsets.zero,
+                title: const Text("Best Ao5"),
+                footer: const Text("Updated today"),
+                child: const Text("12.34"),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final line = MochiGeometry.standard.borderWidth;
+      final card = tester.getRect(find.byType(MochiCard));
+      final value = tester.getRect(find.text("12.34"));
+      final footer = tester.getRect(find.text("Updated today"));
+
+      // Inside the card's own line.
+      expect(footer.bottom, closeTo(card.bottom - line, 0.01));
+      expect(footer.top, greaterThan(value.bottom + 50), reason: "pushed down, not under the content");
+    });
+
+    testWidgets("a footer without a title sits a gap under the content, and the card is no taller", (
+      tester,
+    ) async {
+      Future<(Rect, Rect, Rect)> measure({double? gap}) async {
+        await tester.pumpWidget(
+          app(
+            Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 200,
+                child: MochiCard(
+                  padding: EdgeInsets.zero,
+                  footer: const Text("Updated today"),
+                  footerGap: gap,
+                  child: const Text("12.34"),
+                ),
+              ),
+            ),
+          ),
+        );
+        return (
+          tester.getRect(find.byType(MochiCard)),
+          tester.getRect(find.text("12.34")),
+          tester.getRect(find.text("Updated today")),
+        );
+      }
+
+      final (card, value, footer) = await measure(gap: 0);
+      expect(footer.top, closeTo(value.bottom, 0.5));
+      expect(footer.bottom, closeTo(card.bottom - MochiGeometry.standard.borderWidth, 0.5));
+
+      final (bigCard, _, bigFooter) = await measure(gap: 20);
+      expect(bigCard.height - card.height, closeTo(20, 0.5), reason: "the gap is the only thing that moved");
+      expect(bigFooter.bottom, closeTo(bigCard.bottom - MochiGeometry.standard.borderWidth, 0.5));
+    });
+
+    testWidgets("a footer in a scroll view takes its own height and does not throw", (tester) async {
+      await tester.pumpWidget(
+        app(
+          const SingleChildScrollView(
+            child: MochiCard(footer: Text("Updated today"), child: Text("12.34")),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text("Updated today"), findsOneWidget);
+    });
   });
 }

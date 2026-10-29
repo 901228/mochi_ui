@@ -159,6 +159,32 @@ class _ComponentsSampleState extends State<_ComponentsSample> {
                 child: const Text("A card can carry its own heading."),
               ),
             ),
+            // A footer stands at the bottom edge: two cards of one height keep theirs level.
+            SizedBox(
+              width: 360,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: g.space.sm,
+                  children: [
+                    Expanded(
+                      child: MochiCard(
+                        title: const Text("Short"),
+                        footer: MochiButton(appearance: .soft, onPress: () {}, child: const Text("Open")),
+                        child: const Text("One line."),
+                      ),
+                    ),
+                    Expanded(
+                      child: MochiCard(
+                        title: const Text("Longer"),
+                        footer: MochiButton(appearance: .soft, onPress: () {}, child: const Text("Open")),
+                        child: const Text("A card with a good deal more to say, over several lines."),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             // The two states a multi-select is made of.
             for (final chosen in [false, true])
               SizedBox(

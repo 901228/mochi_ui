@@ -51,6 +51,8 @@ class MochiCard extends StatelessWidget {
     this.titlePrefix,
     this.titleSuffix,
     this.titleGap,
+    this.footer,
+    this.footerGap,
     this.padding,
     this.appearance = MochiCardAppearance.elevated,
     this.elevation = MochiElevation.sm,
@@ -80,6 +82,8 @@ class MochiCard extends StatelessWidget {
        titlePrefix = null,
        titleSuffix = null,
        titleGap = null,
+       footer = null,
+       footerGap = null,
        selected = false,
        onPress = null,
        onLongPress = null,
@@ -99,6 +103,16 @@ class MochiCard extends StatelessWidget {
   /// Taken as given, not scaled by density: pass a value read from `context.theme.geometry` to
   /// keep in step with the theme.
   final double? titleGap;
+
+  /// Along the bottom of the card: a row of buttons, a note, a link. It stands at the card's bottom
+  /// edge, so a card stretched to the height of its neighbour keeps the footers of a row level.
+  /// Not available on [MochiCard.collapsible]. A line above it is the app's to draw: put a
+  /// [MochiDivider] in it.
+  final Widget? footer;
+
+  /// The room between the content and [footer]. Defaults to `geometry.space.sm`, taken as given
+  /// like [titleGap].
+  final double? footerGap;
 
   /// Whether a [MochiCard.collapsible] is open, and who holds that.
   final MochiControl<bool> expanded;
@@ -142,9 +156,17 @@ class MochiCard extends StatelessWidget {
       );
     }
 
-    final body = title == null
+    final body = title == null && footer == null
         ? child
-        : _TitledBody(title: title!, prefix: titlePrefix, suffix: titleSuffix, gap: titleGap, child: child);
+        : _TitledBody(
+            title: title,
+            prefix: titlePrefix,
+            suffix: titleSuffix,
+            gap: titleGap,
+            footer: footer,
+            footerGap: footerGap,
+            child: child,
+          );
 
     if (!_interactive && !selected) {
       return _CardSurface(
@@ -322,13 +344,17 @@ class _TitledBody extends StatelessWidget {
     required this.prefix,
     required this.suffix,
     required this.gap,
+    required this.footer,
+    required this.footerGap,
     required this.child,
   });
 
-  final Widget title;
+  final Widget? title;
   final Widget? prefix;
   final Widget? suffix;
   final double? gap;
+  final Widget? footer;
+  final double? footerGap;
   final Widget child;
 
   @override
@@ -343,49 +369,71 @@ class _TitledBody extends StatelessWidget {
 
     return _TitledLayout(
       gap: gap ?? g.space.sm,
+      footerGap: footerGap ?? g.space.sm,
+      hasTitle: title != null,
+      hasFooter: footer != null,
       children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(minHeight: line),
-          // The row is an xs button tall, so a bar of actions dropped in here is an xs bar unless
-          // the app says otherwise: it costs no height, and nobody has to know the number.
-          child: ActionScale(
-            size: MochiSize.xs,
-            child: Row(
-              spacing: g.space.xs,
-              children: [
-                ?prefix,
-                Expanded(
-                  child: DefaultTextStyle(
-                    style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
-                    child: title,
+        if (title case final title?)
+          ConstrainedBox(
+            constraints: BoxConstraints(minHeight: line),
+            // The row is an xs button tall, so a bar of actions dropped in here is an xs bar unless
+            // the app says otherwise: it costs no height, and nobody has to know the number.
+            child: ActionScale(
+              size: MochiSize.xs,
+              child: Row(
+                spacing: g.space.xs,
+                children: [
+                  ?prefix,
+                  Expanded(
+                    child: DefaultTextStyle(
+                      style: theme.typography.title.sm.copyWith(color: theme.colors.foreground),
+                      child: title,
+                    ),
                   ),
-                ),
-                ?suffix,
-              ],
+                  ?suffix,
+                ],
+              ),
             ),
           ),
-        ),
         child,
+        ?footer,
       ],
     );
   }
 }
 
-/// The title over the content, like a min-sized [Column] — except that a card given a height (say,
-/// stretched in a row under [IntrinsicHeight]) hands the content the height left under the title,
-/// so a [Center] in it centres in the card rather than in its own line. Anywhere else, in a list or
-/// in a `Center`, the content takes its own height: a [Column] with an [Expanded] would throw in a
-/// list, and a [LayoutBuilder] would throw under [IntrinsicHeight].
+/// The title over the content over the footer, like a min-sized [Column] — except that a card given
+/// a height (say, stretched in a row under [IntrinsicHeight]) hands the content the height left
+/// between them, so a [Center] in it centres in the card rather than in its own line, and the footer
+/// stands at the bottom edge. Anywhere else, in a list or in a `Center`, the content takes its own
+/// height: a [Column] with an [Expanded] would throw in a list, and a [LayoutBuilder] would throw
+/// under [IntrinsicHeight].
+///
+/// The children are the title (when [hasTitle]), the content, and the footer (when [hasFooter]).
 class _TitledLayout extends MultiChildRenderObjectWidget {
-  const _TitledLayout({required this.gap, required super.children}) : assert(children.length == 2);
+  const _TitledLayout({
+    required this.gap,
+    required this.footerGap,
+    required this.hasTitle,
+    required this.hasFooter,
+    required super.children,
+  });
 
   final double gap;
+  final double footerGap;
+  final bool hasTitle;
+  final bool hasFooter;
 
   @override
-  _RenderTitledLayout createRenderObject(BuildContext context) => _RenderTitledLayout(gap);
+  _RenderTitledLayout createRenderObject(BuildContext context) =>
+      _RenderTitledLayout(gap, footerGap, hasTitle, hasFooter);
 
   @override
-  void updateRenderObject(BuildContext context, _RenderTitledLayout renderObject) => renderObject.gap = gap;
+  void updateRenderObject(BuildContext context, _RenderTitledLayout renderObject) => renderObject
+    ..gap = gap
+    ..footerGap = footerGap
+    ..hasTitle = hasTitle
+    ..hasFooter = hasFooter;
 }
 
 class _TitledParentData extends ContainerBoxParentData<RenderBox> {}
@@ -394,7 +442,7 @@ class _RenderTitledLayout extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _TitledParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _TitledParentData> {
-  _RenderTitledLayout(this._gap);
+  _RenderTitledLayout(this._gap, this._footerGap, this._hasTitle, this._hasFooter);
 
   double get gap => _gap;
   double _gap;
@@ -404,8 +452,33 @@ class _RenderTitledLayout extends RenderBox
     markNeedsLayout();
   }
 
-  RenderBox get _title => firstChild!;
-  RenderBox get _body => lastChild!;
+  double get footerGap => _footerGap;
+  double _footerGap;
+  set footerGap(double value) {
+    if (value == _footerGap) return;
+    _footerGap = value;
+    markNeedsLayout();
+  }
+
+  bool get hasTitle => _hasTitle;
+  bool _hasTitle;
+  set hasTitle(bool value) {
+    if (value == _hasTitle) return;
+    _hasTitle = value;
+    markNeedsLayout();
+  }
+
+  bool get hasFooter => _hasFooter;
+  bool _hasFooter;
+  set hasFooter(bool value) {
+    if (value == _hasFooter) return;
+    _hasFooter = value;
+    markNeedsLayout();
+  }
+
+  RenderBox? get _title => hasTitle ? firstChild : null;
+  RenderBox get _body => hasTitle ? childAfter(firstChild!)! : firstChild!;
+  RenderBox? get _footer => hasFooter ? lastChild : null;
 
   @override
   void setupParentData(RenderBox child) {
@@ -413,26 +486,29 @@ class _RenderTitledLayout extends RenderBox
   }
 
   @override
-  double computeMinIntrinsicWidth(double height) =>
-      math.max(_title.getMinIntrinsicWidth(double.infinity), _body.getMinIntrinsicWidth(double.infinity));
+  double computeMinIntrinsicWidth(double height) => _widest((c) => c.getMinIntrinsicWidth(double.infinity));
 
   @override
-  double computeMaxIntrinsicWidth(double height) =>
-      math.max(_title.getMaxIntrinsicWidth(double.infinity), _body.getMaxIntrinsicWidth(double.infinity));
+  double computeMaxIntrinsicWidth(double height) => _widest((c) => c.getMaxIntrinsicWidth(double.infinity));
+
+  double _widest(double Function(RenderBox) width) => [?_title, _body, ?_footer].map(width).reduce(math.max);
+
+  double _stacked(double Function(RenderBox) height) =>
+      (_title == null ? 0 : height(_title!) + gap) +
+      height(_body) +
+      (_footer == null ? 0 : footerGap + height(_footer!));
 
   @override
-  double computeMinIntrinsicHeight(double width) =>
-      _title.getMinIntrinsicHeight(width) + gap + _body.getMinIntrinsicHeight(width);
+  double computeMinIntrinsicHeight(double width) => _stacked((c) => c.getMinIntrinsicHeight(width));
 
   @override
-  double computeMaxIntrinsicHeight(double width) =>
-      _title.getMaxIntrinsicHeight(width) + gap + _body.getMaxIntrinsicHeight(width);
+  double computeMaxIntrinsicHeight(double width) => _stacked((c) => c.getMaxIntrinsicHeight(width));
 
   @override
   double? computeDistanceToActualBaseline(TextBaseline baseline) =>
       defaultComputeDistanceToFirstActualBaseline(baseline);
 
-  /// Lays the two children out with [layoutChild] and returns the size; shared by layout and dry
+  /// Lays the children out with [layoutChild] and returns the size; shared by layout and dry
   /// layout so the two cannot disagree.
   Size _layout(BoxConstraints constraints, ChildLayouter layoutChild, {required bool position}) {
     // Stretched across like the column's children were; loose only where nothing bounds the width.
@@ -441,20 +517,32 @@ class _RenderTitledLayout extends RenderBox
         ? BoxConstraints(minWidth: constraints.maxWidth, maxWidth: constraints.maxWidth, maxHeight: maxHeight)
         : BoxConstraints(maxHeight: maxHeight);
 
-    final title = layoutChild(_title, across(double.infinity));
-    final top = title.height + gap;
+    final title = _title == null ? Size.zero : layoutChild(_title!, across(double.infinity));
+    final top = _title == null ? 0.0 : title.height + gap;
+    final footer = _footer == null ? Size.zero : layoutChild(_footer!, across(double.infinity));
+    final bottom = _footer == null ? 0.0 : footer.height + footerGap;
     // Only a card that has been *given* a height hands the rest down: a tight one, or one stretched
     // to a neighbour. A merely bounded one — a card in a `Center` on a page — keeps its content's
     // own height, or a centred child would blow it up to the whole screen. Loose either way, so a
     // Text keeps its own height and only a child that wants the room, a Center, takes it.
-    final rest = constraints.minHeight > 0 ? math.max(0.0, constraints.maxHeight - top) : double.infinity;
+    final rest = constraints.minHeight > 0
+        ? math.max(0.0, constraints.maxHeight - top - bottom)
+        : double.infinity;
     final body = layoutChild(_body, across(rest));
 
+    final size = constraints.constrain(
+      Size(math.max(math.max(title.width, body.width), footer.width), top + body.height + bottom),
+    );
     if (position) {
-      (_title.parentData! as _TitledParentData).offset = Offset.zero;
+      if (_title != null) (_title!.parentData! as _TitledParentData).offset = Offset.zero;
       (_body.parentData! as _TitledParentData).offset = Offset(0, top);
+      // At the bottom edge, which is below the content when the card was given more height than it
+      // needs.
+      if (_footer != null) {
+        (_footer!.parentData! as _TitledParentData).offset = Offset(0, size.height - footer.height);
+      }
     }
-    return constraints.constrain(Size(math.max(title.width, body.width), top + body.height));
+    return size;
   }
 
   @override
